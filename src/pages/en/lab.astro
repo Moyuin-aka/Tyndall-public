@@ -1,0 +1,243 @@
+---
+import { useTranslations } from '@utils/ui';
+import Layout from '@layouts/Layout.astro';
+import ServiceCard from '@components/ServiceCard.astro';
+import ServiceStatus from '@components/ServiceStatus.astro';
+import servicesData from '@data/services.json';
+import { ICONS } from '@utils/icons';
+
+interface Service {
+    name: string;
+    category: string;
+    [key: string]: any;
+}
+
+interface Categories {
+    [key: string]: Service[];
+}
+
+const t = useTranslations(Astro.currentLocale);
+const services: Service[] = servicesData.services || [];
+
+const categories: Categories = {};
+for (const service of services) {
+    if (!categories[service.category]) {
+        categories[service.category] = [];
+    }
+    categories[service.category].push(service);
+}
+
+const categoryIcons: { [key: string]: string } = {
+    'Tools': ICONS.tools,
+    'Storage': ICONS.storage,
+    'DevOps': ICONS.operations,
+    'Admin': ICONS.admin,
+};
+---
+
+<Layout title={t('lab_title')}>
+    <div class="lab-container">
+        <header class="hero-section">
+            <p class="hero-subtitle">Lab</p>
+            <h1 class="hero-slogan">{t('lab_desc')}</h1>
+            <ServiceStatus />
+        </header>
+
+        <main id="lab-main">
+            {Object.entries(categories).map(([categoryName, services]) => (
+                <section class="category-section">
+                    <h2 class="category-title">
+                        <div class="category-icon" set:html={categoryIcons[categoryName] || ''}></div>
+                        <span>{t(`categories.${categoryName}`)}</span>
+                    </h2>
+                    <div class="services-grid">
+                        {services.map(service => <ServiceCard service={service} t={t} />)}
+                    </div>
+                </section>
+            ))}
+        </main>
+    </div>
+</Layout>
+
+<style is:global>
+    /* Global Body Style Override */
+    body {
+        height: auto;
+        display: block;
+        justify-content: initial;
+        align-items: initial;
+    }
+    .hero-subtitle {
+        font-family: var(--font-serif);
+        font-size: 0.9rem;
+        letter-spacing: 0.1em;
+        color: var(--grey);
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+  }
+  
+    /* Lab Page Layout */
+    .lab-container {
+        max-width: 800px;
+        margin: 5rem auto 2rem;
+        padding: 20px;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    .hero-slogan {
+        font-family: var(--font-serif);
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1.2;
+    }
+
+    /* Category Section */
+    .category-section {
+        margin-top: 60px;
+    }
+
+    .category-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .category-icon svg {
+        width: 32px;
+        height: 32px;
+        color: var(--purple);
+    }
+
+    /* Services Grid */
+    .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* Service Card Redesign */
+    .service-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 20px;
+        text-decoration: none;
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    .service-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-shadow-hover);
+        border-color: var(--card-border-hover);
+    }
+
+    .card-content {
+        /* flex-grow: 1; */
+    }
+    
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .card-icon svg {
+        width: 28px;
+        height: 28px;
+        color: var(--icon-color);
+        opacity: 0.9;
+    }
+
+    .card-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .card-desc {
+        margin-top: 12px;
+        font-size: 0.95rem;
+        color: var(--grey);
+        line-height: 1.6;
+        flex-grow: 1;
+    }
+
+    .card-footer {
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .status {
+        display: flex;
+        align-items: center;
+    }
+
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+
+    .status-dot.up { background-color: var(--status-ok); }
+    .status-dot.down { background-color: var(--status-down); }
+    .status-dot.unknown { background-color: var(--status-unknown); }
+
+    .status-text {
+        font-size: 0.9rem;
+        color: var(--grey);
+    }
+
+    .external-link-icon {
+        color: var(--grey);
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+    }
+    
+    .service-card:hover .external-link-icon {
+        opacity: 1;
+        color: var(--purple);
+    }
+
+    .external-link-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Light/Dark Mode Variables */
+    :root {
+        --border: #e5e7eb;
+        --card-bg: #ffffff;
+        --card-border: #e5e7eb;
+        --card-border-hover: var(--purple);
+        --card-shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --status-ok: #2ecc71;
+        --status-down: #ff6b6b;
+        --status-unknown: #ccc;
+        --icon-color: var(--grey);
+    }
+
+    html.dark {
+        --border: #2d2d50;
+        --card-bg: #1E1E1E;
+        --card-border: #333;
+        --card-border-hover: var(--purple);
+        --card-shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        --icon-color: #b5aed6;
+    }
+</style>

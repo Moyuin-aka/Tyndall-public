@@ -1,0 +1,245 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
+import Layout from '@layouts/Layout.astro';
+import '@styles/markdown.css';
+import { useTranslations } from '@utils/ui';
+import TwikooComments from '@components/TwikooComments.astro';
+import TableOfContents from '@components/TableOfContents.astro';
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection('blog', ({ data }) => {
+    // 只包含已发布的文章
+    return data.published !== false;
+  });
+  const paths = [];
+  
+  // 为每个 translationKey 生成中文路径
+  const keySet = new Set();
+  for (const post of allPosts) {
+    const key = post.data.translationKey ?? post.slug.replace(/^en\//, '');
+    if (!keySet.has(key)) {
+      keySet.add(key);
+      paths.push({
+        params: { slug: key },
+        props: { translationKey: key },
+      });
+    }
+  }
+  
+  return paths;
+}
+
+const { translationKey } = Astro.props;
+const t = useTranslations(Astro.currentLocale);
+const locale = Astro.currentLocale;
+
+// 查找当前语言的文章，如果没有则回退到其他语言
+const allPosts = await getCollection('blog', ({ data }) => {
+  // 只包含已发布的文章
+  return data.published !== false;
+});
+const currentLangPost = allPosts.find(p => 
+  (p.data.translationKey ?? p.slug.replace(/^en\//, '')) === translationKey && 
+  p.data.lang === locale
+);
+
+const fallbackPost = allPosts.find(p => 
+  (p.data.translationKey ?? p.slug.replace(/^en\//, '')) === translationKey
+);
+
+const post = currentLangPost || fallbackPost;
+const isFallback = !currentLangPost && !!fallbackPost;
+
+if (!post) {
+  throw new Error(`Post not found: ${translationKey}`);
+}
+
+const { Content, headings } = await post.render();
+---
+<Layout title={post.data.title} translationKey={translationKey}>
+  <main class="post-container">
+    <h1>{post.data.title}</h1>
+    
+    {isFallback && (
+      <div class="fallback-tip">
+        {t('post_not_translated')}
+      </div>
+    )}
+    
+    <p class="post-date">
+      {post.data.pubDate.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
+    </p>
+    
+    <TableOfContents headings={headings} />
+    
+    <div class="markdown-content">
+      <Content />
+    </div>
+    
+    <hr class="comment-divider" />
+    
+    <TwikooComments />
+  </main>
+</Layout>
+
+<script is:inline>
+  // 内联加载 Mermaid，确保在页面加载后执行
+  (async function() {
+    let mermaidModule = null;
+    
+    async function initMermaid() {
+      try {
+        //console.log('🔍 Starting Mermaid initialization...');
+        
+        if (!mermaidModule) {
+          const module = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
+          mermaidModule = module.default;
+          //console.log('✅ Mermaid module loaded');
+        }
+        
+        const isDark = document.documentElement.classList.contains('dark');
+        
+        mermaidModule.initialize({
+          startOnLoad: false,
+          theme: isDark ? 'dark' : 'default',
+          securityLevel: 'loose',
+        });
+        
+        // Astro 使用 data-language 属性而不是 class
+        const mermaidBlocks = document.querySelectorAll('pre[data-language="mermaid"]');
+        
+        if (mermaidBlocks.length === 0) {
+          return;
+        }
+        
+        for (const pre of mermaidBlocks) {
+          const code = pre.querySelector('code');
+          if (!code) continue;
+          
+          const div = document.createElement('div');
+          div.className = 'mermaid-diagram';
+          // 获取纯文本内容（去除 Shiki 添加的 HTML 标签）
+          div.textContent = code.textContent || '';
+          div.style.textAlign = 'center';
+          div.style.margin = '2em 0';
+          
+          pre.replaceWith(div);
+        }
+        
+        await mermaidModule.run({
+          querySelector: '.mermaid-diagram',
+        });
+      } catch (error) {
+        console.error('Failed to initialize Mermaid:', error);
+      }
+    }
+    
+    function onLoad() {
+      setTimeout(initMermaid, 500);
+    }
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', onLoad);
+    } else {
+      onLoad();
+    }
+    
+    document.addEventListener('astro:page-load', onLoad);
+  })();
+</script>
+
+<script is:inline>
+  // 为表格添加滚动容器包装器
+  function wrapTables() {
+    const tables = document.querySelectorAll('.markdown-content table');
+    tables.forEach(table => {
+      // 检查是否已经被包装过
+      if (table.parentElement.classList.contains('table-wrapper')) {
+        return;
+      }
+      
+      const wrapper = document.createElement('div');
+      wrapper.className = 'table-wrapper';
+      table.parentNode.insertBefore(wrapper, table);
+      wrapper.appendChild(table);
+    });
+  }
+  
+  // 页面加载时执行
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wrapTables);
+  } else {
+    wrapTables();
+  }
+  
+  // Astro 路由切换时执行
+  document.addEventListener('astro:page-load', wrapTables);
+</script>
+
+<style>
+  .post-container {
+    max-width: 800px;
+    margin: 5rem auto 2rem;
+    padding: 20px;
+    width: 100%;
+    /* 不设置 overflow，让子元素自己处理 */
+    /* 使用 box-sizing 确保 padding 不会增加总宽度 */
+    box-sizing: border-box;
+  }
+  
+  /* markdown 内容容器 */
+  .markdown-content {
+    /* 限制内容最大宽度，防止撑开 */
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+
+  .post-container h1 {
+    font-family: var(--font-serif);
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    /* 长标题自动换行 */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .post-date {
+    font-family: var(--font-sans);
+    color: var(--grey);
+    margin-bottom: 2rem;
+  }
+
+  .fallback-tip {
+    font-family: var(--font-sans);
+    color: var(--grey);
+    background: rgba(162, 89, 236, 0.1);
+    border: 1px solid rgba(162, 89, 236, 0.25);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+
+  /* 评论区分隔线 */
+  .comment-divider {
+    margin: 3rem 0 2.5rem;
+    border: none;
+    border-top: 1px solid var(--grey);
+    opacity: 0.3;
+  }
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    .post-container {
+      padding: 15px;
+      margin: 4rem auto 1.5rem;
+    }
+
+    .post-container h1 {
+      font-size: 2rem;
+    }
+  }
+</style>

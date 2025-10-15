@@ -1,0 +1,279 @@
+---
+import GlobalStyles from '@components/GlobalStyles.astro';
+import { ViewTransitions } from "astro:transitions";
+import '@styles/fonts.css';
+
+interface Props {
+	title: string;
+  translationKey?: string;
+}
+
+import Header from '@components/Header.astro';
+import Footer from '@components/Footer.astro';
+
+const { title, translationKey } = Astro.props;
+
+// 检测是否为 Safari（服务端无法判断，需要客户端处理）
+// 我们在客户端禁用 Safari 的 View Transitions
+---
+<!DOCTYPE html>
+<html lang={Astro.currentLocale}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>{title}</title>
+    
+    <!-- Critical: Inline minimal theme script to prevent FOUC -->
+    <script>
+      // 极简主题初始化（同步执行，防止闪烁）
+      (function() {
+        try {
+          var mode = localStorage.getItem('theme-mode');
+          var isDark = mode === 'dark' || (!mode && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+    
+    <!-- Favicons -->
+    <link rel="icon" href="/favicon_io/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+    <link rel="apple-touch-icon" href="/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="/favicon_io/site.webmanifest">
+    
+    <!-- RSS Feed -->
+    {Astro.currentLocale === 'en' ? (
+      <link rel="alternate" type="application/rss+xml" title="Moyuin's Blog RSS Feed" href="/en/rss.xml" />
+    ) : (
+      <link rel="alternate" type="application/rss+xml" title="Moyuin 的博客 RSS Feed" href="/rss.xml" />
+    )}
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    
+    <!-- Critical CSS -->
+    <GlobalStyles />
+    
+    <!-- Non-blocking font loading -->
+    <!-- Noto Serif SC for serif text -->
+    <link 
+      rel="stylesheet" 
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&display=swap" 
+      media="print" 
+      onload="this.media='all'; this.onload=null;"
+    >
+    <!-- Noto Sans SC for sans-serif text -->
+    <link 
+      rel="stylesheet" 
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" 
+      media="print" 
+      onload="this.media='all'; this.onload=null;"
+    >
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap">
+    </noscript>
+    
+    <!-- Defer KaTeX CSS - only needed for math content -->
+    <link 
+      rel="stylesheet" 
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" 
+      integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" 
+      crossorigin="anonymous"
+      media="print"
+      onload="this.media='all'; this.onload=null;"
+    >
+    
+    <!-- instant.page: 鼠标悬停 65ms 即开始预加载，实现瞬间切换 -->
+    <script src="https://instant.page/5.2.0" type="module" defer></script>
+  </head>
+  <body class="has-header">
+    <Header translationKey={translationKey} />
+    <slot />
+    <Footer />
+
+    <!-- Smooth page transitions with built-in animations -->
+    <ViewTransitions />
+    
+    <!-- 使用 Astro 内置的优雅过渡效果 -->
+    <style is:global>
+      /* 调整过渡速度，保持优雅感 */
+      @media (prefers-reduced-motion: no-preference) {
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+          animation-duration: 0.25s;
+        }
+      }
+    </style>
+    
+    <!-- 优化 ViewTransitions 的过渡效果 -->
+    <style is:global>
+      /* 加快页面切换动画，减少等待感 */
+      @media (prefers-reduced-motion: no-preference) {
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+          animation-duration: 0.2s;
+        }
+      }
+      
+      /* 使用更流畅的淡入淡出 */
+      ::view-transition-old(root) {
+        animation-name: fade-out;
+      }
+      
+      ::view-transition-new(root) {
+        animation-name: fade-in;
+      }
+      
+      @keyframes fade-out {
+        to {
+          opacity: 0;
+        }
+      }
+      
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+      }
+    </style>
+
+    <script>
+      // 激进的预加载策略：提升切换速度
+      function aggressivePreloading() {
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        const links = document.querySelectorAll('a[href^="/"], a[href^="./"]');
+        
+        if (isMobile) {
+          // 移动端：立即预加载可见区域的所有链接
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                const link = entry.target as HTMLAnchorElement;
+                const href = link.getAttribute('href');
+                
+                if (href && !link.hasAttribute('data-preloaded')) {
+                  const prefetchLink = document.createElement('link');
+                  prefetchLink.rel = 'prefetch';
+                  prefetchLink.href = href;
+                  prefetchLink.as = 'document';
+                  document.head.appendChild(prefetchLink);
+                  link.setAttribute('data-preloaded', 'true');
+                }
+              }
+            });
+          }, {
+            rootMargin: '100px' // 提前 100px 预加载
+          });
+
+          links.forEach(link => observer.observe(link));
+        } else {
+          // 桌面端：结合 hover 和可见区域预加载
+          // 1. 立即预加载当前视口的链接
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                const link = entry.target as HTMLAnchorElement;
+                const href = link.getAttribute('href');
+                
+                if (href && !link.hasAttribute('data-preloaded')) {
+                  const prefetchLink = document.createElement('link');
+                  prefetchLink.rel = 'prefetch';
+                  prefetchLink.href = href;
+                  prefetchLink.as = 'document';
+                  document.head.appendChild(prefetchLink);
+                  link.setAttribute('data-preloaded', 'true');
+                }
+              }
+            });
+          }, {
+            rootMargin: '200px'
+          });
+
+          links.forEach(link => observer.observe(link));
+          
+          // 2. Hover 时立即预加载（Astro 默认行为）
+        }
+      }
+
+      // 页面加载时立即预加载
+      document.addEventListener('astro:page-load', aggressivePreloading);
+    </script>
+
+    <script>
+      function restoreScrollOnce() {
+        // 如果 URL 中有 hash（如 #标题），不恢复滚动位置，让浏览器自动跳转
+        if (window.location.hash) {
+          sessionStorage.removeItem('scroll:restore-once');
+          sessionStorage.removeItem('scroll:pos');
+          return;
+        }
+        
+        const should = sessionStorage.getItem('scroll:restore-once') === '1';
+        const pos = sessionStorage.getItem('scroll:pos');
+        if (should && pos) {
+          setTimeout(() => {
+            window.scrollTo({ top: parseInt(pos, 10) || 0, left: 0, behavior: 'auto' });
+          }, 0);
+        }
+        sessionStorage.removeItem('scroll:restore-once');
+        sessionStorage.removeItem('scroll:pos');
+      }
+
+      document.addEventListener('astro:page-load', restoreScrollOnce);
+    </script>
+    
+    <!-- Deferred theme logic - non-blocking -->
+    <script>
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      
+      function handleThemeLoaded() {
+        document.body.classList.add('theme-loaded', 'lang-loaded');
+      }
+      
+      document.addEventListener('DOMContentLoaded', handleThemeLoaded);
+      
+      document.addEventListener('astro:before-swap', (e) => {
+        const mode = localStorage.getItem('theme-mode');
+        const isDark = mode === 'dark' || (!mode && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        
+        if (isDark) {
+          e.newDocument.documentElement.classList.add('dark');
+        }
+        
+        if (isSafari) {
+          document.documentElement.classList.add('no-transition');
+          e.newDocument.documentElement.classList.add('no-transition');
+        }
+      });
+      
+      document.addEventListener('astro:after-swap', () => {
+        handleThemeLoaded();
+        
+        if (isSafari) {
+          setTimeout(() => {
+            document.documentElement.classList.remove('no-transition');
+          }, 30);
+        }
+      });
+      
+      document.addEventListener('astro:page-load', () => {
+        // 如果 URL 中有 hash（如 #标题），不恢复滚动位置，让浏览器自动跳转
+        if (window.location.hash) {
+          sessionStorage.removeItem('scrollPosition');
+          return;
+        }
+        
+        const scrollPosition = sessionStorage.getItem('scrollPosition');
+        if (scrollPosition) {
+          setTimeout(() => {
+            window.scrollTo({ top: parseInt(scrollPosition, 10), left: 0, behavior: 'auto' });
+            sessionStorage.removeItem('scrollPosition');
+          }, 0);
+        }
+      });
+    </script>
+  </body>
+</html>

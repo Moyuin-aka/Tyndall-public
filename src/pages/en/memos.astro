@@ -1,0 +1,101 @@
+---
+import Layout from '@layouts/Layout.astro';
+import { useTranslations } from '@utils/ui';
+import '@styles/markdown.css';
+
+const t = useTranslations(Astro.currentLocale);
+---
+
+<Layout title={t('memos_page_title')} desc={t('memos_page_desc')}>
+  <main
+    class="memos-container"
+    data-not-found={t('memos_error_not_found')}
+    data-failed={t('memos_error_failed')}
+  >
+    <header class="memos-hero">
+      <p class="memos-hero-subtitle">MEMOS</p>
+      <h1 class="memos-hero-slogan">{t('memos_hero_slogan')}</h1>
+    </header>
+    <div id="memos-loading" class="loading-indicator">
+      <div class="spinner"></div>
+      <p>{t('memos_loading')}</p>
+    </div>
+    <div id="memos-content"></div>
+    <p id="memos-error" class="error-message"></p>
+  </main>
+</Layout>
+
+<script>
+  import { initMemos } from '@utils/memos-render';
+  initMemos();
+</script>
+
+<style is:global>
+  .memos-container {
+    max-width: 800px;
+    margin: 5rem auto 2rem; 
+    padding: 20px;
+  }
+  .memos-hero {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+  .memos-hero-subtitle {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    color: var(--grey);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .memos-hero-slogan {
+    font-family: var(--font-serif);
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .memo-card {
+    background-color: var(--card-bg, #fff);
+    border: 1px solid var(--border, #eee);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  .memo-card:hover {
+    box-shadow: 0 7px 14px rgba(0,0,0,0.07);
+    border-color: var(--card-border-hover, var(--purple));
+  }
+
+  .memo-header {
+    margin-bottom: 1rem;
+    text-align: right;
+  }
+
+  .memo-time {
+    font-size: 0.85rem;
+    color: var(--grey);
+  }
+
+  .memo-body {
+    color: var(--text, #333);
+    line-height: 1.75;
+    word-break: break-word;
+    letter-spacing: normal;
+    word-spacing: normal;
+    font-variant-ligatures: normal;
+  }
+
+  .loading-indicator { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; color: var(--text-muted, #555); }
+  .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: var(--purple, #09f); animation: spin 1s ease infinite; margin-bottom: 1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-message { color: #d9534f; text-align: center; padding: 1rem; }
+  html.dark .memo-card { --card-bg: #1E1E1E; --border: #333; --card-border-hover: var(--purple); background-color: var(--card-bg); border: 1px solid var(--border);}
+  html.dark .memo-time { color: #b5aed6; }
+  html.dark .memo-card { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); }
+  html.dark .memo-card:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); }
+</style>

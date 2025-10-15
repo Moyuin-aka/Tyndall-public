@@ -1,0 +1,190 @@
+---
+import Layout from '@layouts/Layout.astro';
+import { useTranslations } from '@utils/ui';
+import '@styles/markdown.css';
+
+const t = useTranslations(Astro.currentLocale);
+---
+
+<Layout title={t('about_title')}>
+  <main class="about-container">
+    <header class="about-hero">
+      <p class="about-hero-subtitle">ABOUT</p>
+      <h1 class="about-hero-slogan">{t('about_slogan')}</h1>
+    </header>
+
+    <article class="about-content markdown-content">
+      <!-- 关于我 -->
+      <div class="content-section intro-section">
+        <h2>关于我</h2>
+        <p>你好，我是 Your Name。</p>
+        <blockquote>
+          缥缈，游荡，没有来路与归处。
+        </blockquote>
+        <p>这是一个示例关于页面，你可以在这里介绍自己。</p>
+      </div>
+
+      <!-- About me -->
+      <div class="content-section">
+        <h2>About me</h2>
+        <p>在这里填写你的个人信息...</p>
+      </div>
+
+      <!-- About blog -->
+      <div class="content-section">
+        <h2>About blog</h2>
+        <p>这里是我的记录：生活的碎片、学习的轨迹、世界的观察。</p>
+        <p>有情绪就写，有理解就留；是否发布，也许取决于当下的我是否愿意让未来的我看到。</p>
+      </div>
+
+      <!-- RSS 订阅 -->
+      <div class="content-section subscribe-section">
+        <p>你可以通过 <a href="/rss.xml" target="_blank" rel="noopener noreferrer">RSS</a> 订阅本站更新 🌱</p>
+      </div>
+    </article>
+  </main>
+</Layout>
+
+<style>
+  .about-container {
+    max-width: 800px;
+    margin: 5rem auto 2rem;
+    padding: 20px;
+  }
+
+  .about-hero {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .about-hero-subtitle {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    color: var(--grey);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .about-hero-slogan {
+    font-family: var(--font-serif);
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  /* About Content Area - 利用 markdown.css 渲染 */
+  .about-content {
+    font-family: var(--font-sans);
+    color: var(--text);
+    line-height: 1.8;
+  }
+
+  .content-section {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(162, 89, 236, 0.15);
+  }
+
+  .content-section:last-child {
+    border-bottom: none;
+  }
+
+  .content-section h2 {
+    font-family: var(--font-serif);
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1rem;
+    letter-spacing: 0.02em;
+  }
+
+  .content-section p {
+    font-size: 1.05rem;
+    color: var(--text);
+    opacity: 0.85;
+    max-width: 65ch;
+    line-height: 1.8;
+    margin-bottom: 0.8rem;
+  }
+
+  .content-section p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* 引用块样式 */
+  .content-section blockquote {
+    margin: 1.5rem 0;
+    padding: 1.2rem 1.5rem;
+    border-left: 4px solid rgba(162, 89, 236, 0.4);
+    background: rgba(162, 89, 236, 0.06);
+    border-radius: 0 8px 8px 0;
+    font-family: var(--font-serif);
+    font-style: italic;
+  }
+
+  .content-section blockquote p {
+    margin-bottom: 0.8rem;
+    opacity: 0.9;
+    font-size: 1.02rem;
+    line-height: 1.85;
+  }
+
+  .content-section blockquote p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* 链接样式 */
+  .content-section a {
+    color: var(--purple);
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(162, 89, 236, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .content-section a:hover {
+    color: var(--purple);
+    border-bottom-color: var(--purple);
+    opacity: 0.8;
+  }
+
+  /* 首段样式（关于我） */
+  .intro-section p:first-of-type {
+    font-size: 1.15rem;
+    font-weight: 500;
+  }
+
+  /* 订阅区域 */
+  .subscribe-section {
+    text-align: center;
+    padding-top: 1rem;
+  }
+
+  .subscribe-section p {
+    max-width: 100%;
+    font-size: 1.1rem;
+  }
+
+  /* 白天模式适配 */
+  :global(html:not(.dark)) .content-section blockquote {
+    background: rgba(162, 89, 236, 0.04);
+    border-left-color: rgba(162, 89, 236, 0.35);
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .about-hero-slogan {
+      font-size: 2.5rem;
+    }
+
+    .content-section h2 {
+      font-size: 1.5rem;
+    }
+
+    .content-section p {
+      font-size: 1rem;
+    }
+  }
+</style>

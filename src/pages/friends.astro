@@ -1,0 +1,482 @@
+---
+import Layout from '@layouts/Layout.astro';
+import { useTranslations } from '@utils/ui';
+import { friends, friendshipGuidelines } from '@data/friends';
+import '@styles/markdown.css';
+
+const t = useTranslations(Astro.currentLocale);
+const guidelines = friendshipGuidelines.zh;
+
+// 自动收集所有标签
+const allTags = new Set<string>();
+friends.forEach(friend => {
+  friend.tags?.forEach(tag => allTags.add(tag));
+});
+const tags = Array.from(allTags);
+---
+
+<Layout title={t('friends_title')}>
+  <main class="friends-container">
+    <!-- Hero Section -->
+    <header class="friends-hero">
+      <p class="friends-hero-subtitle">FRIENDS</p>
+      <h1 class="friends-hero-title">友情链接</h1>
+    </header>
+
+    <!-- 分类筛选 - 类似blog页的通告设计 -->
+    {tags.length > 0 && (
+      <div class="category-filter">
+        <button class="filter-btn active" data-category="all">
+          全部 ({friends.length})
+        </button>
+        {tags.map(tag => {
+          const count = friends.filter(f => f.tags?.includes(tag)).length;
+          return (
+            <button class="filter-btn" data-category={tag}>
+              {tag} ({count})
+            </button>
+          );
+        })}
+      </div>
+    )}
+
+    <!-- Friends Grid -->
+    <section class="friends-grid">
+      {friends.map((friend) => (
+        <a 
+          href={friend.url} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="friend-card"
+          data-tags={friend.tags?.join(',') || ''}
+        >
+          <div class="friend-avatar">
+            {friend.avatar ? (
+              <img src={friend.avatar} alt={friend.name} loading="lazy" />
+            ) : (
+              <div class="avatar-placeholder">{friend.name.charAt(0)}</div>
+            )}
+          </div>
+          <div class="friend-info">
+            <h3 class="friend-name">{friend.name}</h3>
+            <p class="friend-description">{friend.description}</p>
+          </div>
+        </a>
+      ))}
+    </section>
+
+    <!-- 申请友链 Section -->
+    <section class="apply-section">
+      <div class="apply-content">
+        <h2>添加友链</h2>
+        
+        <div class="my-info-card">
+          <div class="my-avatar">
+            <img src={guidelines.myInfo.avatar} alt={guidelines.myInfo.name} />
+          </div>
+          <div class="my-details">
+            <h3>{guidelines.myInfo.name}</h3>
+            <p class="my-url">{guidelines.myInfo.url}</p>
+            <p class="my-description">{guidelines.myInfo.description}</p>
+          </div>
+        </div>
+
+        <!-- 友链信息复制框 -->
+        <div class="info-box">
+          <div class="info-row">
+            <span class="info-label">名称：</span>
+            <span class="info-value">{guidelines.myInfo.name}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">链接：</span>
+            <span class="info-value">{guidelines.myInfo.url}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">头像：</span>
+            <span class="info-value">{guidelines.myInfo.avatar}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">描述：</span>
+            <span class="info-value">{guidelines.myInfo.description}</span>
+          </div>
+        </div>
+
+        <p class="apply-tip" set:html={guidelines.howToApply}></p>
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<script>
+  // 分类筛选功能
+  document.addEventListener('astro:page-load', () => {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const friendCards = document.querySelectorAll('.friend-card');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const category = btn.getAttribute('data-category');
+        
+        // 更新按钮状态
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // 筛选卡片
+        friendCards.forEach(card => {
+          const cardTags = card.getAttribute('data-tags') || '';
+          const tagsArray = cardTags.split(',').filter(t => t);
+
+          if (category === 'all' || tagsArray.includes(category)) {
+            card.style.display = 'flex';
+            // 添加淡入动画
+            card.style.animation = 'fadeIn 0.3s ease';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+  });
+</script>
+
+<style>
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .friends-container {
+    max-width: 1000px;
+    margin: 5rem auto 2rem;
+    padding: 20px;
+  }
+
+  /* Hero Section */
+  .friends-hero {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .friends-hero-subtitle {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    color: var(--grey);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .friends-hero-title {
+    font-family: var(--font-serif);
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+
+  .friends-hero-description {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    color: var(--grey);
+    opacity: 0.8;
+  }
+
+  /* 分类筛选 - 参考blog页的通告设计 */
+  .category-filter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: rgba(162, 89, 236, 0.08);
+    border: 1px solid rgba(162, 89, 236, 0.2);
+    border-radius: 8px;
+    margin-bottom: 3rem;
+  }
+
+  .filter-btn {
+    font-family: var(--font-serif);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid rgba(162, 89, 236, 0.2);
+    background: transparent;
+    color: var(--text);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .filter-btn:hover {
+    background: rgba(162, 89, 236, 0.1);
+    border-color: rgba(162, 89, 236, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .filter-btn.active {
+    background: rgba(162, 89, 236, 0.15);
+    border-color: rgba(162, 89, 236, 0.4);
+    color: var(--purple);
+    font-weight: 600;
+  }
+
+  /* Friends Grid */
+  .friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+  }
+
+  .friend-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(162, 89, 236, 0.04);
+    border: 1px solid rgba(162, 89, 236, 0.15);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .friend-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple), rgba(162, 89, 236, 0.5));
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+
+  .friend-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--purple);
+    box-shadow: 0 8px 24px rgba(162, 89, 236, 0.2);
+  }
+
+  .friend-card:hover::before {
+    transform: scaleX(1);
+  }
+
+  .friend-avatar {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(162, 89, 236, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .friend-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-placeholder {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--purple);
+  }
+
+  .friend-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .friend-name {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+
+  .friend-description {
+    font-size: 0.95rem;
+    color: var(--grey);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* 申请友链 Section */
+  .apply-section {
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 2px solid rgba(162, 89, 236, 0.15);
+  }
+
+  .apply-content {
+    font-family: var(--font-serif);
+  }
+
+  .apply-content h2 {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  /* My Info Card */
+  .my-info-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem;
+    background: rgba(162, 89, 236, 0.06);
+    border: 1px solid rgba(162, 89, 236, 0.2);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .my-avatar {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--purple);
+  }
+
+  .my-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .my-details {
+    flex: 1;
+  }
+
+  .my-details h3 {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--text);
+  }
+
+  .my-url {
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    color: var(--purple);
+    margin-bottom: 0.5rem;
+  }
+
+  .my-description {
+    font-size: 1rem;
+    color: var(--grey);
+    font-style: italic;
+  }
+
+  /* 友链信息复制框 */
+  .info-box {
+    background: rgba(162, 89, 236, 0.04);
+    border: 1px solid rgba(162, 89, 236, 0.2);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+  }
+
+  .info-row {
+    display: flex;
+    padding: 0.5rem 0;
+    line-height: 1.6;
+  }
+
+  .info-label {
+    color: var(--grey);
+    min-width: 4rem;
+    flex-shrink: 0;
+  }
+
+  .info-value {
+    color: var(--text);
+    word-break: break-all;
+    user-select: all;
+  }
+
+  .apply-tip {
+    text-align: center;
+    font-size: 1rem;
+    color: var(--text);
+    line-height: 1.8;
+    padding: 1.5rem;
+    background: rgba(162, 89, 236, 0.04);
+    border-radius: 8px;
+    border: 1px dashed rgba(162, 89, 236, 0.2);
+  }
+
+  .apply-tip :global(a) {
+    color: var(--purple);
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+  }
+
+  .apply-tip :global(a:hover) {
+    border-bottom-color: var(--purple);
+  }
+
+  /* Dark mode adjustments */
+  :global(html.dark) .friend-card {
+    background: rgba(162, 89, 236, 0.08);
+    border-color: rgba(162, 89, 236, 0.2);
+  }
+
+  :global(html.dark) .friend-card:hover {
+    background: rgba(162, 89, 236, 0.12);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .friends-hero-title {
+      font-size: 2.5rem;
+    }
+
+    .friends-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .my-info-card {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .my-details h3 {
+      margin-top: 0;
+    }
+
+    .category-filter {
+      padding: 1rem;
+    }
+
+    .filter-btn {
+      font-size: 0.85rem;
+      padding: 0.4rem 0.8rem;
+    }
+  }
+</style>

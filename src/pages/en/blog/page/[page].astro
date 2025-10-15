@@ -1,0 +1,507 @@
+---
+import { useTranslations } from '@utils/ui';
+import { getCollection } from 'astro:content';
+import Layout from '@layouts/Layout.astro';
+
+export async function getStaticPaths() {
+  const all = await getCollection('blog', ({ data }) => {
+    // 只包含已发布的文章
+    return data.published !== false;
+  });
+  
+  // Group by translationKey and prefer en locale
+  function stripLangPrefix(slug: string) { return slug.replace(/^en\//,''); }
+  const byKey = new Map<string, { key: string; post: any; isCurrentLang: boolean }>();
+
+  for (const p of all) {
+    const key = p.data.translationKey ?? stripLangPrefix(p.slug);
+    const curr = byKey.get(key);
+    const isCurrentLang = p.data.lang === 'en';
+    
+    if (!curr || (isCurrentLang && !curr.isCurrentLang)) {
+      byKey.set(key, { key, post: p, isCurrentLang });
+    }
+  }
+
+  const sortedPosts = Array.from(byKey.values()).sort(
+    (a, b) => b.post.data.pubDate.getTime() - a.post.data.pubDate.getTime()
+  );
+
+  const pageSize = 10;
+  const totalPages = Math.ceil(sortedPosts.length / pageSize);
+
+  return Array.from({ length: totalPages }, (_, i) => ({
+    params: { page: String(i + 1) },
+    props: {
+      posts: sortedPosts.slice(i * pageSize, (i + 1) * pageSize),
+      currentPage: i + 1,
+      totalPages,
+      totalPosts: sortedPosts.length,
+    },
+  }));
+}
+
+const { posts, currentPage, totalPages, totalPosts } = Astro.props;
+const t = useTranslations('en');
+const locale = 'en';
+
+// 分类名称映射
+const categoryNames: Record<string, { zh: string; en: string }> = {
+  'ctf': { zh: 'CTF', en: 'CTF' },
+  'notes': { zh: '笔记', en: 'Notes' },
+  'record': { zh: '记录', en: 'Records' },
+  'thoughts': { zh: '随笔', en: 'Thoughts' },
+  'weekly': { zh: '周记', en: 'Weekly' },
+  'tech': { zh: '技术', en: 'Tech' },
+  'life': { zh: '生活', en: 'Life' },
+  'uncategorized': { zh: '未分类', en: 'Uncategorized' },
+};
+
+function getCategoryDisplayName(category: string) {
+  return categoryNames[category]?.en || category;
+}
+
+// Generate smart pagination numbers (with ellipsis)
+function generatePageNumbers(current: number, total: number): (number | 'ellipsis')[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  
+  const pages: (number | 'ellipsis')[] = [];
+  
+  // Always show first page
+  pages.push(1);
+  
+  // Current page at start (1-3)
+  if (current <= 3) {
+    pages.push(2, 3, 4, 'ellipsis', total);
+  }
+  // Current page at end (last 3)
+  else if (current >= total - 2) {
+    pages.push('ellipsis', total - 3, total - 2, total - 1, total);
+  }
+  // Current page in middle
+  else {
+    pages.push('ellipsis', current - 1, current, current + 1, 'ellipsis', total);
+  }
+  
+  return pages;
+}
+---
+<Layout title={t('blog_title')}>
+  <main class="blog-list-container">
+    <header class="blog-hero">
+      <p class="blog-hero-subtitle">BLOG</p>
+      <h1 class="blog-hero-slogan">{t('index_text')}</h1>
+    </header>
+
+    <div class="archive-tip">
+      {t('blog_archive_tip')}
+      <a href="/en/archive" class="archive-link">{t('blog_archive_link')}</a>
+      {t('blog_archive_tip_suffix')}
+    </div>
+
+    <section class="blog-posts-section">
+      {posts.map(({ key, post, isCurrentLang }: any) => {
+        const category = post.data.category || 'uncategorized';
+        const categoryDisplay = getCategoryDisplayName(category);
+        
+        return (
+          <article class="blog-post-item">
+            <a href={`/en/blog/${key}`} class="blog-post-title-link">
+              <h2 class="blog-post-title">{post.data.title}</h2>
+            </a>
+            {post.data.description && <p class="blog-post-summary">{post.data.description}</p>}
+            <div class="blog-post-meta">
+              <div class="blog-post-meta-left">
+                {post.data.category && (
+                  <a href={`/en/category/${category}`} class="category-badge">
+                    {categoryDisplay}
+                  </a>
+                )}
+                <time datetime={post.data.pubDate.toISOString()} class="blog-post-date">
+                  {post.data.pubDate.toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </time>
+              </div>
+              {!isCurrentLang && (
+                <span class="language-badge">Original</span>
+              )}
+            </div>
+          </article>
+        );
+      })}
+    </section>
+
+    <!-- 分页导航 -->
+    {totalPages > 1 && (
+      <nav class="pagination" aria-label="Pagination navigation">
+        <div class="pagination-info">
+          Page {currentPage} / {totalPages} · {totalPosts} articles
+        </div>
+        <div class="pagination-controls">
+          {currentPage > 1 && (
+            <a href={currentPage === 2 ? '/en/blog' : `/en/blog/page/${currentPage - 1}`} class="pagination-btn pagination-prev">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              Previous
+            </a>
+          )}
+          
+          <div class="pagination-numbers">
+            {generatePageNumbers(currentPage, totalPages).map((item) => {
+              if (item === 'ellipsis') {
+                return <span class="pagination-ellipsis">...</span>;
+              }
+              return (
+                <a 
+                  href={item === 1 ? '/en/blog' : `/en/blog/page/${item}`}
+                  class:list={['pagination-number', { active: item === currentPage }]}
+                  aria-current={item === currentPage ? 'page' : undefined}
+                >
+                  {item}
+                </a>
+              );
+            })}
+          </div>
+
+          {currentPage < totalPages && (
+            <a href={`/en/blog/page/${currentPage + 1}`} class="pagination-btn pagination-next">
+              Next
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </a>
+          )}
+        </div>
+      </nav>
+    )}
+  </main>
+</Layout>
+
+<style>
+  .blog-list-container {
+    font-family: var(--font-sans);
+    max-width: 800px; 
+    margin: 5rem auto 2rem; 
+    padding: 20px;
+  }
+
+  .blog-hero {
+    text-align: center;
+    margin-bottom: 4rem; 
+  }
+
+  .blog-hero-subtitle {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    color: var(--grey);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .blog-hero-slogan {
+    font-family: var(--font-serif);
+    font-size: 3rem; 
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }  .archive-tip {
+    font-family: var(--font-sans);
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--grey);
+    background: rgba(162, 89, 236, 0.08);
+    border: 1px solid rgba(162, 89, 236, 0.2);
+    padding: 0.85rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 3rem;
+    line-height: 1.6;
+  }
+
+  .archive-link {
+    color: var(--purple);
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+  }
+
+  .archive-link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+  }
+
+  .blog-posts-section {
+    list-style: none;
+    padding: 0;
+  }
+
+  .blog-post-item {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid rgba(162, 89, 236, 0.15);
+  }
+
+  .blog-post-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .blog-post-title-link {
+    text-decoration: none;
+    color: var(--text); 
+    transition: color 0.2s ease;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .blog-post-title {
+    font-family: var(--font-serif);
+    font-size: 1.5rem; 
+    font-weight: 700;
+    margin-bottom: 0;
+  }
+
+  .blog-post-title-link:hover .blog-post-title {
+    color: var(--purple); 
+  }
+
+  .blog-post-summary {
+    font-size: 1rem; 
+    color: var(--text); 
+    opacity: 0.7;   
+    line-height: 1.6;
+    margin-bottom: 0.8rem;
+  }
+
+  .blog-post-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .blog-post-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .blog-post-date {
+    font-size: 0.85rem;
+    color: var(--grey);
+    opacity: 0.8;
+  }
+
+  .language-badge {
+    font-size: 0.75rem;
+    background: rgba(162, 89, 236, 0.1);
+    color: var(--purple);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: normal;
+  }
+
+  .category-badge {
+    display: inline-block;
+    font-size: 0.8rem;
+    background: rgba(162, 89, 236, 0.1);
+    color: var(--purple);
+    padding: 0.3rem 0.7rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .category-badge:hover {
+    background: rgba(162, 89, 236, 0.2);
+    transform: translateY(-1px);
+  }
+
+  /* Pagination styles - based on UserInfo social section design */
+  .pagination {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(162, 89, 236, 0.15);
+  }
+
+  .pagination-info {
+    text-align: center;
+    font-size: 0.95rem;
+    font-family: "Noto Serif", Georgia, serif;
+    color: var(--grey);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  /* Previous/Next buttons - square transparent design */
+  .pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    height: 40px;
+    background-color: transparent;
+    color: color-mix(in oklab, var(--text) 70%, var(--purple));
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-family: "Noto Serif", Georgia, serif;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: all 0.24s cubic-bezier(.16,1,.3,1);
+    border: 1px solid rgba(162, 89, 236, 0.12);
+  }
+
+  .pagination-btn:hover {
+    color: var(--purple);
+    transform: translateY(-2px);
+    background-color: rgba(162, 89, 236, 0.12);
+    border-color: rgba(162, 89, 236, 0.3);
+    box-shadow: 0 4px 12px rgba(162, 89, 236, 0.2);
+  }
+
+  .pagination-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  .pagination-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+    transition: stroke-width 0.2s ease;
+  }
+
+  .pagination-btn:hover svg {
+    stroke-width: 2.2;
+  }
+
+  .pagination-numbers {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  /* Page number buttons - square transparent design */
+  .pagination-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 0.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: color-mix(in oklab, var(--text) 70%, var(--purple));
+    background-color: transparent;
+    font-family: "Noto Serif", Georgia, serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.24s cubic-bezier(.16,1,.3,1);
+    border: 1px solid rgba(162, 89, 236, 0.12);
+  }
+
+  .pagination-number:hover {
+    color: var(--purple);
+    transform: translateY(-2px);
+    background-color: rgba(162, 89, 236, 0.12);
+    border-color: rgba(162, 89, 236, 0.3);
+    box-shadow: 0 4px 12px rgba(162, 89, 236, 0.2);
+  }
+
+  .pagination-number:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  .pagination-number.active {
+    background-color: rgba(162, 89, 236, 0.15);
+    color: var(--purple);
+    border-color: rgba(162, 89, 236, 0.4);
+    font-weight: 600;
+    pointer-events: none;
+  }
+
+  /* Ellipsis */
+  .pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    color: var(--grey);
+    font-family: "Noto Serif", Georgia, serif;
+    font-size: 0.95rem;
+    user-select: none;
+    opacity: 0.6;
+  }
+
+  /* Light mode */
+  :global(html:not(.dark)) .pagination-btn {
+    color: rgba(61, 42, 85, 0.7);
+    border-color: rgba(162, 89, 236, 0.15);
+  }
+
+  :global(html:not(.dark)) .pagination-btn:hover {
+    color: #8b3ad1;
+    background-color: rgba(162, 89, 236, 0.1);
+    border-color: rgba(162, 89, 236, 0.35);
+    box-shadow: 0 4px 12px rgba(162, 89, 236, 0.18);
+  }
+
+  :global(html:not(.dark)) .pagination-number {
+    color: rgba(61, 42, 85, 0.7);
+    border-color: rgba(162, 89, 236, 0.15);
+  }
+
+  :global(html:not(.dark)) .pagination-number:hover {
+    color: #8b3ad1;
+    background-color: rgba(162, 89, 236, 0.1);
+    border-color: rgba(162, 89, 236, 0.35);
+    box-shadow: 0 4px 12px rgba(162, 89, 236, 0.18);
+  }
+
+  :global(html:not(.dark)) .pagination-number.active {
+    background-color: rgba(162, 89, 236, 0.12);
+    color: #8b3ad1;
+    border-color: rgba(162, 89, 236, 0.4);
+  }
+
+  @media (max-width: 768px) {
+    .blog-hero-slogan {
+      font-size: 2.5rem; 
+    }
+    
+    .blog-post-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .pagination-numbers {
+      order: -1;
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .pagination-btn {
+      flex: 1;
+      justify-content: center;
+      max-width: 150px;
+    }
+  }
+</style>

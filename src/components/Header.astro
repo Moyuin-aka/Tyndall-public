@@ -1,0 +1,1104 @@
+---
+import ThemeToggle from '@components/ThemeToggle.astro';
+import LangToggle from '@components/LangToggle.astro';
+import { useTranslations, defaultLocale } from '@utils/ui';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+
+const { translationKey } = Astro.props;
+const t = useTranslations(Astro.currentLocale);
+const currentLocaleForUrls = Astro.currentLocale || defaultLocale;
+---
+
+<header>
+  <nav>
+    <div class="nav-content">
+      <button id="menu-toggle" class="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-dropdown">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+
+      <a class="brand" href={t('nav_home_url')}>Moyuin</a>
+
+      <ul class="nav-links">
+        <!-- 核心导航（左侧） -->
+        <li><a href={t('nav_home_url')} class={`link ${Astro.url.pathname === t('nav_home_url') ? 'active' : ''}`}>{t('nav_home')}</a></li>
+        <li><a href={getRelativeLocaleUrl(currentLocaleForUrls, 'blog')} class={`link ${Astro.url.pathname.startsWith(getRelativeLocaleUrl(currentLocaleForUrls, 'blog')) ? 'active' : ''}`}>{t('nav_blog')}</a></li>
+        <li><a href={getRelativeLocaleUrl(currentLocaleForUrls, 'friends')} class={`link ${Astro.url.pathname.startsWith(getRelativeLocaleUrl(currentLocaleForUrls, 'friends')) ? 'active' : ''}`}>{t('nav_friends')}</a></li>
+        <li><a href={getRelativeLocaleUrl(currentLocaleForUrls, 'about')} class={`link ${Astro.url.pathname.startsWith(getRelativeLocaleUrl(currentLocaleForUrls, 'about')) ? 'active' : ''}`}>{t('nav_about')}</a></li>
+        
+        <!-- 分隔符 -->
+        <li class="nav-separator" aria-hidden="true">|</li>
+        
+        <!-- 更多下拉菜单 -->
+        <li class="nav-more-dropdown">
+          <button class="more-toggle" aria-label={t('nav_more')} aria-haspopup="true" aria-expanded="false">
+            <span class="more-text">{t('nav_more')}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" class="more-icon" aria-hidden="true">
+              <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <ul class="more-menu">
+            <li><a href={getRelativeLocaleUrl(currentLocaleForUrls, 'memos')} class={`more-item ${Astro.url.pathname.startsWith(getRelativeLocaleUrl(currentLocaleForUrls, 'memos')) ? 'is-active' : ''}`}>
+              <span class="active-indicator"></span>
+              {t('nav_memos')}
+            </a></li>
+            <li><a href={t('nav_lab_url')} class={`more-item ${Astro.url.pathname.startsWith(t('nav_lab_url')) ? 'is-active' : ''}`}>
+              <span class="active-indicator"></span>
+              {t('nav_lab')}
+            </a></li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="controls">
+        <LangToggle inHeader={true} translationKey={translationKey} />
+        <ThemeToggle inHeader={true} />
+      </div>
+    </div>
+  </nav>
+</header>
+<div id="mobile-dropdown" class="mobile-dropdown" aria-hidden="true" role="menu"></div>
+
+
+<style>
+:root {
+  --container-max: 1280px;
+  --nav-gap-x: 2rem;
+  --nav-item-size: 34px;
+  /* Header height = item + vertical padding (0.75rem * 2 = 24px) */
+  --header-height: calc(var(--nav-item-size) + 1.5rem);
+  --header-bg: color-mix(in oklab, #ffffff 58%, transparent);
+  --header-border-color: rgba(162, 89, 236, 0.14);
+  --header-backdrop-filter: blur(10px);
+  --header-button-bg: transparent;
+}
+html.dark {
+  --header-bg: color-mix(in oklab, #0c0612 46%, transparent);
+  --header-border-color: rgba(162, 89, 236, 0.16);
+  --header-backdrop-filter: blur(10px);
+  --header-button-bg: transparent;
+}
+
+header {
+  font-family: var(--font-serif);
+  --header-text-color: var(--text);
+  --header-text-hover-color: var(--purple);
+  --header-controls-hover-bg: rgba(162, 89, 236, 0.12);
+
+  width: 100%;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  padding: 0.75rem 1rem;
+  box-sizing: border-box;
+
+  background-color: var(--header-bg);
+  backdrop-filter: var(--header-backdrop-filter);
+  -webkit-backdrop-filter: var(--header-backdrop-filter);
+  border-bottom: 1px solid var(--header-border-color);
+}
+html.dark header { --header-text-color: #EAE6FF; --header-text-hover-color: #fff; --header-controls-hover-bg: rgba(255,255,255,0.18); }
+
+nav { width: 100%; }
+
+.nav-content {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-decoration: none;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  height: var(--nav-item-size);
+  color: var(--header-text-color);
+  transition: color 0.2s ease;
+}
+.nav-links, .link, .controls { font-family: inherit; }
+.brand:hover { color: var(--header-text-hover-color); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem var(--nav-gap-x);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+  min-width: 0;
+  justify-self: center;
+}
+
+.nav-links li { margin: 0; }
+
+/* 分隔符样式 */
+.nav-separator {
+  color: var(--header-text-color);
+  opacity: 0.3;
+  font-size: 1.2rem;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  height: var(--nav-item-size);
+}
+
+.link {
+  text-decoration: none;
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: var(--nav-item-size);
+  line-height: 1;
+  padding: 0 0.25rem;
+  white-space: nowrap;
+  box-sizing: border-box;
+  color: var(--header-text-color);
+  transition: color 0.2s ease;
+  font-family: inherit;
+}
+.link:hover, .link.active { color: var(--header-text-hover-color); }
+.link::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: -4px;
+  width: 100%; height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transition: transform 0.2s ease;
+}
+.link:hover::after, .link.active::after { transform: scaleX(1); }
+
+/* 更多下拉菜单 - 参考 LangToggle 的优雅设计 */
+.nav-more-dropdown {
+  position: relative;
+  display: inline-block;
+  height: var(--nav-item-size);
+}
+
+.more-toggle {
+  cursor: pointer;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.25rem;
+  height: var(--nav-item-size);
+  color: var(--header-text-color);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: color 0.2s ease;
+}
+
+.more-toggle:hover {
+  color: var(--header-text-hover-color);
+}
+
+.more-icon {
+  transition: transform 0.2s ease;
+  opacity: 0.7;
+}
+
+.nav-more-dropdown.is-open .more-icon {
+  transform: rotate(180deg);
+}
+
+/* 下拉菜单面板 */
+.more-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem;
+  background-color: var(--header-bg);
+  border: 1px solid var(--header-border-color);
+  backdrop-filter: var(--header-backdrop-filter);
+  -webkit-backdrop-filter: var(--header-backdrop-filter);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  width: max-content;
+  min-width: 140px;
+
+  opacity: 0;
+  transform: translateX(-50%) translateY(-10px) scale(0.95);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s step-end;
+}
+
+.nav-more-dropdown.is-open .more-menu {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s, 0s, 0s;
+}
+
+/* 菜单项 */
+.more-menu li {
+  display: contents;
+}
+
+.more-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--header-text-color);
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.more-item:hover {
+  background-color: var(--header-controls-hover-bg);
+  color: var(--header-text-hover-color);
+}
+
+/* 活动指示圆点 */
+.more-item .active-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.more-item.is-active .active-indicator {
+  background-color: var(--purple);
+}
+
+.more-item.is-active {
+  font-weight: 500;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-self: end;
+  color: var(--header-text-color);
+  font-family: inherit;
+  height: var(--nav-item-size);
+  align-self: center; 
+}
+.controls :is(button, a) {
+  color: inherit;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  background-color: var(--header-button-bg);
+  border: none;
+  padding: 0; 
+  box-sizing: border-box;
+  width: var(--nav-item-size,34px);
+  height: var(--nav-item-size,34px);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.controls :is(a, button) svg {
+  width: 20px; 
+  height: 20px;
+  position: relative;
+  z-index: 2;
+}
+.controls :is(button, a):hover {
+  color: var(--header-text-hover-color);
+  background-color: var(--header-controls-hover-bg);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.controls :is(button, a):active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+.controls svg { display: block; }
+.controls svg, .controls svg * { fill: currentColor; stroke: currentColor; }
+
+/* 深色模式下强化对比度 */
+html.dark .controls :is(button, a) {
+  background-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+html.dark .controls :is(button, a):hover {
+  background-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.menu-toggle {
+  display: none; 
+  position: relative; 
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  width: var(--nav-item-size);
+  height: var(--nav-item-size);
+  justify-content: center;
+  align-items: center;
+}
+.menu-toggle:hover {
+  background-color: var(--header-controls-hover-bg);
+  border-radius: 6px;
+}
+
+.menu-toggle .bar {
+  display: block;
+  width: 20px; 
+  height: 2px;  
+  background-color: currentColor;
+  border-radius: 1px;
+  position: absolute;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.menu-toggle .bar:nth-child(1) { transform: translateY(-6px); }
+.menu-toggle .bar:nth-child(2) { transform: translateY(0); }
+.menu-toggle .bar:nth-child(3) { transform: translateY(6px); }
+
+.menu-toggle[aria-expanded="true"] .bar:nth-child(1) {
+  transform: translateY(0) rotate(45deg);
+}
+.menu-toggle[aria-expanded="true"] .bar:nth-child(2) {
+  opacity: 0;
+}
+.menu-toggle[aria-expanded="true"] .bar:nth-child(3) {
+  transform: translateY(0) rotate(-45deg);
+}
+.mobile-dropdown { display: none; }
+
+@media (max-width: 768px) {
+  .brand { display: none; }
+  .nav-links { display: none; }
+  .menu-toggle { display: inline-flex; }
+  
+  .nav-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* 确保控制按钮在小屏幕下也能正确对齐 */
+  .controls {
+    height: var(--nav-item-size);
+    display: flex;
+    align-items: center;
+  }
+
+  /* 移动端：隐藏桌面端的下拉菜单 */
+  .nav-more-dropdown {
+    display: none !important;
+  }
+
+  .mobile-dropdown {
+    display: flex;
+    position: fixed;
+    top: var(--header-height);
+    left: 0; right: 0;
+    z-index: 999;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--header-border-color);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    backdrop-filter: var(--header-backdrop-filter);
+    -webkit-backdrop-filter: var(--header-backdrop-filter);
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-8px);
+    visibility: hidden;
+    pointer-events: none;
+    overflow: hidden;
+    transition:
+      max-height 260ms cubic-bezier(.2,.7,.2,1),
+      opacity 260ms cubic-bezier(.2,.7,.2,1),
+      transform 260ms cubic-bezier(.2,.7,.2,1),
+      visibility 260ms step-end;
+  }
+
+  .mobile-dropdown.open {
+    max-height: 70vh;
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+      max-height 260ms cubic-bezier(.2,.7,.2,1),
+      opacity 260ms cubic-bezier(.2,.7,.2,1),
+      transform 260ms cubic-bezier(.2,.7,.2,1),
+      visibility 0s linear;
+  }
+
+  .mobile-dropdown .nav-links {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  
+  /* 移动端分隔符：显示为横线 */
+  .mobile-dropdown .nav-separator {
+    width: 80%;
+    height: 1px;
+    background: var(--header-border-color);
+    opacity: 0.5;
+    margin: 0.75rem 0;
+    font-size: 0;  /* 隐藏文字 */
+    flex-shrink: 0;
+  }
+
+  /* 移动端"更多"按钮：和其他链接样式一致 */
+  .mobile-dropdown .mobile-more-toggle {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    padding: 0.75rem 1rem !important;
+    text-align: center !important;
+    border-radius: 6px !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    color: var(--header-text-color) !important;
+    font-family: var(--font-serif) !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease, color 0.2s ease !important;
+  }
+
+  .mobile-dropdown .mobile-more-toggle:hover {
+    background-color: var(--header-controls-hover-bg) !important;
+    color: var(--header-text-hover-color) !important;
+    transform: none !important;
+  }
+
+  .mobile-dropdown .mobile-more-toggle .dropdown-icon {
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+  }
+
+  .mobile-dropdown .mobile-more-toggle[aria-expanded="true"] .dropdown-icon {
+    transform: rotate(180deg);
+  }
+
+  /* 移动端"更多"展开内容 */
+  .mobile-dropdown .mobile-more-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+    padding: 0;
+  }
+
+  .mobile-dropdown .mobile-more-content.open {
+    max-height: 500px;
+    opacity: 1;
+    padding: 0.5rem 0 0 0;
+  }
+
+  .mobile-dropdown .mobile-more-content .link {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    transform: none !important;
+    color: var(--header-text-color);
+    text-decoration: none;
+    display: block;
+    position: relative;
+  }
+
+  /* "更多"展开内容的下划线效果 */
+  .mobile-dropdown .mobile-more-content a.link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-dropdown .mobile-more-content a.link::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0.5rem;
+    transform: translateX(-50%) scaleX(0);
+    width: 4em;
+    height: 1px;
+    background-color: currentColor;
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-dropdown .mobile-more-content a.link:hover {
+    background-color: var(--header-controls-hover-bg) !important;
+    color: var(--header-text-hover-color);
+    transform: none !important;
+  }
+
+  .mobile-dropdown .mobile-more-content a.link:hover::after,
+  .mobile-dropdown .mobile-more-content a.link.active::after {
+    transform: translateX(-50%) scaleX(1);
+  }
+
+  .mobile-dropdown .mobile-more-content a.link.active {
+    color: var(--header-text-hover-color);
+    background-color: var(--header-controls-hover-bg) !important;
+  }
+
+  /* 确保移动端导航链接也不受全局按钮样式影响 */
+  .mobile-dropdown .nav-links .link {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    border-radius: 6px;
+    transform: none !important;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    display: block;
+    position: relative;
+  }
+
+  /* 移动端主导航链接的下划线效果 */
+  .mobile-dropdown .nav-links .link::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0.5rem;
+    transform: translateX(-50%) scaleX(0);
+    width: calc(100% - 2rem);
+    height: 1px;
+    background-color: currentColor;
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-dropdown .nav-links .link:hover {
+    background-color: var(--header-controls-hover-bg) !important;
+    color: var(--header-text-hover-color);
+    transform: none !important;
+  }
+  
+  .mobile-dropdown .nav-links .link:hover::after,
+  .mobile-dropdown .nav-links .link.active::after {
+    transform: translateX(-50%) scaleX(1);
+  }
+  
+  .mobile-dropdown .nav-links .link:active {
+    transform: none !important;
+  }
+  
+  .mobile-dropdown .nav-links .link.active {
+    color: var(--header-text-hover-color);
+    background-color: var(--header-controls-hover-bg) !important;
+  }
+  
+  .mobile-dropdown,
+  .mobile-dropdown .nav-links,
+  .mobile-dropdown .link {
+    font-family: var(--font-serif);
+  }
+  /* 调整移动端宣言位置更靠上 */
+  .manifesto-section .center {
+    --manifesto-bias: -20vh; /* 向上偏移一些，数值可按需要微调 */
+  }
+}
+</style>
+
+<style is:global>
+  /* Header control buttons: square, minimal, bound to header layout */
+  header .controls { gap: 0.75rem; flex: 0 0 auto; }
+
+  /* Ensure the clickable area is a transparent square with a subtle border */
+  header .controls :where(button, a) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--nav-item-size);
+    height: var(--nav-item-size);
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: 1px solid var(--header-border-color);
+    border-radius: 8px; /* slight rounding */
+    color: var(--header-text-color);
+    box-shadow: none;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .1s ease;
+  }
+
+  /* Keep the icon purely visual and centered inside the clickable square */
+  header .controls :where(button, a) svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+  }
+  header .controls :where(button, a) svg, 
+  header .controls :where(button, a) svg * {
+    fill: currentColor;
+    stroke: currentColor;
+  }
+
+  /* Hover/active/focus states: modern & subtle */
+  header .controls :where(button, a):hover {
+    background-color: var(--header-controls-hover-bg);
+    color: var(--header-text-hover-color);
+    border-color: var(--header-border-color);
+  }
+  header .controls :where(button, a):active {
+    transform: translateY(0);
+  }
+  header .controls :where(button, a):focus-visible {
+    outline: 2px solid rgba(162, 89, 236, 0.55);
+    outline-offset: 2px;
+  }
+
+  /* Dark mode contrast: clearer border & text */
+  html.dark header .controls :where(button, a) {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.24);
+    color: #EAE6FF;
+  }
+  html.dark header .controls :where(button, a):hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.36);
+    color: #fff;
+  }
+
+  /* Small screens: buttons stay bound to header height and align center */
+  @media (max-width: 768px) {
+    header .controls {
+      height: var(--nav-item-size);
+      align-items: center;
+    }
+  }
+
+  /* 移动端"更多"按钮强制样式 - 覆盖所有其他样式 */
+  #mobile-dropdown .mobile-more-toggle {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    padding: 0.75rem 1rem !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    transform: none !important;
+    color: var(--header-text-color) !important;
+    font-family: var(--font-serif) !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    transition: color 0.2s ease, background-color 0.2s ease !important;
+    outline: none !important;
+    text-align: center !important;
+  }
+
+  #mobile-dropdown .mobile-more-toggle:hover {
+    color: var(--header-text-hover-color) !important;
+    background-color: var(--header-controls-hover-bg) !important;
+    transform: none !important;
+    border: none !important;
+  }
+
+  #mobile-dropdown .mobile-more-toggle:active {
+    transform: none !important;
+  }
+
+  #mobile-dropdown .mobile-more-toggle .more-text {
+    font-family: var(--font-serif) !important;
+    font-size: 1rem !important;
+    color: inherit !important;
+  }
+
+  #mobile-dropdown .mobile-more-toggle .dropdown-icon {
+    transition: transform 0.2s ease !important;
+    flex-shrink: 0 !important;
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  #mobile-dropdown .mobile-more-toggle[aria-expanded="true"] .dropdown-icon {
+    transform: rotate(180deg) !important;
+  }
+
+  /* 移动端"更多"内容区域强制样式 */
+  #mobile-dropdown .mobile-more-content {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease !important;
+    padding: 0 !important;
+  }
+
+  #mobile-dropdown .mobile-more-content.open {
+    max-height: 500px !important;
+    opacity: 1 !important;
+    padding: 0.5rem 0 0 0 !important;
+  }
+
+  #mobile-dropdown .mobile-more-content a.link {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    text-align: center !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 6px !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transition: background-color 0.2s ease, color 0.2s ease !important;
+    transform: none !important;
+    color: var(--header-text-color) !important;
+    text-decoration: none !important;
+    display: block !important;
+    position: relative !important;
+  }
+
+  #mobile-dropdown .mobile-more-content a.link::after {
+    content: '' !important;
+    position: absolute !important;
+    left: 50% !important;
+    bottom: 0.5rem !important;
+    transform: translateX(-50%) scaleX(0) !important;
+    width: 4em !important;
+    height: 1px !important;
+    background-color: currentColor !important;
+    transition: transform 0.2s ease !important;
+  }
+
+  #mobile-dropdown .mobile-more-content a.link:hover {
+    background-color: var(--header-controls-hover-bg) !important;
+    color: var(--header-text-hover-color) !important;
+  }
+
+  #mobile-dropdown .mobile-more-content a.link:hover::after,
+  #mobile-dropdown .mobile-more-content a.link.active::after {
+    transform: translateX(-50%) scaleX(1) !important;
+  }
+
+  #mobile-dropdown .mobile-more-content a.link.active {
+    color: var(--header-text-hover-color) !important;
+    background-color: var(--header-controls-hover-bg) !important;
+  }
+</style>
+
+<script>
+  /**
+   * 统一初始化 Header 的所有功能
+   * 使用单次绑定 + 防重复机制，避免事件监听器累积
+   */
+  
+  // 全局标记，防止重复绑定事件
+  let headerInitialized = false;
+  let menuClickHandler: (() => void) | null = null;
+  let outsideClickHandler: ((e: MouseEvent) => void) | null = null;
+
+  /**
+   * 初始化"更多"下拉菜单 - 参考 LangToggle 的优雅实现
+   */
+  function setupMoreDropdown() {
+    const dropdown = document.querySelector('.nav-more-dropdown');
+    if (!dropdown || (dropdown as HTMLElement).dataset.initialized) return;
+
+    (dropdown as HTMLElement).dataset.initialized = 'true';
+    const toggle = dropdown.querySelector('.more-toggle');
+    if (!toggle) return;
+
+    const open = () => dropdown.classList.add('is-open');
+    const close = () => dropdown.classList.remove('is-open');
+
+    toggle.addEventListener('click', (e: Event) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('is-open');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target as Node)) {
+        close();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && dropdown.classList.contains('is-open')) {
+        close();
+        (toggle as HTMLElement).focus();
+      }
+    });
+  }
+
+  function initializeHeader() {
+    const header = document.querySelector('header');
+    if (!header) {
+      return;
+    }
+
+    // 更新导航状态（每次都需要更新）
+    updateActiveNavLink();
+
+    // 初始化"更多"下拉菜单
+    setupMoreDropdown();
+
+    // 移动端菜单需要在每次页面切换后重新绑定
+    // 因为 DOM 会被替换
+    initMobileMenu();
+  }
+
+  function updateActiveNavLink() {
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.nav-links .link');
+    
+    navLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href) return;
+
+      // 精确匹配：用于 Home 页 (/ 或 /en/)
+      const isExactMatch = href === currentPath;
+      
+      // 前缀匹配：用于其他页面，但要确保不是 Home 页
+      // 例如：/blog 匹配 /blog/xxx，但 / 不匹配 /blog
+      const isPrefixMatch = 
+        href !== '/' && 
+        href !== '/en/' && 
+        currentPath.startsWith(href);
+
+      if (isExactMatch || isPrefixMatch) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+
+  /**
+   * 初始化移动端菜单
+   * 每次页面切换都需要重新绑定，因为 DOM 会被替换
+   */
+  function initMobileMenu() {
+    const header = document.querySelector('header');
+    if (!header) {
+      return;
+    }
+
+    const menuToggle = header.querySelector('#menu-toggle');
+    const navLinks = header.querySelector('.nav-links');
+    const controls = header.querySelector('.controls');
+    const dropdown = document.getElementById('mobile-dropdown');
+    const navContent = header.querySelector('.nav-content');
+
+    if (!menuToggle || !navLinks || !controls || !dropdown || !navContent) {
+      return;
+    }
+
+    const mq = window.matchMedia('(max-width: 768px)');
+
+    const openMenu = () => {
+      header.classList.add('is-menu-open');
+      
+      // 构建移动端菜单结构
+      buildMobileMenu();
+      
+      dropdown.classList.add('open');
+      dropdown.setAttribute('aria-hidden', 'false');
+      menuToggle.setAttribute('aria-expanded', 'true');
+    };
+
+    const closeMenu = () => {
+      header.classList.remove('is-menu-open');
+      navContent.insertBefore(navLinks, controls);
+      dropdown.classList.remove('open');
+      dropdown.setAttribute('aria-hidden', 'true');
+      menuToggle.setAttribute('aria-expanded', 'false');
+      
+      // 清空移动端菜单
+      dropdown.innerHTML = '';
+    };
+
+    const buildMobileMenu = () => {
+      // 清空旧内容
+      dropdown.innerHTML = '';
+      
+      // 克隆导航链接
+      const navLinksClone = navLinks.cloneNode(true) as HTMLElement;
+      
+      // 移除桌面端的下拉菜单项和分隔符
+      const desktopDropdown = navLinksClone.querySelector('.nav-more-dropdown');
+      const separator = navLinksClone.querySelector('.nav-separator');
+      if (desktopDropdown) {
+        desktopDropdown.remove();
+      }
+      if (separator) {
+        separator.remove();
+      }
+      
+      // 创建"更多"按钮的 li 容器
+      const moreLi = document.createElement('li');
+      
+      const moreToggle = document.createElement('button');
+      moreToggle.className = 'link mobile-more-toggle';
+      moreToggle.setAttribute('aria-expanded', 'false');
+      moreToggle.setAttribute('type', 'button');
+      
+      // 获取"更多"按钮的文本
+      const moreText = header.querySelector('.more-toggle')?.textContent?.trim() || 'More';
+      
+      moreToggle.innerHTML = `
+        <span class="more-text">${moreText}</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" class="dropdown-icon">
+          <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+      
+      moreLi.appendChild(moreToggle);
+      navLinksClone.appendChild(moreLi);
+      
+      // 添加主要导航（包含"更多"按钮）
+      dropdown.appendChild(navLinksClone);
+      
+      // 创建折叠内容区域（直接在导航下方）
+      const moreContent = document.createElement('div');
+      moreContent.className = 'mobile-more-content';
+      
+      // 获取"更多"菜单中的链接
+      const moreMenu = header.querySelector('.more-menu');
+      
+      if (moreMenu) {
+        const moreItems = moreMenu.querySelectorAll('.more-item');
+        
+        moreItems.forEach((item, index) => {
+          const link = document.createElement('a');
+          link.href = (item as HTMLAnchorElement).href;
+          link.className = 'link';
+          link.textContent = item.textContent?.replace(/\s+/g, ' ').trim() || '';
+          
+          // 保持激活状态
+          if (item.classList.contains('is-active')) {
+            link.classList.add('active');
+          }
+          
+          moreContent.appendChild(link);
+        });
+      }
+      
+      dropdown.appendChild(moreContent);
+      
+      // 绑定折叠切换事件
+      moreToggle.addEventListener('click', (e) => {
+        e.stopPropagation(); // 防止触发外部点击关闭
+        const isExpanded = moreToggle.getAttribute('aria-expanded') === 'true';
+        moreToggle.setAttribute('aria-expanded', (!isExpanded).toString());
+        moreContent.classList.toggle('open');
+      });
+    };
+
+    const ensurePlacement = () => {
+      if (!mq.matches) {
+        if (header.classList.contains('is-menu-open')) {
+          closeMenu();
+        }
+        navContent.insertBefore(navLinks, controls);
+      } else if (!header.classList.contains('is-menu-open')) {
+        navContent.insertBefore(navLinks, controls);
+      }
+    };
+
+    // 移除旧的事件监听器（如果存在）
+    if (menuClickHandler) {
+      menuToggle.removeEventListener('click', menuClickHandler);
+    }
+    if (outsideClickHandler) {
+      document.removeEventListener('click', outsideClickHandler);
+    }
+
+    // 创建新的事件处理器并保存引用
+    menuClickHandler = () => {
+      header.classList.contains('is-menu-open') ? closeMenu() : openMenu();
+    };
+
+    outsideClickHandler = (e: MouseEvent) => {
+      if (!header.classList.contains('is-menu-open')) return;
+      const target = e.target as HTMLElement;
+      if (!dropdown.contains(target) && !menuToggle.contains(target)) {
+        closeMenu();
+      }
+    };
+
+    // 绑定新的事件监听器
+    menuToggle.addEventListener('click', menuClickHandler);
+    document.addEventListener('click', outsideClickHandler);
+
+    mq.addEventListener('change', ensurePlacement);
+    ensurePlacement();
+  }
+
+  // 立即执行初始化（不等待 DOMContentLoaded）
+  // 因为这个 script 标签本身就在 HTML 底部，DOM 已经准备好了
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeHeader);
+  } else {
+    // DOM 已经加载完成，立即执行
+    initializeHeader();
+  }
+
+  // 每次页面过渡后只更新导航状态
+  document.addEventListener('astro:after-swap', () => {
+    initializeHeader();
+  });
+</script>

@@ -1,0 +1,95 @@
+---
+const { title } = Astro.props;
+---
+<button class="theme-toggle" id="themeToggleBtn" title={title} aria-label={title}>
+    <span class="icon-sun" style="display:none;">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </span>
+    <span class="icon-moon" style="display:none;">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </span>
+</button>
+
+<script>
+    function setupThemeToggle() {
+        const btn = document.getElementById('themeToggleBtn');
+        if (!btn) return;
+        
+        const html = document.documentElement;
+
+        // 获取存储
+        function getSavedTheme() {
+            return localStorage.getItem('theme-mode');
+        }
+
+        // 设置主题
+        function setTheme(mode: string) {
+            if (mode === 'dark') {
+                html.classList.add('dark');
+            } else {
+                html.classList.remove('dark');
+            }
+        }
+
+        function updateThemeIcon(): void {
+            const isDark = html.classList.contains('dark');
+            if (btn) {
+                const sunIcon = btn.querySelector('.icon-moon') as HTMLElement;
+                const moonIcon = btn.querySelector('.icon-sun') as HTMLElement;
+                if (sunIcon && moonIcon) {
+                    sunIcon.style.display = isDark ? 'inline' : 'none';
+                    moonIcon.style.display = isDark ? 'none' : 'inline';
+                }
+            }
+        }
+
+        // 先移除旧事件监听器，再添加新的（防止重复绑定）
+        const handleThemeClick = () => {
+            const isDark = html.classList.contains('dark');
+            const newMode = isDark ? 'light' : 'dark';
+            setTheme(newMode);
+            localStorage.setItem('theme-mode', newMode);
+            updateThemeIcon();
+        };
+
+        btn.removeEventListener('click', handleThemeClick);
+        btn.addEventListener('click', handleThemeClick);
+
+        // 初始化主题
+        let mode = getSavedTheme();
+        if (!mode) {
+            // 默认跟随系统
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                mode = 'dark';
+            } else {
+                mode = 'light';
+            }
+        }
+        setTheme(mode);
+        updateThemeIcon();
+
+        // 系统主题变更时联动（自动模式下）
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleSystemThemeChange = (e:any) => {
+            if (!getSavedTheme()) { // 没手动设置过才自动跟随
+                setTheme(e.matches ? 'dark' : 'light');
+                updateThemeIcon();
+            }
+        };
+        
+        mediaQuery.removeEventListener('change', handleSystemThemeChange);
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+    }
+
+    // 三重保险：确保在任何情况下都能初始化
+    document.addEventListener('DOMContentLoaded', setupThemeToggle);
+    document.addEventListener('astro:page-load', setupThemeToggle);
+    
+    // 如果 DOM 已经准备好，立即执行
+    if (document.readyState === 'loading') {
+        // DOM 还在加载中，等待 DOMContentLoaded
+    } else {
+        // DOM 已经加载完成，立即执行
+        setupThemeToggle();
+    }
+</script>

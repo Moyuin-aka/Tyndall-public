@@ -1,0 +1,82 @@
+---
+import servicesData from '@data/services.json';
+
+const services = servicesData.services || [];
+
+const statusCounts = {
+  online: 0,
+  offline: 0,
+  unknown: 0,
+};
+
+services.forEach(service => {
+  const state = service.status?.state || 'unknown';
+  if (state === 'up') {
+    statusCounts.online++;
+  } else if (state === 'down') {
+    statusCounts.offline++;
+  } else {
+    statusCounts.unknown++;
+  }
+});
+---
+
+<div class="service-status-summary">
+  <a href="#" class="status-item online" title="Online">
+    <span class="status-dot up"></span>
+    <span class="count">{statusCounts.online}</span>
+  </a>
+  <a href="#" class="status-item offline" title="Offline">
+    <span class="status-dot down"></span>
+    <span class="count">{statusCounts.offline}</span>
+  </a>
+  <a href="#" class="status-item unknown" title="Unknown">
+    <span class="status-dot unknown"></span>
+    <span class="count">{statusCounts.unknown}</span>
+  </a>
+</div>
+
+<style>
+  .service-status-summary {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--grey);
+    font-size: 0.9rem;
+    background-color: var(--card-bg);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+  }
+
+  .status-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+    color: var(--text);
+  }
+
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  /* Re-using dot colors from global styles */
+  .status-dot.up { background-color: var(--status-ok); }
+  .status-dot.down { background-color: var(--status-down); }
+  .status-dot.unknown { background-color: var(--status-unknown); }
+
+  .count {
+    font-weight: 600;
+  }
+</style>
