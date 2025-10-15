@@ -8,7 +8,7 @@
       "category": "Tools",
       "status": {
         "state": "up",
-        "http": 200
+        "http": 307
       }
     },
     {
@@ -19,7 +19,7 @@
       "category": "Storage",
       "status": {
         "state": "up",
-        "http": 200
+        "http": 307
       }
     }
   ]
