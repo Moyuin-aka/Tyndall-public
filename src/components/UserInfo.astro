@@ -1,0 +1,633 @@
+---
+import { ICONS } from '@/utils/icons'; 
+interface UserInfoProps {
+  t: any;
+  biasDesktop?: string;
+  biasMobile?: string;
+  xbiasDesktop?: string;
+  xbiasMobile?: string;
+}
+const { t, biasDesktop, biasMobile, xbiasDesktop, xbiasMobile } = Astro.props as UserInfoProps;
+
+const styleVars: string[] = [];
+if (biasDesktop) styleVars.push(`--manifesto-bias-desktop:${biasDesktop}`);
+if (biasMobile) styleVars.push(`--manifesto-bias-mobile:${biasMobile}`);
+if (xbiasDesktop) styleVars.push(`--manifesto-xbias-desktop:${xbiasDesktop}`);
+if (xbiasMobile) styleVars.push(`--manifesto-xbias-mobile:${xbiasMobile}`);
+const centerStyle = styleVars.length ? styleVars.join(';') : undefined;
+
+// 社交链接配置
+const socialLinks = [
+  { name: 'GitHub', icon: ICONS.github, url: 'https://github.com/yourusername' },
+  { name: 'Twitter', icon: ICONS.twitter, url: 'https://twitter.com/yourusername' },
+  { name: 'Telegram', icon: ICONS.telegram, url: 'https://t.me/yourusername' },
+  { name: 'Email', icon: ICONS.mail, url: 'mailto:your@email.com' }
+];
+---
+<section class="manifesto-section" role="region" aria-label="intro">
+  <div class="ender-hero" data-particles="on">
+    <!-- Ender particles background (tsParticles) -->
+    <div id="ender-particles" class="ender-particles" aria-hidden="true"></div>
+    <!-- Floating dust/particles (optional) -->
+    <canvas class="particles-canvas" aria-hidden="true"></canvas>
+
+    <div class="center" style={centerStyle}>
+      <!-- 宣言居中容器 -->
+      <div class="manifesto-container">
+        <p class="manifesto">{t('Manifesto')}</p>
+      </div>
+      <!-- 社交信息区:现代化水平排列 -->
+      <div class="social-section">
+        <div class="social-info-horizontal">
+          <span class="author-name">Your Name</span>
+          <span class="separator" aria-hidden="true">·</span>
+          <div class="social-icons">
+            {socialLinks.map(link => (
+              <a 
+                href={link.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="social-icon-link"
+                aria-label={link.name}
+                title={link.name}
+              >
+                <Fragment set:html={link.icon} />
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="info-section" role="region" aria-label="profile">
+  <canvas class="particles-canvas" aria-hidden="true"></canvas>
+
+  <div class="center">
+    <p class="intro-line">{t('introduction')}</p>
+  </div>
+</section>
+
+<script>
+  window.__ENDER_IS_MOBILE = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+
+  import "@/utils/userinfo-effects.ts";
+</script>
+<script>
+  // 首屏宣言入场：挂载后触发 .is-mounted
+  requestAnimationFrame(() => {
+    document.querySelector('.manifesto-section')?.classList.add('is-mounted');
+  });
+</script>
+<script>
+  function initFloatingHeader() {
+    // 检查是否应该启用浮动效果（比如只在首页启用）
+    const shouldFloat = window.location.pathname === '/' || window.location.pathname === '/en/';
+    const header = document.querySelector('.site-header, header');
+    
+    if (!header) return;
+    
+    if (!shouldFloat) {
+      // 非首页：确保 header 处于正常状态
+      header.classList.remove('site-header--floating', 'site-header--active');
+      return;
+    }
+    
+    const hero = document.querySelector('.manifesto-section');
+    if (!hero) return;
+
+    // 首页：重置 header 状态并启用浮动效果
+    header.classList.remove('site-header--active'); // 清除可能的激活状态
+    header.classList.add('site-header--floating');   // 设置为浮动状态
+
+    const activate = (on) => {
+      header.classList.toggle('site-header--active', !!on);
+    };
+
+    // 当首屏可见比例小于 0.6 时，激活 Header
+    const io = new IntersectionObserver(([entry]) => {
+      activate(entry && entry.intersectionRatio < 0.6);
+    }, { threshold: [0, 0.2, 0.4, 0.6, 0.8, 1] });
+
+    io.observe(hero);
+
+    // 回退：若浏览器不支持 IO，直接激活
+    if (!('IntersectionObserver' in window)) activate(true);
+  }
+
+  // 首次加载时执行
+  initFloatingHeader();
+  
+  // 如果使用客户端路由，监听页面切换
+  document.addEventListener('astro:page-load', initFloatingHeader);
+</script>
+<script>
+  // 移动端大幅降低粒子复杂度：将数量降至原来的 30%（≈减少 70%）
+  (function(){
+    if (!(window.matchMedia && window.matchMedia('(max-width: 768px)').matches)) return;
+
+    let tries = 0;
+    const MAX_TRIES = 60; // ~1秒重试（60fps）
+    function tweakParticles(){
+      tries++;
+      const ts = window.tsParticles || window?.window?.tsParticles;
+      if (!ts || !ts.dom || !ts.dom.length) {
+        if (tries < MAX_TRIES) requestAnimationFrame(tweakParticles);
+        return;
+      }
+      // 尝试定位 id="ender-particles" 的容器
+      const containers = ts.dom;
+      const container = containers.find?.(c => c?.id === 'ender-particles') || containers[0];
+      if (!container || !container.options) return;
+      try {
+        const opts = container.options;
+        const num = opts?.particles?.number;
+        if (num && typeof num.value === 'number') {
+          const original = num.value;
+          const target = Math.max(5, Math.round(original * 0.3)); // 30%
+          if (original !== target) {
+            num.value = target;
+          }
+        }
+        // 降低每秒渲染压力：略降速度（非必须）
+        if (opts?.particles?.move && typeof opts.particles.move.speed === 'number') {
+          opts.particles.move.speed = Math.max(0.2, opts.particles.move.speed * 0.8);
+        }
+        // 应用更改
+        if (typeof container.refresh === 'function') container.refresh();
+      } catch (e) { /* noop */ }
+    }
+    requestAnimationFrame(tweakParticles);
+  })();
+</script>
+
+<style>
+  /* —— Global guards —— */
+  :global(html, body) { height: 100%; }
+  :global(body) { margin: 0; background: transparent !important; position: relative; }
+
+  .manifesto-section,
+  .info-section {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* intro 部分额外增加底部间距，与 album 部分拉开距离 */
+  .info-section {
+    padding-bottom: clamp(6rem, 12vh, 10rem);
+  }
+
+  /* —— 全局固定背景 —— */
+  :global(body)::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1; /* keep behind particle bg */
+    pointer-events: none;
+
+    background:
+      radial-gradient(1200px 800px at 20% 10%, var(--end-sky-deep, #2a0e3f) 0%, color-mix(in oklab, var(--end-sky-deep, #2a0e3f) 0%, transparent) 60%),
+      radial-gradient(1000px 700px at 80% 30%, var(--end-ambient-purple, #a259ec) 0%, rgba(162,89,236,0.00) 55%),
+      radial-gradient(1600px 1100px at 50% 90%, var(--end-ambient-pale, #f2e7b9) 0%, rgba(242,231,185,0.00) 65%),
+      var(--bg, linear-gradient(#faf7ff, #ffffff));
+    background-attachment: fixed, fixed, fixed, fixed;
+  }
+
+  /* 白天模式：纯白背景，去除淡黄色 */
+  :global(html:not(.dark)) :global(body)::before {
+    background:
+      radial-gradient(1200px 800px at 20% 10%, rgba(162,89,236,0.03) 0%, transparent 60%),
+      radial-gradient(1000px 700px at 80% 30%, rgba(162,89,236,0.04) 0%, transparent 55%),
+      linear-gradient(#ffffff, #ffffff);
+    background-attachment: fixed, fixed, fixed;
+  }
+
+  /* —— 组件：使用"可用高度"做居中 —— */
+  .manifesto-section .ender-hero {
+    position: relative;
+    width: 100%;
+    /* 居中区域 = 视口高度 - header 高度 */
+    /* 明确可用高度，扣除站点头部高度，确保视觉中心更准确 */
+    --hero-avail-h: calc(100dvh - var(--site-header-h, 56px));
+    min-height: var(--hero-avail-h, 100dvh);
+    margin: 0;
+    padding: 0;
+    background: transparent !important;
+    overflow: hidden;
+    isolation: isolate;
+
+    display: grid;
+    place-items: center; /* 水平 + 垂直居中 */
+    --grain-opacity: 0.12;
+  }
+
+  /* Ender particles background container */
+  .manifesto-section .ender-particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0; /* bottom-most within hero, above body::before */
+  }
+
+  /* 画布固定到视口，保证顶端与全屏覆盖 */
+  .manifesto-section .particles-canvas,
+  .info-section .particles-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+  }
+
+  /* Desktop: ensure hero canvases span the full viewport (avoid section clipping) */
+  @media (min-width: 769px) {
+    .manifesto-section .particles-canvas,
+    .info-section .particles-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+  }
+  .manifesto-section .particles-canvas { z-index: 2; }
+  .info-section .particles-canvas { z-index: 2; }
+
+  .center {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    padding: clamp(1rem, 4vw, 2.4rem);
+    display: grid;
+    place-items: center;
+  }
+  /* Visually raise manifesto slightly toward true center */
+  .manifesto-section .center {
+    /* 桌面端：轻微下移，更贴近视觉中心 */
+    --manifesto-bias: -8vh;
+    --manifesto-xbias: 0px;
+    transform: translateY(var(--manifesto-bias)) translateX(var(--manifesto-xbias));
+  }
+
+  /* —— Language-specific optical centering —— */
+  :global(html[lang^="zh"] .manifesto-section .center),
+  :global(html[lang*="zh"] .manifesto-section .center) {
+    --manifesto-bias: -11vh;
+    --manifesto-xbias: 0px;
+  }
+
+  /* —— "浮现"入场 —— */
+  /* 宣言外层居中容器 */
+  .manifesto-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .manifesto {
+    margin: 0;
+    /* Word 风格的居中对齐 */
+    text-align: center;
+    text-align-last: center;  /* 确保最后一行也居中 */
+    font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, "LXGW WenKai", Garamond, "Times New Roman", Georgia, serif;
+    font-weight: 500;  
+    letter-spacing: .08em;
+    line-height: 1.12;
+    word-break: keep-all;
+    overflow-wrap: break-word;  /* Safari 兼容：允许必要时断行 */
+    max-inline-size: min(43ch, 85vw);  /* 与 intro-line 保持一致，限制在画面中央 1/3 */
+    color: color-mix(in oklab, #ffffff 92%, var(--end-ambient-pale, #f2e7b9));
+    font-size: clamp(2rem, 9vw, 7rem);
+    /* 确保文本块本身也居中 */
+    margin-left: auto;
+    margin-right: auto;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+    /* 使用 inline-block 确保宽度由内容决定，同时支持居中 */
+    display: inline-block;
+
+    opacity: 0;
+    transform: translateY(22px);
+    filter: blur(5px);
+    clip-path: inset(10% 0 12% 0 round 0);
+    will-change: transform, filter, opacity, clip-path;
+    text-wrap: balance;
+    hanging-punctuation: allow-end;
+  }
+
+  /* 中文版每行缩进优化 */
+  :global(html[lang^="zh"]) .manifesto,
+  :global(html[lang*="zh"]) .manifesto {
+    padding-left: 0.5em
+  }
+
+  /* 挂载后触发 reveal，不再使用漂浮动画 */
+  .is-mounted .manifesto {
+    animation: manifesto-reveal 900ms cubic-bezier(.16,1,.3,1) forwards;
+  }
+
+  @keyframes manifesto-reveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  @keyframes manifesto-float {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-6px); }
+  }
+
+  .manifesto:lang(en) {
+    font-family: "Noto Serif", Georgia, serif;
+    font-weight: 500;
+  }
+  :global(html:not(.dark)) .manifesto { color: #261a3b; }
+
+  @media (max-width: 768px) {
+    /* 移动端：宣言区域使用自适应高度，避免下方过多留白 */
+    .manifesto-section {
+      min-height: auto;  /* 取消固定高度 */
+      padding: clamp(4rem, 12vh, 8rem) 0 clamp(3rem, 8vh, 6rem);  /* 上下留白 */
+    }
+    
+    .manifesto {
+      font-size: clamp(2.1rem, 9.6vw, 6.2rem); /* 显著放大 */
+      font-weight: 500; /* 移动端更厚重一些 */
+      line-height: 1.18; /* 更舒展的行高 */
+      letter-spacing: .06em; /* 稍微收紧字距 */
+      max-inline-size: min(43ch, 85vw); /* 与 intro-line 保持一致 */
+    }
+    /* 移动端：提升到 1/3 处 */
+    .manifesto-section .center { 
+      --manifesto-bias: -16vh;  /* 拉高到 1/3 位置 */
+      --manifesto-xbias: 0px;
+    }
+    
+    /* 中文移动端：额外优化 */
+    :global(html[lang^="zh"] .manifesto-section .center),
+    :global(html[lang*="zh"] .manifesto-section .center) {
+      --manifesto-bias: -18vh;  /* 中文额外上移 */
+      --manifesto-xbias: 0px
+    }
+  }
+
+  /* —— 社交信息区：现代化水平布局 —— */
+  .social-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: clamp(2.5rem, 5vh, 4rem);
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  .is-mounted .social-section {
+    animation: social-fade-in 900ms cubic-bezier(.16,1,.3,1) 650ms forwards;
+  }
+
+  @keyframes social-fade-in {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 水平排列容器 */
+  .social-info-horizontal {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.75rem, 2vw, 1.25rem);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* 作者名称 - 与宣言统一的衬线字体 */
+  .author-name {
+    font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, "LXGW WenKai", Garamond, "Times New Roman", Georgia, serif;
+    font-size: clamp(1.25rem, 3vw, 1.625rem);  /* 20px - 26px，桌面端更大 */
+    font-weight: 500;
+    letter-spacing: 0.04em;  /* 与宣言保持一致 */
+    color: color-mix(in oklab, #ffffff 75%, var(--end-ambient-pale));  /* 灰色调 */
+    line-height: 1;
+    margin: 0;
+    transition: color 0.3s ease;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .author-name:lang(en) {
+    font-family: "Times New Roman", "Noto Serif", Georgia, serif;
+    font-weight: 500;
+  }
+
+  /* 分隔符 */
+  .separator {
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
+    color: color-mix(in oklab, #ffffff 65%, var(--end-ambient-pale));
+    line-height: 1;
+    opacity: 0.7;
+    user-select: none;
+  }
+
+  /* 图标容器 */
+  .social-icons {
+    display: flex;
+    gap: clamp(0.625rem, 1.5vw, 1rem);
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 图标链接 - 参考 toggle 按钮的方形、透明设计 */
+  .social-icon-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* 方形容器，参考 header toggle 按钮 */
+    width: clamp(34px, 4.5vw, 42px);
+    height: clamp(34px, 4.5vw, 42px);
+    padding: 0;
+    border-radius: 8px;  /* 方形圆角 */
+    color: color-mix(in oklab, #ffffff 70%, var(--end-ambient-pale));  /* 灰色调 */
+    background-color: transparent;  /* 全透明 */
+    border: 1px solid rgba(255, 255, 255, 0.12);  /* 淡边框 */
+    transition: all 0.24s cubic-bezier(.16,1,.3,1);
+    text-decoration: none;
+    box-sizing: border-box;
+  }
+
+  .social-icon-link:hover {
+    color: #ffffff;
+    transform: translateY(-2px);
+    background-color: rgba(162, 89, 236, 0.12);  /* 悬停时淡紫色背景 */
+    border-color: rgba(162, 89, 236, 0.3);
+    box-shadow: 0 4px 12px rgba(162, 89, 236, 0.2);
+  }
+
+  .social-icon-link:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  .social-icon-link :global(svg) {
+    /* SVG 图标尺寸 */
+    width: clamp(18px, 2.5vw, 22px);
+    height: clamp(18px, 2.5vw, 22px);
+    display: block;
+    stroke-width: 2;
+    transition: stroke-width 0.2s ease;
+  }
+
+  .social-icon-link:hover :global(svg) {
+    stroke-width: 2.2;
+  }
+
+  /* 白天模式 */
+  :global(html:not(.dark)) .author-name {
+    color: rgba(26, 18, 41, 0.65);  /* 灰色调 */
+    font-weight: 500;
+  }
+
+  :global(html:not(.dark)) .separator {
+    color: rgba(26, 18, 41, 0.4);
+  }
+
+  :global(html:not(.dark)) .social-icon-link {
+    color: rgba(61, 42, 85, 0.7);  /* 灰色调 */
+    background-color: transparent;
+    border-color: rgba(162, 89, 236, 0.15);
+  }
+
+  :global(html:not(.dark)) .social-icon-link:hover {
+    color: #8b3ad1;
+    background-color: rgba(162, 89, 236, 0.1);
+    border-color: rgba(162, 89, 236, 0.35);
+    box-shadow: 0 4px 12px rgba(162, 89, 236, 0.18);
+  }
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    .social-section {
+      margin-top: clamp(1.5rem, 3vh, 2.5rem);  /* 减少上边距，更紧凑 */
+    }
+
+    .social-info-horizontal {
+      gap: clamp(0.625rem, 1.5vw, 1rem);
+    }
+
+    .author-name {
+      font-size: clamp(1.125rem, 2.5vw, 1.375rem);  /* 18px - 22px */
+      font-weight: 500;
+    }
+
+    .separator {
+      font-size: clamp(1.125rem, 2.5vw, 1.25rem);
+    }
+
+    .social-icons {
+      gap: clamp(0.5rem, 1.2vw, 0.75rem);
+    }
+
+    .social-icon-link {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+    }
+
+    .social-icon-link :global(svg) {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+    }
+  }
+
+  /* 无障碍：减少动画 */
+  @media (prefers-reduced-motion: reduce) {
+    .social-icon-link {
+      transition: color 0.2s ease, opacity 0.2s ease;
+    }
+    .social-icon-link:hover {
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .manifesto, .is-mounted .manifesto { animation: none; opacity: 1; transform: none; filter: none; }
+    .manifesto { clip-path: none; }
+  }
+
+  /* —— intro line in info-section —— */
+  .intro-line {
+    margin: 0 auto;
+    text-align: left;  /* 左对齐，利于阅读长文本 */
+    font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, "LXGW WenKai", Garamond, "Times New Roman", Georgia, serif;
+    color: color-mix(in oklab, #ffffff 92%, var(--end-ambient-pale));
+    font-size: clamp(2.35rem, 3vw, 2.75rem);  /* 放大字号，保持可读性 */
+    line-height: 1.8;  /* 舒适的行高 */
+    letter-spacing: .02em;
+    max-width: min(43ch, 85vw);  /* 最佳阅读宽度 */
+  }
+
+  /* —— Unified floating site header —— */
+  :global(.site-header), :global(header.site-header) {
+    position: fixed; inset: 0 0 auto 0; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    height: 56px; padding: 0 clamp(10px, 4vw, 18px);
+    transition: opacity .28s ease, transform .28s ease, backdrop-filter .28s ease, background-color .28s ease;
+    background-color: color-mix(in oklab, #0c0612 36%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(162,89,236,.14);
+    opacity: 1; transform: none;
+  }
+  /* 初始在首屏上方"隐身" */
+  :global(.site-header--floating) {
+    opacity: 0; transform: translateY(-12px); pointer-events: none;
+    background-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; border-bottom-color: transparent;
+  }
+  /* 过线后显现 */
+  :global(.site-header--floating.site-header--active) {
+    opacity: 1; transform: none; pointer-events: auto;
+    background-color: color-mix(in oklab, #0c0612 46%, transparent);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    border-bottom-color: rgba(162,89,236,.16);
+  }
+  /* 深浅色适配 */
+  :global(html:not(.dark) .site-header.site-header--active) { background-color: color-mix(in oklab, #ffffff 58%, transparent); border-bottom-color: rgba(30,10,60,.08); }
+
+  /* —— Light mode (day) overrides: ensure contrast on white backgrounds —— */
+  :global(html:not(.dark)) .manifesto {
+    color: #221737; /* 深一些，兼容白底 */
+    text-shadow: none;
+  }
+  :global(html:not(.dark)) .intro-line {
+    color: #2a1f3b;  /* 深色文字 */
+  }
+
+  /* 细化边框与毛玻璃强度（Header 已有 active 态适配，这里补充初始浮动态） */
+  :global(html:not(.dark) .site-header) {
+    background-color: color-mix(in oklab, #ffffff 52%, transparent);
+    border-bottom-color: rgba(30,10,60,.06);
+  }
+  :global(html:not(.dark) .site-header--floating) {
+    background-color: transparent;
+    border-bottom-color: transparent;
+  }
+
+  /* —— Mobile performance mode (<=768px) —— */
+  @media (max-width: 768px) {
+    /* 移动端使用与桌面端和其他页面统一的背景 */
+    /* body::before 的背景由全局 Layout 控制，保持一致性 */
+    
+    /* 字体渲染优化：宣言在移动端优先速度 */
+    .manifesto { text-rendering: optimizeSpeed; }
+  }
+</style>

@@ -1,0 +1,34 @@
+---
+// No props needed for now
+---
+
+<footer>
+  <div class="footer-content">
+    <p>© 2025  - Tyndall - Made by Moyuin with Astro</p>
+  </div>
+</footer>
+
+<style>
+  footer {
+    font-family: var(--font-sans);
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 4rem; 
+    
+    background-color: var(--header-bg);
+    backdrop-filter: var(--header-backdrop-filter);
+    -webkit-backdrop-filter: var(--header-backdrop-filter);
+    border-top: 1px solid var(--header-border-color);
+  }
+
+  .footer-content {
+    max-width: var(--container-max, 1280px);
+    margin: 0 auto;
+  }
+
+  p {
+    margin: 0;
+  }
+</style>

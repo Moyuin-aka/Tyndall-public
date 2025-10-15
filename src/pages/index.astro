@@ -1,0 +1,37 @@
+---
+import { useTranslations } from '@utils/ui';
+import Layout from '@layouts/Layout.astro';
+import UserInfo from '@components/UserInfo.astro';
+
+import AutoMarquee from '@components/AutoMarquee.astro';
+import { favorites } from '@data/favorites';
+
+
+const t = useTranslations(Astro.currentLocale);
+---
+
+<Layout title={t('home_title')}>
+  <main>
+    <section class="screen hero">
+      <UserInfo t={t} />
+    </section>
+    <section class="screen marquee-screen">
+      <AutoMarquee title={t('album_desc')} items={favorites} />
+    </section>
+  </main>
+</Layout>
+
+<style>
+  main {
+    display: flow-root;
+  }
+
+  .screen {
+    min-height: calc(100vh - 5rem);
+    display: grid;
+    place-items: center;
+    padding: 2rem 0;
+  }
+  .marquee-screen { min-height: auto; padding-top: 0; }
+  /* reserved hook if needed later */
+</style>

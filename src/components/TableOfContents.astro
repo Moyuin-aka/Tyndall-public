@@ -1,0 +1,524 @@
+---
+import { useTranslations } from '@utils/ui';
+
+interface Props {
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { headings } = Astro.props;
+const t = useTranslations(Astro.currentLocale);
+
+// 过滤掉 h1（通常是文章标题），只显示 h2-h6
+const tocHeadings = headings.filter(h => h.depth > 1 && h.depth <= 4);
+
+// 如果没有标题，不显示 TOC
+if (tocHeadings.length === 0) {
+  return null;
+}
+---
+
+<!-- TOC 容器包装器：原始 TOC 保持在文档流中 -->
+<div class="toc-wrapper">
+  <!-- 原始 TOC：始终保持在文档流中，默认展开 -->
+  <details class="table-of-contents toc-original" open>
+    <summary>
+      <svg class="toc-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+      <span class="toc-title">{t('toc_title')}</span>
+      <svg class="toc-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </summary>
+    <nav class="toc-nav">
+      <ul>
+        {tocHeadings.map((heading) => (
+          <li class={`toc-item toc-depth-${heading.depth}`}>
+            <a href={`#${heading.slug}`} data-heading-id={heading.slug}>
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </details>
+  
+  <!-- 吸顶 TOC：独立的浮动层，滚动时出现 -->
+  <details class="table-of-contents toc-sticky">
+    <summary>
+      <svg class="toc-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+      <span class="toc-title">{t('toc_title')}</span>
+      <svg class="toc-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </summary>
+    <nav class="toc-nav">
+      <ul>
+        {tocHeadings.map((heading) => (
+          <li class={`toc-item toc-depth-${heading.depth}`}>
+            <a href={`#${heading.slug}`} data-heading-id={heading.slug}>
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </details>
+</div>
+
+<style>
+  /* TOC 包装器 */
+  .toc-wrapper {
+    position: relative;
+  }
+
+  /* 原始 TOC：正常文档流中的 TOC */
+  .toc-original {
+    /* 正常显示 */
+  }
+
+  /* 吸顶 TOC：默认隐藏，滚动时显示 */
+  .toc-sticky {
+    position: fixed;
+    top: 50px; /* 调高位置，更靠近 header */
+    left: 50%;
+    max-width: 600px; /* 缩短宽度，减少遮挡 */
+    width: calc(100% - 40px);
+    margin: 0;
+    z-index: 100;
+    
+    /* 默认隐藏 - 使用 scale 而不是 visibility */
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-10px) scale(0.95); /* 初始缩小 + 上移 */
+    
+    /* 性能优化提示 */
+    will-change: opacity, transform;
+    
+    /* 毛玻璃效果 */
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-color: rgba(162, 89, 236, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  /* 吸顶 TOC 显示状态 */
+  .toc-sticky.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0) scale(1); /* 滑入 + 放大到正常 */
+  }
+
+  .table-of-contents {
+    font-family: var(--font-sans);
+    margin: 1.5rem 0 2rem;
+    padding: 1rem 1.25rem;
+    background: rgba(162, 89, 236, 0.05);
+    border: 1px solid rgba(162, 89, 236, 0.2);
+    border-radius: 8px;
+    /* 只对颜色和边框过渡，不对布局属性过渡 */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+
+  /* 覆盖 table-of-contents 的 transition，确保吸顶 TOC 的过渡生效 */
+  .table-of-contents.toc-sticky {
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), 
+                transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                background-color 0.3s ease, 
+                border-color 0.3s ease;
+  }
+
+  summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text);
+    list-style: none;
+    transition: color 0.2s ease;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary:hover {
+    color: var(--purple);
+  }
+
+  .toc-icon {
+    flex-shrink: 0;
+    color: var(--purple);
+  }
+
+  .toc-title {
+    flex: 1;
+  }
+
+  .toc-chevron {
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+    color: var(--grey);
+  }
+
+  details[open] .toc-chevron {
+    transform: rotate(180deg);
+  }
+
+  .toc-nav {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(162, 89, 236, 0.15);
+  }
+
+  .toc-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .toc-item {
+    margin: 0;
+    line-height: 1.8;
+  }
+
+  .toc-item a {
+    display: block;
+    color: var(--text);
+    text-decoration: none;
+    padding: 0.3rem 0;
+    transition: all 0.2s ease;
+    border-left: 2px solid transparent;
+    padding-left: 0.75rem;
+  }
+
+  .toc-item a:hover {
+    color: var(--purple);
+    border-left-color: var(--purple);
+    padding-left: 1rem;
+  }
+
+  .toc-item a.active {
+    color: var(--purple);
+    font-weight: 600;
+    border-left-color: var(--purple);
+  }
+
+  /* 不同层级的缩进 */
+  .toc-depth-2 {
+    padding-left: 0;
+  }
+
+  .toc-depth-3 {
+    padding-left: 1rem;
+  }
+
+  .toc-depth-4 {
+    padding-left: 2rem;
+  }
+
+  /* 美化吸顶 TOC 滚动条 */
+  .toc-sticky::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .toc-sticky::-webkit-scrollbar-track {
+    background: rgba(162, 89, 236, 0.05);
+    border-radius: 3px;
+  }
+
+  .toc-sticky::-webkit-scrollbar-thumb {
+    background: rgba(162, 89, 236, 0.3);
+    border-radius: 3px;
+  }
+
+  .toc-sticky::-webkit-scrollbar-thumb:hover {
+    background: rgba(162, 89, 236, 0.5);
+  }
+
+  /* 深色模式 */
+  html.dark .table-of-contents {
+    background: rgba(162, 89, 236, 0.08);
+    border-color: rgba(162, 89, 236, 0.25);
+  }
+
+  html.dark .table-of-contents:hover {
+    background: rgba(162, 89, 236, 0.12);
+    border-color: rgba(162, 89, 236, 0.35);
+  }
+
+  html.dark .toc-sticky {
+    background: rgba(30, 30, 30, 0.6);
+    border-color: rgba(162, 89, 236, 0.3);
+  }
+
+  html.dark .toc-sticky.show:hover {
+    background: rgba(30, 30, 30, 0.75);
+  }
+
+  /* 移动端适配 */
+  @media (max-width: 768px) {
+    .toc-sticky {
+      top: 50px;
+      width: 66.67%;
+      max-width: 400px;
+      max-height: 50vh;
+      border-radius: 8px;
+      padding: 0.75rem 0.9rem;
+    }
+
+    .toc-sticky summary {
+      font-size: 0.85rem;
+    }
+
+    .toc-sticky .toc-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    .toc-sticky .toc-chevron {
+      width: 12px;
+      height: 12px;
+    }
+
+    .toc-sticky .toc-nav {
+      font-size: 0.9rem;
+    }
+  }
+</style>
+
+<script>
+  function initTOC() {
+    const tocWrapper = document.querySelector('.toc-wrapper') as HTMLElement;
+    const tocOriginal = document.querySelector('.toc-original') as HTMLDetailsElement;
+    const tocSticky = document.querySelector('.toc-sticky') as HTMLDetailsElement;
+    
+    if (!tocOriginal || !tocSticky || !tocWrapper) return;
+
+    const tocLinks = document.querySelectorAll('.toc-item a');
+    if (tocLinks.length === 0) return;
+
+    // 记录原始 TOC 的位置
+    let tocOriginalBottom = 0;
+    const headerHeight = 80;
+    let isInitialized = false;
+    let isStickyShown = false; // 添加标志追踪吸顶 TOC 状态
+    
+    // 计算原始 TOC 在文档中的绝对位置
+    function getAbsoluteTop(element: HTMLElement): number {
+      let top = 0;
+      let current: HTMLElement | null = element;
+      while (current && current !== document.body) {
+        top += current.offsetTop;
+        current = current.offsetParent as HTMLElement;
+      }
+      return top;
+    }
+    
+    // 延迟计算位置
+    setTimeout(() => {
+      const tocTop = getAbsoluteTop(tocOriginal);
+      tocOriginalBottom = tocTop + tocOriginal.offsetHeight;
+      isInitialized = true;
+      
+      updateTOC();
+    }, 100);
+
+    // 获取所有标题元素
+    const headingIds = Array.from(tocLinks).map(link => 
+      link.getAttribute('data-heading-id')
+    ).filter(Boolean);
+
+    const headings = headingIds
+      .map(id => document.getElementById(id!))
+      .filter(Boolean) as HTMLElement[];
+
+    if (headings.length === 0) return;
+
+    let currentActive: Element | null = null;
+
+    // 点击外部关闭吸顶 TOC
+    let isClosing = false;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!tocSticky || !tocSticky.classList.contains('show') || !tocSticky.hasAttribute('open')) {
+        return;
+      }
+      
+      if (isClosing) return;
+      
+      const target = e.target as HTMLElement;
+      
+      if (
+        !tocSticky.contains(target) &&
+        target.tagName !== 'A' &&
+        target.tagName !== 'BUTTON' &&
+        !target.closest('a') &&
+        !target.closest('button')
+      ) {
+        isClosing = true;
+        queueMicrotask(() => {
+          if (tocSticky && tocSticky.hasAttribute('open')) {
+            tocSticky.removeAttribute('open');
+          }
+          setTimeout(() => {
+            isClosing = false;
+          }, 100);
+        });
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside, { capture: true, passive: true });
+
+    // 更新 TOC 状态和高亮
+    function updateTOC() {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      
+      // 控制吸顶 TOC 的显示/隐藏
+      if (isInitialized && tocSticky) {
+        const stickyThreshold = 200; // 滚动超过原始 TOC 底部 200px 后显示
+        const scrollPastTOC = scrollY - tocOriginalBottom;
+        
+        const shouldShow = scrollPastTOC > stickyThreshold;
+        
+        // 只在状态真正改变时才操作，避免重复触发
+        if (shouldShow && !isStickyShown) {
+          isStickyShown = true;
+          tocSticky.classList.add('show');
+        } else if (!shouldShow && isStickyShown) {
+          isStickyShown = false;
+          tocSticky.classList.remove('show');
+        }
+      }
+      
+      // 更新高亮（两个 TOC 都需要更新）
+      let activeHeading: HTMLElement | null = null;
+      let minDistance = Infinity;
+      const referenceLine = windowHeight * 0.3;
+      
+      for (const heading of headings) {
+        const rect = heading.getBoundingClientRect();
+        if (rect.top <= referenceLine) {
+          const distance = referenceLine - rect.top;
+          if (distance < minDistance) {
+            minDistance = distance;
+            activeHeading = heading;
+          }
+        }
+      }
+
+      if (!activeHeading) {
+        for (const heading of headings) {
+          const rect = heading.getBoundingClientRect();
+          if (rect.top > referenceLine) {
+            activeHeading = heading;
+            break;
+          }
+        }
+      }
+
+      if (!activeHeading && headings.length > 0) {
+        activeHeading = headings[0];
+      }
+
+      if (activeHeading) {
+        const activeLink = document.querySelector(
+          `.toc-item a[data-heading-id="${activeHeading.id}"]`
+        );
+
+        if (activeLink !== currentActive) {
+          tocLinks.forEach(link => link.classList.remove('active'));
+          // 在两个 TOC 中都高亮
+          document.querySelectorAll(`.toc-item a[data-heading-id="${activeHeading.id}"]`)
+            .forEach(link => link.classList.add('active'));
+          currentActive = activeLink;
+        }
+      }
+    }
+
+    // 平滑滚动到标题
+    tocLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        sessionStorage.removeItem('scrollPosition');
+        sessionStorage.removeItem('scroll:restore-once');
+        sessionStorage.removeItem('scroll:pos');
+        
+        const targetId = link.getAttribute('data-heading-id');
+        const targetElement = document.getElementById(targetId!);
+        
+        if (targetElement) {
+          const offsetTop = targetElement.offsetTop - headerHeight - 20;
+          window.scrollTo({
+            top: offsetTop,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+
+    // 监听滚动
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          updateTOC();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+
+    // 监听窗口大小变化
+    const handleResize = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          if (tocOriginal && !tocSticky.classList.contains('show')) {
+            const tocTop = getAbsoluteTop(tocOriginal);
+            tocOriginalBottom = tocTop + tocOriginal.offsetHeight;
+          }
+          updateTOC();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
+    // 初始化
+    updateTOC();
+
+    // 清理
+    const cleanup = () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('click', handleClickOutside, { capture: true });
+    };
+
+    document.addEventListener('astro:before-preparation', cleanup, { once: true });
+    document.addEventListener('astro:page-load', cleanup, { once: true });
+  }
+
+  document.addEventListener('DOMContentLoaded', initTOC);
+  document.addEventListener('astro:page-load', initTOC);
+</script>

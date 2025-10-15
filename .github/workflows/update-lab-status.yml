@@ -1,0 +1,94 @@
+name: Update Lab Status
+
+on:
+  schedule:
+    - cron: '0 * * * *' # 每小时运行一次（UTC）
+  workflow_dispatch: # 手动触发
+
+# 确保有权限推送
+permissions:
+  contents: write
+
+jobs:
+  update-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run status check script
+        id: status_check
+        env:
+          TIMEOUT_MS: 5000
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+
+            // --- MODIFIED PATH ---
+            const servicesPath = path.join(process.env.GITHUB_WORKSPACE, 'src', 'data', 'services.json');
+            const servicesData = JSON.parse(fs.readFileSync(servicesPath, 'utf8'));
+            let changed = false;
+
+            async function checkService(service) {
+              const ctrl = new AbortController();
+              const timer = setTimeout(() => ctrl.abort(), Number(process.env.TIMEOUT_MS) || 5000);
+              try {
+                const res = await fetch(service.url, {
+                  method: 'GET',
+                  redirect: 'manual',
+                  signal: ctrl.signal,
+                  headers: {
+                    'User-Agent': 'Mozilla/5.0 (status-check; +github-actions)',
+                    'Accept': '*/*'
+                  }
+                });
+                // 认为“可达”即 up：2xx、3xx，以及常见 4xx（401/403/405）
+                const reachable =
+                  res.ok ||
+                  (res.status >= 300 && res.status < 400) ||
+                  [401, 403, 405].includes(res.status);
+
+                const newState = reachable ? 'up' : 'down';
+                if (!service.status || service.status.state !== newState || service.status.http !== res.status) {
+                  service.status = { ...service.status, state: newState, http: res.status };
+                  changed = true;
+                }
+                console.log(`[${service.name}] ${service.url} -> ${res.status} => ${newState}`);
+              } catch (e) {
+                if (!service.status || service.status.state !== 'down') {
+                  service.status = { ...service.status, state: 'down' };
+                  changed = true;
+                }
+                console.log(`[${service.name}] ${service.url} -> error: ${e.message} => down`);
+              } finally {
+                clearTimeout(timer);
+              }
+            }
+
+            (async () => {
+              await Promise.all(servicesData.services.map(checkService));
+              if (changed) {
+                fs.writeFileSync(servicesPath, JSON.stringify(servicesData, null, 2) + '\n');
+                fs.appendFileSync(process.env.GITHUB_OUTPUT, 'changed=true\n');
+              } else {
+                fs.appendFileSync(process.env.GITHUB_OUTPUT, 'changed=false\n');
+              }
+            })();
+          "
+
+
+      - name: Commit and push if changed
+        if: steps.status_check.outputs.changed == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          # --- MODIFIED PATH ---
+          git add src/data/services.json
+          git commit -m 'chore(lab): Update service status' || echo 'No changes to commit'
+          git push

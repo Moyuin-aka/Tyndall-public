@@ -1,0 +1,129 @@
+---
+import { useTranslations } from '@utils/ui';
+import Layout from '@layouts/Layout.astro';
+
+const t = useTranslations(Astro.currentLocale);
+---
+
+<Layout title={t('404_title')}>
+  <main class="error-page">
+    <div class="error-content">
+      <h1 class="error-code">{t('404_heading')}</h1>
+      <p class="error-message">{t('404_message')}</p>
+      <a href={t('nav_home_url')} class="back-home">{t('404_back_home')}</a>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .error-page {
+    min-height: calc(100vh - 5rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .error-content {
+    text-align: center;
+    z-index: 1;
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  .error-code {
+    font-size: clamp(4rem, 15vw, 8rem);
+    font-weight: 500;
+    margin: 0;
+    font-family: 'Noto Serif SC', Georgia, serif;
+    color: var(--title-color, rgba(255, 255, 255, 0.898));
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .error-message {
+    font-size: clamp(1rem, 3vw, 1.25rem);
+    color: var(--text-secondary, #d5dceb);
+    margin: 1.5rem 0 2.5rem;
+    max-width: 28rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .back-home {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 2rem;
+    background-color: transparent;
+    color: var(--btn-color, rgba(107, 114, 128, 0.85));
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 1rem;
+    border: 1px solid var(--btn-border, rgba(107, 114, 128, 0.25));
+    transition: all 0.24s cubic-bezier(.16,1,.3,1);
+    box-sizing: border-box;
+  }
+
+  .back-home:hover {
+    transform: translateY(-2px);
+    color: var(--btn-hover-color, rgba(75, 85, 99, 1));
+    background-color: var(--btn-hover-bg, rgba(107, 114, 128, 0.08));
+    border-color: var(--btn-hover-border, rgba(107, 114, 128, 0.4));
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.15);
+  }
+
+  .back-home:active {
+    transform: translateY(0);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .error-page {
+      padding: 1rem;
+    }
+
+    .error-message {
+      font-size: 1rem;
+      margin: 1rem 0 2rem;
+    }
+
+    .back-home {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.9375rem;
+    }
+  }
+
+  :root {
+    --title-color: rgba(107, 114, 128, 0.85);
+    --text-primary: #9ca3af;
+    --btn-color: rgba(107, 114, 128, 0.75);
+    --btn-border: rgba(107, 114, 128, 0.3);
+    --btn-hover-color: rgba(75, 85, 99, 1);
+    --btn-hover-bg: rgba(107, 114, 128, 0.1);
+    --btn-hover-border: rgba(107, 114, 128, 0.5);
+  }
+
+  :global([data-theme="dark"]) {
+    --title-color: rgba(255, 255, 255, 0.92);
+    --text-primary: #d1d5db;
+    --btn-color: rgba(209, 213, 219, 0.9);
+    --btn-border: rgba(209, 213, 219, 0.35);
+    --btn-hover-color: rgba(255, 255, 255, 1);
+    --btn-hover-bg: rgba(209, 213, 219, 0.15);
+    --btn-hover-border: rgba(209, 213, 219, 0.5);
+  }
+</style>

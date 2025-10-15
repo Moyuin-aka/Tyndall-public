@@ -1,0 +1,228 @@
+---
+import { useTranslations } from '@utils/ui';
+import { getCollection } from 'astro:content';
+import Layout from '@layouts/Layout.astro';
+
+export async function getStaticPaths() {
+  const all = await getCollection('blog', ({ data }) => {
+    // 只包含已发布的文章
+    return data.published !== false;
+  });
+  
+  // 收集所有分类
+  const categories = new Set<string>();
+  for (const post of all) {
+    const category = post.data.category || 'uncategorized';
+    categories.add(category);
+  }
+  
+  return Array.from(categories).map(category => ({
+    params: { category },
+  }));
+}
+
+const { category } = Astro.params;
+const t = useTranslations(Astro.currentLocale);
+const locale = Astro.currentLocale;
+
+const all = await getCollection('blog', ({ data }) => {
+  // 只包含已发布的文章
+  return data.published !== false;
+});
+
+// 筛选当前分类的文章
+const allCategoryPosts = all
+  .filter(post => {
+    const postCategory = post.data.category || 'uncategorized';
+    return postCategory === category;
+  })
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// 按语言分组，优先显示当前语言的文章
+const currentLangPosts = allCategoryPosts.filter(post => post.data.lang === locale);
+const otherLangPosts = allCategoryPosts.filter(post => post.data.lang !== locale);
+
+// 如果有当前语言的文章就只显示当前语言，否则显示所有语言
+const categoryPosts = currentLangPosts.length > 0 ? currentLangPosts : allCategoryPosts;
+
+// 计算去重后的总文章数（用于显示统计）
+function stripLangPrefix(slug: string) { return slug.replace(/^en\//,''); }
+const uniqueKeys = new Set(
+  allCategoryPosts.map(post => post.data.translationKey || stripLangPrefix(post.slug))
+);
+const totalUniqueCount = uniqueKeys.size;
+
+// 分类名称映射
+const categoryNames: Record<string, { zh: string; en: string }> = {
+  'ctf': { zh: 'CTF', en: 'CTF' },
+  'notes': { zh: '笔记', en: 'Notes' },
+  'record': { zh: '记录', en: 'Records' },
+  'thoughts': { zh: '随笔', en: 'Thoughts' },
+  'weekly': { zh: '周记', en: 'Weekly' },
+  'tech': { zh: '技术', en: 'Tech' },
+  'life': { zh: '生活', en: 'Life' },
+  'uncategorized': { zh: '未分类', en: 'Uncategorized' },
+};
+
+function getCategoryDisplayName(cat: string) {
+  return categoryNames[cat]?.[locale as 'zh' | 'en'] || cat;
+}
+
+const displayName = getCategoryDisplayName(category!);
+---
+<Layout title={`${displayName} - ${t('categories_hero_subtitle')}`}>
+  <main class="category-posts-container">
+    <header class="category-header">
+      <a href={locale === 'zh' ? '/categories' : '/en/categories'} class="back-link">
+        ← {t('nav_categories')}
+      </a>
+      <div class="category-title-section">
+        <p class="category-subtitle">{t('categories_hero_subtitle')}</p>
+        <h1 class="category-title">{displayName}</h1>
+        <p class="category-count">
+          {totalUniqueCount} {t('category_posts_count')}
+        </p>
+      </div>
+    </header>
+
+    <section class="posts-list">
+      {categoryPosts.map(post => {
+        const postKey = post.data.translationKey || post.slug.replace(/^en\//, '');
+        const postUrl = locale === 'zh' ? `/blog/${postKey}` : `/en/blog/${postKey}`;
+        
+        return (
+          <article class="post-item">
+            <a href={postUrl} class="post-link">
+              <h2 class="post-title">{post.data.title}</h2>
+            </a>
+            {post.data.description && <p class="post-description">{post.data.description}</p>}
+            <time datetime={post.data.pubDate.toISOString()} class="post-date">
+              {post.data.pubDate.toLocaleDateString(locale, { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </time>
+          </article>
+        );
+      })}
+    </section>
+
+    {categoryPosts.length === 0 && (
+      <div class="empty-state">
+        <p>{locale === 'zh' ? '这个分类还没有文章' : 'No posts in this category yet'}</p>
+      </div>
+    )}
+  </main>
+</Layout>
+
+<style>
+  .category-posts-container {
+    font-family: var(--font-sans);
+    max-width: 800px;
+    margin: 5rem auto 2rem;
+    padding: 20px;
+  }
+
+  .category-header {
+    margin-bottom: 3rem;
+  }
+
+  .back-link {
+    display: inline-block;
+    color: var(--purple);
+    text-decoration: none;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    transition: opacity 0.2s ease;
+  }
+
+  .back-link:hover {
+    opacity: 0.7;
+  }
+
+  .category-title-section {
+    text-align: center;
+    padding: 2rem 0;
+    border-bottom: 1px solid rgba(162, 89, 236, 0.2);
+  }
+
+  .category-subtitle {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    color: var(--grey);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .category-title {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .category-count {
+    font-size: 1rem;
+    color: var(--grey);
+  }
+
+  .posts-list {
+    margin-top: 3rem;
+  }
+
+  .post-item {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(162, 89, 236, 0.1);
+  }
+
+  .post-item:last-child {
+    border-bottom: none;
+  }
+
+  .post-link {
+    text-decoration: none;
+    color: var(--text);
+    transition: color 0.2s ease;
+  }
+
+  .post-title {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .post-link:hover .post-title {
+    color: var(--purple);
+  }
+
+  .post-description {
+    font-size: 1rem;
+    color: var(--text);
+    opacity: 0.7;
+    line-height: 1.6;
+    margin-bottom: 0.8rem;
+  }
+
+  .post-date {
+    font-size: 0.85rem;
+    color: var(--grey);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--grey);
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 768px) {
+    .category-title {
+      font-size: 2rem;
+    }
+  }
+</style>

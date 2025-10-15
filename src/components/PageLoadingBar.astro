@@ -1,0 +1,129 @@
+---
+// 顶部页面加载进度条组件
+---
+
+<div id="page-loading-bar" class="page-loading-bar"></div>
+
+<style>
+  .page-loading-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple), #c084fc);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    box-shadow: 0 0 10px var(--purple), 0 0 5px var(--purple);
+  }
+
+  .page-loading-bar.loading {
+    opacity: 1;
+    transition: width 0.3s ease-out, opacity 0.2s ease;
+  }
+
+  .page-loading-bar.complete {
+    width: 100% !important;
+    transition: width 0.2s ease-in, opacity 0.3s ease 0.3s;
+    opacity: 0;
+  }
+
+  /* 深色模式优化 */
+  html.dark .page-loading-bar {
+    background: linear-gradient(90deg, #a259ec, #c084fc, #e0b3ff);
+  }
+
+  /* 白天模式优化 */
+  html:not(.dark) .page-loading-bar {
+    background: linear-gradient(90deg, #8b3ad1, #a259ec, #b57ce8);
+    box-shadow: 0 0 10px rgba(162, 89, 236, 0.5), 0 0 5px rgba(162, 89, 236, 0.3);
+  }
+</style>
+
+<script>
+  function initLoadingBar() {
+    const bar = document.getElementById('page-loading-bar');
+    if (!bar) return;
+
+    let progress = 0;
+    let interval: number | null = null;
+    let loadingTimeout: number | null = null;
+
+    // 开始加载
+    function startLoading() {
+      if (!bar) return;
+      
+      // 缩短延迟到 150ms，快速响应但避免闪现
+      loadingTimeout = window.setTimeout(() => {
+        progress = 0;
+        bar.style.width = '0%';
+        bar.classList.remove('complete');
+        bar.classList.add('loading');
+
+        // 更快的进度增长
+        interval = window.setInterval(() => {
+          if (!bar) return;
+          
+          if (progress < 70) {
+            const increment = (70 - progress) * 0.15;
+            progress += increment;
+            bar.style.width = `${progress}%`;
+          } else if (progress < 85) {
+            progress += 1;
+            bar.style.width = `${progress}%`;
+          }
+        }, 80);
+      }, 150);
+    }
+
+    // 完成加载
+    function completeLoading() {
+      if (!bar) return;
+      
+      // 清除延迟显示的定时器
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+      }
+      
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+
+      // 如果加载条还没显示，就不需要完成动画
+      if (!bar.classList.contains('loading')) {
+        return;
+      }
+
+      // 快速到达 100%
+      progress = 100;
+      bar.style.width = '100%';
+      bar.classList.add('complete');
+
+      // 动画结束后重置
+      setTimeout(() => {
+        if (!bar) return;
+        bar.classList.remove('loading', 'complete');
+        bar.style.width = '0%';
+      }, 500);
+    }
+
+    // 监听 Astro 页面导航事件
+    document.addEventListener('astro:before-preparation', startLoading);
+    document.addEventListener('astro:page-load', completeLoading);
+
+    // 清理函数
+    return () => {
+      if (interval) clearInterval(interval);
+      if (loadingTimeout) clearTimeout(loadingTimeout);
+    };
+  }
+
+  // 初始化
+  document.addEventListener('DOMContentLoaded', initLoadingBar);
+  
+  // Astro 页面切换后重新初始化
+  document.addEventListener('astro:page-load', initLoadingBar);
+</script>

@@ -1,0 +1,37 @@
+{
+  "name": "tyndall",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "A modern Astro blog theme focused on details and visual experience",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/tyndall.git"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "devDependencies": {
+    "astro": "^5.14.3",
+    "sharp": "^0.34.4"
+  },
+  "dependencies": {
+    "@astrojs/prefetch": "^0.4.1",
+    "@astrojs/rss": "^4.0.12",
+    "@astrojs/sitemap": "^3.6.0",
+    "@astrojs/vercel": "^8.2.9",
+    "marked": "^16.4.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "sanitize-html": "^2.17.0",
+    "tsparticles-engine": "^2.12.0",
+    "tsparticles-slim": "^2.12.0"
+  },
+  "overrides": {
+    "path-to-regexp": "6.3.0"
+  }
+}

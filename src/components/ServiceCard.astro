@@ -1,0 +1,25 @@
+---
+import { ICONS } from '@utils/icons';
+const { service, t } = Astro.props;
+
+const status = service.status?.state || 'unknown';
+const statusKey = `status_${status === 'up' ? 'online' : (status === 'down' ? 'offline' : 'unknown')}`;
+const serviceDescKey = `services.${service.name.toLowerCase().replace(/[^a-z0-9_]+/g, '_')}.desc`;
+---
+
+<a href={service.url} class="service-card" target={service.target || '_blank'} rel="noopener noreferrer">
+    <div class="card-content">
+        <div class="card-header">
+            <div class="card-icon" set:html={service.icon_svg || ''}></div>
+            <h3 class="card-title">{service.name || 'Unnamed Service'}</h3>
+        </div>
+        <p class="card-desc">{t(serviceDescKey, { defaultValue: service.desc })}</p>
+    </div>
+    <div class="card-footer">
+        <div class="status">
+            <span class={`status-dot ${status}`}></span>
+            <span class="status-text">{t(statusKey, { defaultValue: status })}</span>
+        </div>
+        <div class="external-link-icon" set:html={ICONS.externalLink}></div>
+    </div>
+</a>

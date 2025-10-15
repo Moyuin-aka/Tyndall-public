@@ -1,0 +1,156 @@
+<style is:global>
+:root {
+  --font-serif: "Noto Serif SC", "Noto Serif", ui-serif, "Source Han Serif SC", "Songti SC",
+                "STSong", "Hiragino Mincho ProN", Georgia, "Times New Roman", Times, serif;
+  --font-sans: "Noto Sans SC", "Noto Sans", ui-sans-serif, "PingFang SC", "Hiragino Sans GB", 
+               "Microsoft YaHei", "Noto Sans CJK SC", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+}
+
+/* 全站默认使用更纤细的无衬线字体 */
+html, body {
+  font-family: var(--font-serif);
+}
+    :root {
+        --purple: #a259ec;
+        --bg: #fff;
+        --text: #222;
+        --grey: #888;
+        --icon-size: 1.4rem;
+
+        /* Ender ambient tokens (light defaults: end-stone washed palette) */
+        --end-sky-deep: #f1edd8;   /* warm pale (end stone) */
+        --end-sky-dark: #fbf9ef;   /* near-white warm */
+        --end-ambient-purple: rgba(162, 89, 236, 0.06); /* faint lavender wash */
+        --end-ambient-pale: rgba(224, 214, 170, 0.08);  /* warm dust glow */
+        --end-pale: #d8d1b0;       /* washed pale yellow */
+        --end-noise-opacity: .08;  /* lighter grain in day */
+    }
+
+    html,
+    body {
+        min-height: 100%;
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-serif);
+        font-weight: 300; /* light */
+        transition: background .3s, color .3s;
+    }
+
+    body {
+        display: block;
+        height: auto;
+        min-height: 100vh;
+        color: var(--text);
+        position: relative;
+        visibility: visible; /* 默认可见，避免刷新时“散架” */
+        justify-content: initial;
+        align-items: initial;
+    }
+
+    /* (removed) Avoid leaking component styles globally: avatar/nickname/icons/links
+       are now scoped in their components to reduce collisions. */
+
+    @media (max-width: 600px) {
+        /* component-specific responsive styles moved locally */
+
+        body:not(.has-header) .theme-toggle {
+            top: 10px;
+            right: 10px;
+            font-size: 1.3rem;
+        }
+
+        body:not(.has-header) .lang-toggle {
+            top: 10px;
+            right: 10px;
+            font-size: 1.3rem;
+        }
+    }
+
+    html.dark {
+        --bg: #070615;
+        --text: #f7f7fc;
+        --grey: #a6a6c1;
+
+        /* Ender ambient tokens (dark overrides: near-black indigo/purple) */
+        --end-sky-deep: #0d0817;   /* deeper indigo */
+        --end-sky-dark: #070512;   /* near-black purple */
+        --end-ambient-purple: rgba(162, 89, 236, 0.16);
+        --end-ambient-pale: rgba(242, 231, 185, 0.08);
+        --end-pale: #f2e7b9;       /* gentle pale yellow for dark */
+        --end-noise-opacity: .16;  /* slightly stronger grain at night */
+    }
+
+    html.dark body {
+        background: var(--bg);
+        color: var(--text);
+    }
+
+    /* component dark-mode styles moved locally */
+
+    /* Scope floating toggle styles to pages without header */
+    body:not(.has-header) .theme-toggle {
+        position: absolute;
+        top: 24px;
+        right: 36px;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        outline: none;
+        font-size: 1.6rem;
+        color: var(--theme-toggle-color, #8a8a8a);
+        transition: color .25s, background .3s;
+        z-index: 10;
+        padding: 4px 7px;
+        border-radius: 50%;
+        box-shadow: 0 1px 8px 0 rgba(162, 89, 236, .05);
+        user-select: none;
+    }
+
+    .theme-toggle:hover {
+        background: rgba(162, 89, 236, .10);
+    }
+
+    html.dark body:not(.has-header) .theme-toggle {
+        color: #b5aed6;
+    }
+
+    body:not(.has-header) .lang-toggle {
+        position: absolute;
+        top: 24px;
+        right: 100px;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        outline: none;
+        font-size: 1.6rem;
+        color: var(--lang-toggle-color, #8a8a8a);
+        transition: color .25s, background .3s;
+        z-index: 10;
+        padding: 4px 7px;
+        border-radius: 50%;
+        box-shadow: 0 1px 8px 0 rgba(162, 89, 236, .05);
+        user-select: none;
+    }
+    html.dark body:not(.has-header) .lang-toggle {
+        color: #b5aed6;
+    }
+    .lang-icon {
+        display: inline-block;
+        transition: transform .3s;
+    }
+
+    .lang-toggle:hover {
+        background: rgba(162, 89, 236, .10);
+    }
+    html.no-transition,
+    html.no-transition * {
+      transition: none !important;
+    }
+    body.theme-loaded {
+      visibility: visible;
+    }
+
+    /* The header provides its own layout for these toggles */
+</style>

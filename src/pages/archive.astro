@@ -1,0 +1,469 @@
+---
+import { useTranslations } from '@utils/ui';
+import { getCollection } from 'astro:content';
+import Layout from '@layouts/Layout.astro';
+
+const t = useTranslations(Astro.currentLocale);
+const locale = Astro.currentLocale;
+
+// 获取所有博客文章
+const allPosts = await getCollection('blog', ({ data }) => {
+  // 只包含已发布的文章
+  return data.published !== false;
+});
+
+// 按 translationKey 分组，获取每篇文章的所有语言版本
+function stripLangPrefix(slug: string) { return slug.replace(/^en\//, ''); }
+const byKey = new Map<string, any[]>();
+
+for (const p of allPosts) {
+  const key = p.data.translationKey ?? stripLangPrefix(p.slug);
+  if (!byKey.has(key)) {
+    byKey.set(key, []);
+  }
+  byKey.get(key)!.push(p);
+}
+
+// 为每个 translationKey 选择一篇文章用于显示
+// 优先显示当前语言版本，如果没有则显示任意版本
+const displayPosts = Array.from(byKey.values()).map(posts => {
+  const currentLangPost = posts.find(p => p.data.lang === locale);
+  return currentLangPost || posts[0];
+});
+
+// 按年份分组
+interface PostsByYear {
+  [year: string]: typeof displayPosts;
+}
+
+const postsByYear: PostsByYear = {};
+
+displayPosts.forEach(post => {
+  const year = post.data.pubDate.getFullYear().toString();
+  if (!postsByYear[year]) {
+    postsByYear[year] = [];
+  }
+  postsByYear[year].push(post);
+});
+
+// 对每个年份内的文章按日期降序排序
+Object.keys(postsByYear).forEach(year => {
+  postsByYear[year].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+});
+
+// 获取年份并降序排序
+const years = Object.keys(postsByYear).sort((a, b) => parseInt(b) - parseInt(a));
+---
+
+<Layout title={t('archive_page_title')}>
+  <main class="archive-container">
+    <div class="archive-header">
+      <div class="title-en">ARCHIVE</div>
+      <h1 class="title-zh">{t('archive_hero_slogan')}</h1>
+    </div>
+
+    <!-- 搜索框 -->
+    <div class="search-container">
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder={t('search_placeholder')}
+        id="archive-search"
+      />
+      <span class="search-results-count" id="search-count"></span>
+    </div>
+
+    {years.map((year) => (
+      <section class="year-section">
+        <h2 class="year-title">{year}</h2>
+        
+        <ul class="posts-list">
+          {postsByYear[year].map((post) => {
+            const postLang = post.data.lang;
+            const isCurrentLang = postLang === locale;
+            const href = isCurrentLang 
+              ? `/blog/${post.data.translationKey ?? post.slug.replace(/^en\//, '')}`
+              : `/en/blog/${post.data.translationKey ?? post.slug.replace(/^en\//, '')}`;
+            
+            // 格式化日期
+            const date = post.data.pubDate;
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const formattedDate = `${month} 月 ${day} 日`;
+            
+            // 获取标签字符串
+            const tagsString = post.data.tags?.join(' ') || '';
+            
+            // 获取文章正文内容（用于全文搜索）
+            const bodyContent = post.body || '';
+            
+            return (
+              <li class="post-item" 
+                  data-title={post.data.title.toLowerCase()}
+                  data-description={(post.data.description || '').toLowerCase()}
+                  data-tags={tagsString.toLowerCase()}
+                  data-body={bodyContent.toLowerCase()}>
+                <div class="post-item-header">
+                  <time class="post-date" datetime={date.toISOString()}>
+                    {formattedDate}
+                  </time>
+                  <a href={href} class="post-title">
+                    {post.data.title}
+                    {!isCurrentLang && <span class="lang-badge">{postLang}</span>}
+                  </a>
+                </div>
+                <div class="post-excerpt" style="display: none;"></div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    ))}
+  </main>
+</Layout>
+
+<style>
+  .archive-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 6rem 2rem 4rem;
+  }
+
+  .archive-header {
+    margin-bottom: 4rem;
+  }
+
+  .title-en {
+    font-family: var(--font-serif);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    color: var(--grey);
+    opacity: 0.6;
+    margin-bottom: 0.5rem;
+  }
+
+  .title-zh {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+  }
+
+  /* 搜索框样式 */
+  .search-container {
+    position: relative;
+    margin-bottom: 3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    background: rgba(162, 89, 236, 0.05);
+    border: 1px solid rgba(162, 89, 236, 0.15);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+
+  .search-container:focus-within {
+    background: rgba(162, 89, 236, 0.08);
+    border-color: rgba(162, 89, 236, 0.3);
+    box-shadow: 0 0 0 3px rgba(162, 89, 236, 0.1);
+  }
+
+  .search-icon {
+    color: var(--purple);
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    color: var(--text);
+    outline: none;
+  }
+
+  .search-input::placeholder {
+    color: var(--grey);
+    opacity: 0.5;
+  }
+
+  .search-results-count {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--purple);
+    opacity: 0.7;
+    flex-shrink: 0;
+    min-width: 4rem;
+    text-align: right;
+  }
+
+  .year-section {
+    margin-bottom: 4rem;
+  }
+
+  .year-title {
+    font-family: var(--font-sans);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--fg);
+    margin: 0 0 1.5rem 0;
+  }
+
+  .posts-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .post-item {
+    display: block;
+    padding: 0.75rem 0;
+    transition: background-color 0.2s ease;
+  }
+
+  .post-item:hover {
+    background-color: rgba(162, 89, 236, 0.03);
+  }
+
+  .post-item-header {
+    display: flex;
+    align-items: baseline;
+    gap: 2rem;
+  }
+
+  .post-date {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--grey);
+    flex-shrink: 0;
+    width: 6rem;
+    opacity: 0.7;
+  }
+
+  .post-title {
+    font-family: var(--font-sans);
+    font-size: 1.125rem;
+    color: var(--fg);
+    text-decoration: none;
+    flex: 1;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .post-title:hover {
+    color: var(--primary);
+  }
+
+  .post-excerpt {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    color: var(--grey);
+    margin-top: 0.5rem;
+    margin-left: 8rem;
+    line-height: 1.6;
+    opacity: 0.8;
+  }
+
+  .post-excerpt mark {
+    background-color: rgba(162, 89, 236, 0.25);
+    color: var(--purple);
+    padding: 0.1em 0.2em;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  .lang-badge {
+    font-size: 0.75rem;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    background: rgba(162, 89, 236, 0.15);
+    color: var(--primary);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 768px) {
+    .archive-container {
+      padding: 4rem 1.5rem 3rem;
+    }
+
+    .title-zh {
+      font-size: 2rem;
+    }
+
+    .year-title {
+      font-size: 1.5rem;
+    }
+
+    .post-item {
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(var(--grey-rgb, 128, 128, 128), 0.15);
+    }
+
+    .post-item-header {
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .post-date {
+      width: auto;
+      font-size: 0.8125rem;
+    }
+
+    .post-title {
+      font-size: 1rem;
+    }
+
+    .post-excerpt {
+      margin-left: 0;
+      margin-top: 0.75rem;
+    }
+  }
+</style>
+
+<script>
+  // 高级搜索功能
+  function initSearch() {
+    const searchInput = document.getElementById('archive-search') as HTMLInputElement;
+    const searchCount = document.getElementById('search-count');
+    const postItems = document.querySelectorAll('.post-item');
+    const yearSections = document.querySelectorAll('.year-section');
+    
+    if (!searchInput || !searchCount) return;
+
+    // 提取文本片段，显示匹配上下文
+    function getExcerpt(text: string, query: string, maxLength = 150): string {
+      const index = text.indexOf(query);
+      if (index === -1) return '';
+      
+      const start = Math.max(0, index - 50);
+      const end = Math.min(text.length, index + query.length + 50);
+      let excerpt = text.slice(start, end);
+      
+      // 添加省略号
+      if (start > 0) excerpt = '...' + excerpt;
+      if (end < text.length) excerpt = excerpt + '...';
+      
+      // 高亮关键词
+      const regex = new RegExp(`(${query})`, 'gi');
+      excerpt = excerpt.replace(regex, '<mark>$1</mark>');
+      
+      return excerpt;
+    }
+
+    // 计算相关度分数
+    function calculateRelevance(item: Element, query: string): { score: number; excerpt: string } {
+      const title = item.getAttribute('data-title') || '';
+      const description = item.getAttribute('data-description') || '';
+      const tags = item.getAttribute('data-tags') || '';
+      const body = item.getAttribute('data-body') || '';
+      
+      let score = 0;
+      let excerpt = '';
+      
+      // 标题匹配（最高权重）
+      if (title.includes(query)) {
+        score += 100;
+        excerpt = getExcerpt(title, query);
+      }
+      
+      // 描述匹配（高权重）
+      if (description.includes(query)) {
+        score += 50;
+        if (!excerpt) excerpt = getExcerpt(description, query);
+      }
+      
+      // 标签匹配（中等权重）
+      if (tags.includes(query)) {
+        score += 30;
+      }
+      
+      // 正文匹配（基础权重）
+      if (body.includes(query)) {
+        score += 10;
+        if (!excerpt) excerpt = getExcerpt(body, query, 120);
+      }
+      
+      return { score, excerpt };
+    }
+
+    function performSearch() {
+      const query = searchInput.value.toLowerCase().trim();
+      
+      // 如果搜索框为空，显示所有文章
+      if (query === '') {
+        postItems.forEach(item => {
+          (item as HTMLElement).style.display = '';
+          const excerptEl = item.querySelector('.post-excerpt') as HTMLElement;
+          if (excerptEl) {
+            excerptEl.style.display = 'none';
+            excerptEl.innerHTML = '';
+          }
+        });
+        yearSections.forEach(section => {
+          (section as HTMLElement).style.display = '';
+        });
+        searchCount.textContent = '';
+        return;
+      }
+      
+      // 计算每个文章的相关度并收集结果
+      const results: Array<{ item: Element; score: number; excerpt: string }> = [];
+      
+      postItems.forEach(item => {
+        const { score, excerpt } = calculateRelevance(item, query);
+        
+        if (score > 0) {
+          results.push({ item, score, excerpt });
+        } else {
+          (item as HTMLElement).style.display = 'none';
+        }
+      });
+      
+      // 按相关度排序
+      results.sort((a, b) => b.score - a.score);
+      
+      // 显示结果
+      results.forEach(({ item, excerpt }) => {
+        (item as HTMLElement).style.display = '';
+        const excerptEl = item.querySelector('.post-excerpt') as HTMLElement;
+        if (excerptEl && excerpt) {
+          excerptEl.innerHTML = excerpt;
+          excerptEl.style.display = 'block';
+        }
+      });
+      
+      // 隐藏没有文章的年份区域
+      yearSections.forEach(section => {
+        const visiblePosts = section.querySelectorAll('.post-item:not([style*="display: none"])');
+        if (visiblePosts.length === 0) {
+          (section as HTMLElement).style.display = 'none';
+        } else {
+          (section as HTMLElement).style.display = '';
+        }
+      });
+      
+      // 更新搜索结果数量
+      if (results.length === 0) {
+        searchCount.textContent = '无结果';
+      } else {
+        searchCount.textContent = `${results.length} 篇`;
+      }
+    }
+    
+    searchInput.addEventListener('input', performSearch);
+  }
+  
+  // 页面加载时初始化
+  document.addEventListener('astro:page-load', initSearch);
+</script>

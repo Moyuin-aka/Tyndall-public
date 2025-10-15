@@ -1,0 +1,17 @@
+/* Fonts Configuration */
+/* Note: Noto Serif SC is now loaded via async <link> in Layout.astro for better FCP */
+
+/* Optimized local font declaration */
+@font-face {
+  font-family: 'Noto Serif SC Optimized';
+  font-style: normal;
+  font-display: swap; /* 快速显示备用字体 */
+  src: local('Noto Serif SC'), local('NotoSerifSC');
+}
+
+/* Keep optional UI sans stack for components that explicitly opt-in. */
+:root {
+  --font-sans-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+}
+
+/* Do not override body font here; GlobalStyles controls typography. */
