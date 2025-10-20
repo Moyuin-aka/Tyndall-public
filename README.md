@@ -6,7 +6,7 @@
 
 [![Astro](https://img.shields.io/badge/Astro-5.14-A259EC?style=flat-square&logo=astro)](https://astro.build)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](./LICENSE)
+[![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)](./docs/LICENSE)
 
 [English](./docs/README_EN.md) [配置指南](./src/content/blog/CONFIGURATION.md)
 
@@ -42,7 +42,7 @@ pnpm preview
 
 ## 📄 许可
 
-MIT License - 详见 [LICENSE](./docs/LICENSE)
+GNU GPLv3 - 详见 [LICENSE](./docs/LICENSE)
 
 ---
 
