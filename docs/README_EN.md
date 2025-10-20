@@ -6,7 +6,7 @@ A modern Astro blog theme focused on details and visual experience.
 
 [![Astro](https://img.shields.io/badge/Astro-5.14-A259EC?style=flat-square&logo=astro)](https://astro.build)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](./LICENSE)
+[![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)](./LICENSE)
 
 [中文文档](./README.md)
 
@@ -42,7 +42,7 @@ pnpm preview
 ---
 ## 📄 License
 
-MIT License - See [LICENSE](./LICENSE)
+GNU GPLv3 - See [LICENSE](./LICENSE)
 
 ---
 

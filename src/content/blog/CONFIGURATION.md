@@ -40,23 +40,6 @@ export default defineConfig({
 - 如果使用其他部署平台，需要修改或移除 `adapter`
 - `i18n` 配置决定了网站的语言结构
 
-#### `package.json`
-
-更新项目基本信息：
-
-```json
-{
-  "name": "your-blog-name",
-  "version": "1.0.0",
-  "description": "Your blog description",
-  "author": "Your Name",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/yourusername/your-repo.git"
-  }
-}
-```
 
 ### 2. 个人信息配置
 

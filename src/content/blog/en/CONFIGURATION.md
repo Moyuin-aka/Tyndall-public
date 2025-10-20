@@ -40,23 +40,6 @@ export default defineConfig({
 - If using other deployment platforms, modify or remove `adapter`
 - `i18n` configuration determines the site's language structure
 
-#### `package.json`
-
-Update project basic information:
-
-```json
-{
-  "name": "your-blog-name",
-  "version": "1.0.0",
-  "description": "Your blog description",
-  "author": "Your Name",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/yourusername/your-repo.git"
-  }
-}
-```
 
 ### 2. Personal Information Configuration
 
