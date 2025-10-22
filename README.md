@@ -42,7 +42,8 @@ pnpm preview
 
 ## 📄 许可
 
-GNU GPLv3 - 详见 [LICENSE](./docs/LICENSE)
+`GPL-3.0 license`
+ 详见 [LICENSE](./docs/LICENSE)
 
 ---
 
