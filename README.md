@@ -6,7 +6,7 @@
 
 [![Astro](https://img.shields.io/badge/Astro-5.14-A259EC?style=flat-square&logo=astro)](https://astro.build)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)](./docs/LICENSE)
+[![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0.txt)
 
 [English](./docs/README_EN.md) [配置指南](./src/content/blog/CONFIGURATION.md)
 
@@ -40,13 +40,6 @@ pnpm preview
 
 ---
 
-## 📄 许可
-
-`GPL-3.0 license`
- 详见 [LICENSE](./docs/LICENSE)
-
----
-
 ## 💖 致谢
 
 本博客使用了以下优秀的开源项目：
@@ -63,8 +56,14 @@ pnpm preview
 - [hiRipple - Gamer](https://hiripple.com)
 - [Cry4o4N0tfound](https://cry4o4n0tfound.cn)
 - [Motues - Momo](https://blog.motues.top)
+……
 
-......
+---
+
+## 📄 LICENSE
+
+`GPL-3.0 license`
+ 详见 [LICENSE](./docs/LICENSE)
 
 ---
 
