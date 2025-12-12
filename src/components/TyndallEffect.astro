@@ -1,0 +1,99 @@
+---
+// TyndallEffect.astro
+// A lightweight, CSS-based ambient light effect
+---
+
+<div class="tyndall-container" aria-hidden="true">
+  <div class="beam beam-1"></div>
+  <div class="beam beam-2"></div>
+  <div class="beam beam-3"></div>
+  <div class="particles"></div>
+</div>
+
+<style>
+  .tyndall-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 120%, var(--end-sky-deep), var(--bg) 80%);
+    transition: background 0.5s ease;
+  }
+
+  .beam {
+    position: absolute;
+    top: -50%;
+    left: 50%;
+    width: 200px;
+    height: 200vh;
+    background: linear-gradient(180deg, 
+      rgba(255, 255, 255, 0) 0%, 
+      var(--end-ambient-pale) 40%, 
+      rgba(255, 255, 255, 0) 100%
+    );
+    filter: blur(60px);
+    transform-origin: top center;
+    animation: sway 15s ease-in-out infinite;
+    mix-blend-mode: screen;
+  }
+
+  :global(.dark) .beam {
+    mix-blend-mode: plus-lighter;
+  }
+
+  .beam-1 {
+    left: 20%;
+    animation-delay: 0s;
+    width: 300px;
+    opacity: 0.6;
+    background: linear-gradient(180deg, 
+      rgba(162, 89, 236, 0) 0%, 
+      var(--end-ambient-purple) 50%, 
+      rgba(162, 89, 236, 0) 100%
+    );
+  }
+
+  .beam-2 {
+    left: 50%;
+    animation-delay: -5s;
+    width: 400px;
+    opacity: 0.4;
+    animation-duration: 20s;
+  }
+
+  .beam-3 {
+    left: 80%;
+    animation-delay: -10s;
+    width: 250px;
+    opacity: 0.5;
+    animation-duration: 18s;
+    background: linear-gradient(180deg, 
+      rgba(200, 200, 255, 0) 0%, 
+      var(--end-ambient-purple) 50%, 
+      rgba(200, 200, 255, 0) 100%
+    );
+  }
+
+  @keyframes sway {
+    0%, 100% {
+      transform: rotate(-15deg) translateX(-20px);
+    }
+    50% {
+      transform: rotate(-5deg) translateX(20px);
+    }
+  }
+
+  /* Subtle grain texture overlay */
+  .particles {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+    opacity: var(--end-noise-opacity);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+</style>

@@ -8,7 +8,6 @@ const locale = Astro.currentLocale;
 
 // 获取所有博客文章
 const allPosts = await getCollection('blog', ({ data }) => {
-  // 只包含已发布的文章
   return data.published !== false;
 });
 

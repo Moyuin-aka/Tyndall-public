@@ -1,12 +1,9 @@
 const initEnderHero = () => {
-  //console.log('[DEBUG] EnderHero script started.');
   const root = document.querySelector('.ender-hero') as HTMLElement | null;
   if (!root || root.dataset.initialized === 'true') {
-    //console.log('[DEBUG] no .ender-hero element found or already initialized, aborting init.');
     return () => {}; // Return an empty cleanup function
   }
   root.dataset.initialized = 'true';
-  //console.log('[DEBUG] root element found and marked as initialized.');
 
   requestAnimationFrame(() => root.classList.add('is-mounted'));
 
@@ -28,18 +25,15 @@ const initEnderHero = () => {
 
   const canvasGrain = root?.querySelector('.grain-canvas') as HTMLCanvasElement | null;
   const canvasP = root?.querySelector('.particles-canvas') as HTMLCanvasElement | null;
-  //console.log('[DEBUG] canvasGrain found:', !!canvasGrain);
-  //console.log('[DEBUG] canvasP found:', !!canvasP);
 
   let rafGrain = 0;
   let rafParticles = 0;
 
   if (root && canvasGrain && canvasP) {
-    //console.log('[DEBUG] Canvas initialization block entered.');
     const ctxG = canvasGrain.getContext('2d');
     const ctxP = canvasP.getContext('2d');
     if (!ctxG || !ctxP) {
-     // console.warn('[EnderHero] canvas 2D context unavailable.');
+      console.warn('[EnderHero] canvas 2D context unavailable.');
       return () => {};
     } 
 
@@ -47,10 +41,8 @@ const initEnderHero = () => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     const enableParticles = (root.getAttribute('data-particles') || 'on') !== 'off';
     let width = 0, height = 0;
-    const DEBUG = false;
 
     const resize = () => {
-      //console.log('[DEBUG] resize() called.');
       width = window.innerWidth;
       height = window.innerHeight;
 
@@ -166,7 +158,6 @@ const initEnderHero = () => {
     initParticlesBG();
 
     const cleanup = () => {
-      //console.log('[DEBUG] EnderHero cleanup called.');
       window.removeEventListener('resize', measureHeaderAndSetVars);
       window.removeEventListener('resize', resize);
       if (resizeObserver && hdr) resizeObserver.unobserve(hdr);

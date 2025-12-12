@@ -81,19 +81,86 @@
   word-break: break-word;
 }
 
-.markdown-content pre {
-  background-color: #2d2d2d; /* Dark background for code blocks */
-  color: #f8f8f2; /* Light text color */
-  padding: 1em;
-  border-radius: 5px;
+/* ========== 代码块容器 ========== */
+.markdown-content .code-block-wrapper {
+  position: relative;
   margin-bottom: 1em;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #24292e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.markdown-content .code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #1c2128;
+  padding: 0.6em 1em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.markdown-content .code-block-language {
+  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+  font-size: 0.85em;
+  color: #c9d1d9;
+  text-transform: lowercase;
+  user-select: none;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.markdown-content .code-block-copy {
+  background: transparent;
+  border: none;
+  color: #c9d1d9;
+  cursor: pointer;
+  padding: 0.4em 0.7em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.85em;
+  font-family: var(--font-sans);
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.markdown-content .code-block-copy:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.markdown-content .code-block-copy svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.markdown-content .code-block-copy.copied {
+  color: #4caf50;
+}
+
+.markdown-content pre,
+.markdown-content .astro-code {
+  background-color: #24292e;
+  color: #e1e4e8;
+  padding: 1em;
+  margin-bottom: 0;
   font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
   font-size: 0.95em;
-  line-height: 1.4;
+  line-height: 1.5;
   max-width: 100%;
   overflow-x: auto;
   white-space: pre;
   box-sizing: border-box;
+  border-radius: 0;
+}
+
+/* 当代码块有 header 时，移除独立代码块的样式 */
+.markdown-content .code-block-wrapper pre,
+.markdown-content .code-block-wrapper .astro-code {
+  border: none;
+  border-radius: 0;
 }
 
 .markdown-content pre code {
@@ -111,9 +178,27 @@
     font-size: 0.85em;
     padding: 0.875em;
   }
+
+  .markdown-content .code-block-header {
+    padding: 0.5em 0.75em;
+  }
+
+  .markdown-content .code-block-language {
+    font-size: 0.8em;
+  }
+
+  .markdown-content .code-block-copy {
+    font-size: 0.8em;
+    padding: 0.35em 0.6em;
+  }
+
+  .markdown-content .code-block-copy svg {
+    width: 14px;
+    height: 14px;
+  }
 }
 
-.markdown-content :not(pre) > code {
+.markdown-content :not(pre)>code {
   font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
   background-color: rgba(128, 128, 128, 0.2);
   padding: 0.2em 0.4em;
@@ -153,7 +238,8 @@
 .markdown-content table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 0; /* 由包装器提供 margin */
+  margin-bottom: 0;
+  /* 由包装器提供 margin */
   /* 恢复正常的表格布局 */
   display: table;
   table-layout: auto;
@@ -199,7 +285,7 @@
 
 .markdown-content th {
   background-color: rgba(128, 128, 128, 0.1);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .markdown-content img {
@@ -294,7 +380,8 @@
 /* 强调 */
 .markdown-content strong,
 .markdown-content b {
-  font-weight: 500;  /* 从 700 改为 500，更柔和的加粗效果 */
+  font-weight: 500;
+  /* 从 700 改为 500，更柔和的加粗效果 */
   color: var(--text);
 }
 
@@ -320,6 +407,7 @@
   width: 1.1em;
   height: 1.1em;
   vertical-align: middle;
+  accent-color: #4caf50;
 }
 
 .markdown-content input[type="checkbox"]:disabled {
@@ -424,12 +512,7 @@
 }
 
 /* Dark mode adjustments */
-html.dark .markdown-content pre {
-  background-color: #1e1e1e;
-  color: #d4d4d4;
-}
-
-html.dark .markdown-content :not(pre) > code {
+html.dark .markdown-content :not(pre)>code {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -470,6 +553,15 @@ html.dark .markdown-content pre code .line {
 
 /* ========== LaTeX 数学公式样式 ========== */
 
+
+.markdown-content .katex .katex-mathml {
+  display: inline;
+}
+
+.markdown-content .katex .katex-html {
+  display: none !important;
+}
+
 /* 行内公式 */
 .markdown-content .katex {
   font-size: 1.05em;
@@ -496,10 +588,14 @@ html.dark .markdown-content .katex .mord {
 .markdown-content pre.mermaid,
 .markdown-content .mermaid-diagram {
   background: transparent;
-  padding: 1em;
+  padding: 1em 0;
+  /* 减少左右内边距，避免图表贴边 */
   text-align: center;
   overflow-x: auto;
-  margin: 2em 0;
+  overflow-y: visible;
+  margin: 2em auto;
+  /* 居中显示 */
+  max-width: 100%;
 }
 
 .markdown-content .mermaid-diagram {
@@ -507,25 +603,40 @@ html.dark .markdown-content .katex .mord {
   justify-content: center;
   align-items: center;
   min-height: 100px;
+  width: 100%;
 }
 
 .markdown-content .mermaid-diagram svg {
-  max-width: 100%;
+  max-width: 95%;
+  /* 限制最大宽度，留出一些边距 */
   height: auto;
+  display: block;
+  margin: 0 auto;
 }
 
 /* ========== 移动端优化 ========== */
 @media (max-width: 768px) {
+
+  /* Mermaid 图表移动端优化 */
+  .markdown-content .mermaid-diagram {
+    padding: 0.5em 0;
+  }
+
+  .markdown-content .mermaid-diagram svg {
+    max-width: 100%;
+    /* 移动端可以用满宽度 */
+  }
+
   /* 移动端表格优化 */
   .markdown-content table {
     font-size: 0.9em;
   }
-  
+
   .markdown-content th,
   .markdown-content td {
     padding: 0.6em;
   }
-  
+
   /* 移动端表格内的行内代码：更小的字号和更激进的换行 */
   .markdown-content table code {
     font-size: 0.85em;

@@ -1,23 +1,22 @@
 ---
-import type { CollectionEntry } from 'astro:content';
-import { getCollection } from 'astro:content';
-import Layout from '@layouts/Layout.astro';
-import '@styles/markdown.css';
-import { useTranslations } from '@utils/ui';
-import TwikooComments from '@components/TwikooComments.astro';
-import TableOfContents from '@components/TableOfContents.astro';
+import type { CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
+import Layout from "@layouts/Layout.astro";
+import "@styles/markdown.css";
+import { useTranslations } from "@utils/ui";
+import TwikooComments from "@components/TwikooComments.astro";
+import TableOfContents from "@components/TableOfContents.astro";
 
 export async function getStaticPaths() {
-  const allPosts = await getCollection('blog', ({ data }) => {
-    // 只包含已发布的文章
+  const allPosts = await getCollection("blog", ({ data }) => {
     return data.published !== false;
   });
   const paths = [];
-  
+
   // 为每个 translationKey 生成中文路径
   const keySet = new Set();
   for (const post of allPosts) {
-    const key = post.data.translationKey ?? post.slug.replace(/^en\//, '');
+    const key = post.data.translationKey ?? post.slug.replace(/^en\//, "");
     if (!keySet.has(key)) {
       keySet.add(key);
       paths.push({
@@ -26,7 +25,7 @@ export async function getStaticPaths() {
       });
     }
   }
-  
+
   return paths;
 }
 
@@ -35,17 +34,18 @@ const t = useTranslations(Astro.currentLocale);
 const locale = Astro.currentLocale;
 
 // 查找当前语言的文章，如果没有则回退到其他语言
-const allPosts = await getCollection('blog', ({ data }) => {
-  // 只包含已发布的文章
+const allPosts = await getCollection("blog", ({ data }) => {
   return data.published !== false;
 });
-const currentLangPost = allPosts.find(p => 
-  (p.data.translationKey ?? p.slug.replace(/^en\//, '')) === translationKey && 
-  p.data.lang === locale
+const currentLangPost = allPosts.find(
+  (p) =>
+    (p.data.translationKey ?? p.slug.replace(/^en\//, "")) === translationKey &&
+    p.data.lang === locale,
 );
 
-const fallbackPost = allPosts.find(p => 
-  (p.data.translationKey ?? p.slug.replace(/^en\//, '')) === translationKey
+const fallbackPost = allPosts.find(
+  (p) =>
+    (p.data.translationKey ?? p.slug.replace(/^en\//, "")) === translationKey,
 );
 
 const post = currentLangPost || fallbackPost;
@@ -55,126 +55,147 @@ if (!post) {
   throw new Error(`Post not found: ${translationKey}`);
 }
 
+// 获取上一篇和下一篇文章
+const uniquePosts = new Map();
+for (const p of allPosts) {
+  const key = p.data.translationKey ?? p.slug.replace(/^en\//, "");
+  if (!uniquePosts.has(key)) {
+    uniquePosts.set(key, p);
+  } else {
+    if (p.data.lang === locale) {
+      uniquePosts.set(key, p);
+    }
+  }
+}
+
+const sortedPosts = Array.from(uniquePosts.values()).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+const currentIndex = sortedPosts.findIndex((p) => {
+  const pKey = p.data.translationKey ?? p.slug.replace(/^en\//, "");
+  const currentKey = post.data.translationKey ?? post.slug.replace(/^en\//, "");
+  return pKey === currentKey;
+});
+
+const prevPost =
+  currentIndex < sortedPosts.length - 1 ? sortedPosts[currentIndex + 1] : null;
+const nextPost = currentIndex > 0 ? sortedPosts[currentIndex - 1] : null;
+
+function getPostUrl(p) {
+  if (!p) return "#";
+  const key = p.data.translationKey ?? p.slug.replace(/^en\//, "");
+  return locale === "en" ? `/en/blog/${key}` : `/blog/${key}`;
+}
+
+import { ICONS } from "@utils/icons";
+
 const { Content, headings } = await post.render();
+
+// 检测内容中是否包含数学公式或 Mermaid 图表
+const rawContent = post.body;
+const hasLatex = /\$.*?\$|\$\$[\s\S]*?\$\$/.test(rawContent);
+const hasMermaid = /```mermaid/.test(rawContent);
 ---
+
 <Layout title={post.data.title} translationKey={translationKey}>
+  <!-- 按需加载 KaTeX CSS -->
+  {
+    hasLatex && (
+      <link
+        slot="head"
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+        integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV"
+        crossorigin="anonymous"
+      />
+    )
+  }
+
   <main class="post-container">
     <h1>{post.data.title}</h1>
-    
-    {isFallback && (
-      <div class="fallback-tip">
-        {t('post_not_translated')}
-      </div>
-    )}
-    
+
+    {isFallback && <div class="fallback-tip">{t("post_not_translated")}</div>}
+
     <p class="post-date">
-      {post.data.pubDate.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
+      {
+        post.data.pubDate.toLocaleDateString(locale, {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      }
     </p>
-    
+
     <TableOfContents headings={headings} />
-    
+
     <div class="markdown-content">
       <Content />
     </div>
-    
+
     <hr class="comment-divider" />
-    
+
+    <div class="post-navigation">
+      {
+        prevPost ? (
+          <a href={getPostUrl(prevPost)} class="nav-item prev">
+            <span class="nav-label">
+              <span class="icon" set:html={ICONS.arrowLeft} />
+              {t("post_prev")}
+            </span>
+            <span class="nav-title">{prevPost.data.title}</span>
+          </a>
+        ) : (
+          <div class="nav-item empty" />
+        )
+      }
+
+      {
+        nextPost ? (
+          <a href={getPostUrl(nextPost)} class="nav-item next">
+            <span class="nav-label">
+              {t("post_next")}
+              <span class="icon" set:html={ICONS.arrowRight} />
+            </span>
+            <span class="nav-title">{nextPost.data.title}</span>
+          </a>
+        ) : (
+          <div class="nav-item empty" />
+        )
+      }
+    </div>
+
+    <hr class="comment-divider" />
+
     <TwikooComments />
   </main>
 </Layout>
 
-<script is:inline>
-  // 内联加载 Mermaid，确保在页面加载后执行
-  (async function() {
-    let mermaidModule = null;
-    
-    async function initMermaid() {
-      try {
-        //console.log('🔍 Starting Mermaid initialization...');
-        
-        if (!mermaidModule) {
-          const module = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
-          mermaidModule = module.default;
-          //console.log('✅ Mermaid module loaded');
-        }
-        
-        const isDark = document.documentElement.classList.contains('dark');
-        
-        mermaidModule.initialize({
-          startOnLoad: false,
-          theme: isDark ? 'dark' : 'default',
-          securityLevel: 'loose',
-        });
-        
-        // Astro 使用 data-language 属性而不是 class
-        const mermaidBlocks = document.querySelectorAll('pre[data-language="mermaid"]');
-        
-        if (mermaidBlocks.length === 0) {
-          return;
-        }
-        
-        for (const pre of mermaidBlocks) {
-          const code = pre.querySelector('code');
-          if (!code) continue;
-          
-          const div = document.createElement('div');
-          div.className = 'mermaid-diagram';
-          // 获取纯文本内容（去除 Shiki 添加的 HTML 标签）
-          div.textContent = code.textContent || '';
-          div.style.textAlign = 'center';
-          div.style.margin = '2em 0';
-          
-          pre.replaceWith(div);
-        }
-        
-        await mermaidModule.run({
-          querySelector: '.mermaid-diagram',
-        });
-      } catch (error) {
-        console.error('Failed to initialize Mermaid:', error);
-      }
-    }
-    
-    function onLoad() {
-      setTimeout(initMermaid, 500);
-    }
-    
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', onLoad);
-    } else {
-      onLoad();
-    }
-    
-    document.addEventListener('astro:page-load', onLoad);
-  })();
+<script>
+  // 使用立即执行的方式初始化博客增强功能
+  import { initializeAll } from "@utils/blog-enhancements";
+
+  // 立即执行初始化
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      initializeAll();
+    });
+  } else {
+    // DOM 已经加载完成，立即执行
+    initializeAll();
+  }
+
+  // 支持 Astro View Transitions
+  document.addEventListener("astro:page-load", () => {
+    initializeAll();
+  });
 </script>
 
-<script is:inline>
-  // 为表格添加滚动容器包装器
-  function wrapTables() {
-    const tables = document.querySelectorAll('.markdown-content table');
-    tables.forEach(table => {
-      // 检查是否已经被包装过
-      if (table.parentElement.classList.contains('table-wrapper')) {
-        return;
-      }
-      
-      const wrapper = document.createElement('div');
-      wrapper.className = 'table-wrapper';
-      table.parentNode.insertBefore(wrapper, table);
-      wrapper.appendChild(table);
-    });
+<script define:vars={{ hasMermaid, hasLatex }}>
+  // 记录当前页面需要的资源，用于预加载优化
+  if (typeof window !== "undefined") {
+    window.__pageFeatures = { hasMermaid, hasLatex };
   }
-  
-  // 页面加载时执行
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', wrapTables);
-  } else {
-    wrapTables();
-  }
-  
-  // Astro 路由切换时执行
-  document.addEventListener('astro:page-load', wrapTables);
 </script>
 
 <style>
@@ -187,7 +208,7 @@ const { Content, headings } = await post.render();
     /* 使用 box-sizing 确保 padding 不会增加总宽度 */
     box-sizing: border-box;
   }
-  
+
   /* markdown 内容容器 */
   .markdown-content {
     /* 限制内容最大宽度，防止撑开 */
@@ -223,6 +244,69 @@ const { Content, headings } = await post.render();
     margin-bottom: 1rem;
   }
 
+  /* Post Navigation */
+  .post-navigation {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    /* margin-top 和 padding-top 移除，由 hr.comment-divider 控制间距 */
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-decoration: none;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .nav-item:not(.empty):hover {
+    background: rgba(136, 136, 136, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .nav-item.next {
+    text-align: right;
+    align-items: flex-end;
+  }
+
+  .nav-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--grey);
+  }
+
+  .nav-title {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    color: var(--text);
+    font-weight: 500;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .nav-item .icon {
+    width: 1.2em;
+    height: 1.2em;
+    transition: transform 0.2s ease;
+  }
+
+  .nav-item.prev:hover .icon {
+    transform: translateX(-4px);
+  }
+
+  .nav-item.next:hover .icon {
+    transform: translateX(4px);
+  }
+
   /* 评论区分隔线 */
   .comment-divider {
     margin: 3rem 0 2.5rem;
@@ -240,6 +324,21 @@ const { Content, headings } = await post.render();
 
     .post-container h1 {
       font-size: 2rem;
+    }
+
+    .post-navigation {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .nav-item.next {
+      text-align: left;
+      align-items: flex-start;
+    }
+
+    .nav-item.next .nav-label {
+      flex-direction: row-reverse;
+      justify-content: flex-end;
     }
   }
 </style>

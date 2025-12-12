@@ -36,6 +36,7 @@ const categoryIcons: { [key: string]: string } = {
 ---
 
 <Layout title={t('lab_title')}>
+
     <div class="lab-container">
         <header class="hero-section">
             <p class="hero-subtitle">Lab</p>
@@ -44,14 +45,18 @@ const categoryIcons: { [key: string]: string } = {
         </header>
 
         <main id="lab-main">
-            {Object.entries(categories).map(([categoryName, services]) => (
-                <section class="category-section">
+            {Object.entries(categories).map(([categoryName, services], index) => (
+                <section class="category-section" style={`--delay: ${index * 0.1}s`}>
                     <h2 class="category-title">
                         <div class="category-icon" set:html={categoryIcons[categoryName] || ''}></div>
                         <span>{t(`categories.${categoryName}`)}</span>
                     </h2>
                     <div class="services-grid">
-                        {services.map(service => <ServiceCard service={service} t={t} />)}
+                        {services.map((service, sIndex) => (
+                            <div class="service-wrapper" style={`--delay: ${(index * 0.1) + (sIndex * 0.05)}s`}>
+                                <ServiceCard service={service} t={t} />
+                            </div>
+                        ))}
                     </div>
                 </section>
             ))}
@@ -67,177 +72,260 @@ const categoryIcons: { [key: string]: string } = {
         justify-content: initial;
         align-items: initial;
     }
+
+
+
     .hero-subtitle {
         font-family: var(--font-serif);
         font-size: 0.9rem;
-        letter-spacing: 0.1em;
+        letter-spacing: 0.2em;
         color: var(--grey);
         text-transform: uppercase;
-        margin-bottom: 0.5rem;
-  }
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
   
     /* Lab Page Layout */
     .lab-container {
-        max-width: 800px;
-        margin: 5rem auto 2rem;
-        padding: 20px;
+        max-width: 1000px;
+        margin: 6rem auto 2rem;
+        padding: 0 24px;
     }
 
     /* Hero Section */
     .hero-section {
         text-align: center;
-        margin-bottom: 4rem;
+        margin-bottom: 5rem;
+        position: relative;
     }
+    
+    .hero-section::after {
+        content: '';
+        position: absolute;
+        bottom: -2.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, var(--purple), var(--blue));
+        border-radius: 2px;
+        opacity: 0.6;
+    }
+
     .hero-slogan {
         font-family: var(--font-serif);
-        font-size: 3rem;
+        font-size: 3.5rem;
         font-weight: 700;
         color: var(--text);
         line-height: 1.2;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, var(--text) 0%, var(--grey) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1.5rem;
     }
 
     /* Category Section */
     .category-section {
-        margin-top: 60px;
+        margin-top: 4rem;
+        opacity: 0;
+        animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        animation-delay: var(--delay);
     }
 
     .category-title {
         display: flex;
         align-items: center;
         gap: 1rem;
-        font-size: 2rem;
-        font-weight: 700;
+        font-size: 1.8rem;
+        font-weight: 600;
         margin-bottom: 2rem;
         padding-bottom: 1rem;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid rgba(162, 89, 236, 0.1);
+        font-family: var(--font-serif);
+        color: var(--text);
     }
 
     .category-icon svg {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
         color: var(--purple);
+        filter: drop-shadow(0 2px 4px rgba(162, 89, 236, 0.2));
     }
 
     /* Services Grid */
     .services-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 3rem 1.5rem;
     }
 
-    /* Service Card Redesign */
+    .service-wrapper {
+        opacity: 0;
+        animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        animation-delay: var(--delay);
+        position: relative; /* Ensure z-index works */
+        transition: z-index 0s step-end 0.3s;
+    }
+    
+    .service-wrapper:hover {
+        z-index: 10;
+        transition: z-index 0s step-start;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Service Card Redesign - Global Styles for Component */
     .service-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 12px;
-        padding: 20px;
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 16px;
+        padding: 1.2rem;
         text-decoration: none;
         color: var(--text);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        height: 100%;
+        min-height: 140px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 
+            0 4px 20px -2px rgba(0, 0, 0, 0.02),
+            0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .service-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--card-shadow-hover);
-        border-color: var(--card-border-hover);
+        transform: translateY(-6px) scale(1.02);
+        box-shadow: 
+            0 20px 40px -4px rgba(162, 89, 236, 0.15),
+            0 0 0 1px rgba(162, 89, 236, 0.3) inset;
+        background: rgba(255, 255, 255, 0.8);
+        z-index: 2;
     }
 
-    .card-content {
-        /* flex-grow: 1; */
-    }
-    
     .card-header {
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 1rem;
+        margin-bottom: 1rem;
     }
 
     .card-icon svg {
-        width: 28px;
-        height: 28px;
-        color: var(--icon-color);
-        opacity: 0.9;
+        width: 32px;
+        height: 32px;
+        color: var(--grey);
+        transition: all 0.3s ease;
+    }
+
+    .service-card:hover .card-icon svg {
+        color: var(--purple);
+        transform: scale(1.1);
     }
 
     .card-title {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 600;
+        color: var(--text);
     }
 
     .card-desc {
-        margin-top: 12px;
         font-size: 0.95rem;
         color: var(--grey);
         line-height: 1.6;
         flex-grow: 1;
+        opacity: 0.9;
     }
 
     .card-footer {
-        margin-top: 16px;
+        margin-top: 1.5rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
     }
 
     .status {
         display: flex;
         align-items: center;
+        background: rgba(0, 0, 0, 0.03);
+        padding: 4px 10px;
+        border-radius: 20px;
     }
 
     .status-dot {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
         margin-right: 8px;
+        box-shadow: 0 0 8px currentColor;
     }
 
-    .status-dot.up { background-color: var(--status-ok); }
-    .status-dot.down { background-color: var(--status-down); }
-    .status-dot.unknown { background-color: var(--status-unknown); }
+    .status-dot.up { background-color: #10b981; color: rgba(16, 185, 129, 0.4); }
+    .status-dot.down { background-color: #ef4444; color: rgba(239, 68, 68, 0.4); }
+    .status-dot.unknown { background-color: #9ca3af; color: rgba(156, 163, 175, 0.4); }
 
     .status-text {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
+        font-weight: 500;
         color: var(--grey);
     }
 
     .external-link-icon {
         color: var(--grey);
-        opacity: 0.5;
-        transition: opacity 0.3s ease;
+        opacity: 0.4;
+        transition: all 0.3s ease;
+        transform: translateX(0);
     }
     
     .service-card:hover .external-link-icon {
         opacity: 1;
         color: var(--purple);
+        transform: translateX(2px) translateY(-2px);
     }
 
     .external-link-icon svg {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
     }
 
-    /* Light/Dark Mode Variables */
-    :root {
-        --border: #e5e7eb;
-        --card-bg: #ffffff;
-        --card-border: #e5e7eb;
-        --card-border-hover: var(--purple);
-        --card-shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        --status-ok: #2ecc71;
-        --status-down: #ff6b6b;
-        --status-unknown: #ccc;
-        --icon-color: var(--grey);
+    /* Dark Mode */
+    html.dark .service-card {
+        background: rgba(30, 30, 30, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 
+            0 4px 20px -2px rgba(0, 0, 0, 0.2),
+            0 0 0 1px rgba(255, 255, 255, 0.05) inset;
     }
 
-    html.dark {
-        --border: #2d2d50;
-        --card-bg: #1E1E1E;
-        --card-border: #333;
-        --card-border-hover: var(--purple);
-        --card-shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-        --icon-color: #b5aed6;
+    html.dark .service-card:hover {
+        background: rgba(40, 40, 40, 0.95);
+        box-shadow: 
+            0 20px 40px -4px rgba(162, 89, 236, 0.15),
+            0 0 0 1px rgba(162, 89, 236, 0.3) inset;
+    }
+
+    html.dark .card-footer {
+        border-top-color: rgba(255, 255, 255, 0.05);
+    }
+
+    html.dark .status {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+        .hero-slogan {
+            font-size: 2.5rem;
+        }
+        
+        .services-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>

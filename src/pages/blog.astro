@@ -54,7 +54,7 @@ function getCategoryDisplayName(category: string) {
 
 // 生成智能分页数字（带省略）
 function generatePageNumbers(current: number, total: number): (number | 'ellipsis')[] {
-  if (total <= 7) {
+  if (total <= 5) {
     return Array.from({ length: total }, (_, i) => i + 1);
   }
   
@@ -63,17 +63,17 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
   // 始终显示第一页
   pages.push(1);
   
-  // 当前页在开头（1-3）
-  if (current <= 3) {
-    pages.push(2, 3, 4, 'ellipsis', total);
+  // 当前页在开头（1-2）
+  if (current <= 2) {
+    pages.push(2, 'ellipsis', total);
   }
-  // 当前页在末尾（倒数3页内）
-  else if (current >= total - 2) {
-    pages.push('ellipsis', total - 3, total - 2, total - 1, total);
+  // 当前页在末尾（倒数2页内）
+  else if (current >= total - 1) {
+    pages.push('ellipsis', total - 1, total);
   }
   // 当前页在中间
   else {
-    pages.push('ellipsis', current - 1, current, current + 1, 'ellipsis', total);
+    pages.push('ellipsis', current, 'ellipsis', total);
   }
   
   return pages;
@@ -149,7 +149,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
 
           {currentPage < totalPages && (
             <a href={`/blog/page/${currentPage + 1}`} class="pagination-btn pagination-next">
-              下一页
+              
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6"></polyline>
               </svg>
@@ -291,6 +291,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
   .category-badge {
     display: inline-block;
     font-size: 0.8rem;
+    font-family: var(--font-serif);
     background: rgba(162, 89, 236, 0.1);
     color: var(--purple);
     padding: 0.3rem 0.7rem;
@@ -470,9 +471,13 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
     }
     
     .blog-post-meta {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.5rem;
+      /* 保持 flex-direction: row，让原文标签在右侧 */
+      align-items: center;
+    }
+
+    .blog-post-meta-left {
+      /* 左侧元素可以换行 */
+      flex: 1;
     }
 
     .pagination-numbers {

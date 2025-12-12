@@ -20,7 +20,7 @@ const tags = Array.from(allTags);
     <!-- Hero Section -->
     <header class="friends-hero">
       <p class="friends-hero-subtitle">FRIENDS</p>
-      <h1 class="friends-hero-title">友情链接</h1>
+      <h1 class="friends-hero-title">天涯若比邻</h1>
     </header>
 
     <!-- 分类筛选 - 类似blog页的通告设计 -->
@@ -81,24 +81,21 @@ const tags = Array.from(allTags);
           </div>
         </div>
 
-        <!-- 友链信息复制框 -->
-        <div class="info-box">
-          <div class="info-row">
-            <span class="info-label">名称：</span>
-            <span class="info-value">{guidelines.myInfo.name}</span>
+        <div class="json-box">
+          <div class="json-line"><span class="key">myInfo</span>: <span class="bracket">{'{'}</span></div>
+          <div class="json-line indent">
+            <span class="key">name</span>: <span class="value">'{guidelines.myInfo.name}'</span>,
           </div>
-          <div class="info-row">
-            <span class="info-label">链接：</span>
-            <span class="info-value">{guidelines.myInfo.url}</span>
+          <div class="json-line indent">
+            <span class="key">avatar</span>: <span class="value">'{guidelines.myInfo.avatar}'</span>,
           </div>
-          <div class="info-row">
-            <span class="info-label">头像：</span>
-            <span class="info-value">{guidelines.myInfo.avatar}</span>
+          <div class="json-line indent">
+            <span class="key">url</span>: <span class="value">'{guidelines.myInfo.url}'</span>,
           </div>
-          <div class="info-row">
-            <span class="info-label">描述：</span>
-            <span class="info-value">{guidelines.myInfo.description}</span>
+          <div class="json-line indent">
+            <span class="key">description</span>: <span class="value">'{guidelines.myInfo.description}'</span>
           </div>
+          <div class="json-line"><span class="bracket">{'}'}</span>,</div>
         </div>
 
         <p class="apply-tip" set:html={guidelines.howToApply}></p>
@@ -108,7 +105,6 @@ const tags = Array.from(allTags);
 </Layout>
 
 <script>
-  // 分类筛选功能
   document.addEventListener('astro:page-load', () => {
     const filterBtns = document.querySelectorAll('.filter-btn');
     const friendCards = document.querySelectorAll('.friend-card');
@@ -389,33 +385,67 @@ const tags = Array.from(allTags);
     font-style: italic;
   }
 
-  /* 友链信息复制框 */
-  .info-box {
+  /* JSON Box */
+  .json-box {
     background: rgba(162, 89, 236, 0.04);
     border: 1px solid rgba(162, 89, 236, 0.2);
     border-radius: 8px;
-    padding: 1.5rem;
+    padding: 1.5em;
     margin: 1.5rem 0;
     font-family: 'Courier New', monospace;
     font-size: 0.9rem;
-  }
-
-  .info-row {
-    display: flex;
-    padding: 0.5rem 0;
     line-height: 1.6;
+    color: var(--grey); /* Punctuation becomes grey */
+    transition: all 0.3s ease;
   }
 
-  .info-label {
-    color: var(--grey);
-    min-width: 4rem;
-    flex-shrink: 0;
+  /* ... existing styles ... */
+
+  @media (max-width: 768px) {
+    /* ... existing mobile styles ... */
+
+    .json-box {
+      padding: 1.5em;
+      font-size: 3.2vw;
+      overflow-x: hidden;
+      margin: 1rem 0;
+    }
+
+    .json-line {
+      white-space: nowrap;
+    }
+
+    .json-line.indent {
+      padding-left: 1.5em;
+    }
   }
 
-  .info-value {
-    color: var(--text);
+  .json-box:hover {
+    background: rgba(162, 89, 236, 0.06);
+    border-color: rgba(162, 89, 236, 0.3);
+  }
+
+  .json-line {
+    display: flex;
+    align-items: center;
+  }
+
+  .json-line.indent {
+    padding-left: 1.5rem;
+  }
+
+  .key {
+    color: var(--purple);
+    margin-right: 0.5rem;
+  }
+
+  .value {
+    color: var(--text); /* Values become main text color */
     word-break: break-all;
-    user-select: all;
+  }
+
+  .bracket {
+    color: inherit; /* Inherit grey from json-box */
   }
 
   .apply-tip {
@@ -477,6 +507,31 @@ const tags = Array.from(allTags);
     .filter-btn {
       font-size: 0.85rem;
       padding: 0.4rem 0.8rem;
+    }
+
+    /* MyInfo Mobile Adaptation */
+    .apply-section {
+      margin-top: 2rem;
+      padding-top: 2rem;
+    }
+
+    .apply-content h2 {
+      font-size: 1.5rem;
+    }
+
+    .my-avatar {
+      margin-bottom: 0.5rem;
+    }
+
+    .json-box {
+      padding: 1rem;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    .json-line.indent {
+      padding-left: 1rem;
     }
   }
 </style>

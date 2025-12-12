@@ -1,6 +1,6 @@
---- 
-import { Image } from 'astro:assets';
-import { favorites } from '@/data/favorites';
+---
+import { Image } from "astro:assets";
+import { favorites } from "@/data/favorites";
 
 interface Props {
   title?: string;
@@ -9,8 +9,13 @@ interface Props {
   rows?: number;
 }
 
-const { title = 'More I Love', items, speedMs = 28000, rows = 1 } = Astro.props as Props;
-const displayItems = (items && items.length ? items : favorites);
+const {
+  title = "More I Love",
+  items,
+  speedMs = 28000,
+  rows = 1,
+} = Astro.props as Props;
+const displayItems = items && items.length ? items : favorites;
 ---
 
 <section class="marquee" role="region" aria-label={title}>
@@ -25,32 +30,15 @@ const displayItems = (items && items.length ? items : favorites);
     <!-- Row A -->
     <div class="row" data-dir="right" style={`--speed: ${speedMs}ms`}>
       <div class="track">
-        {displayItems.concat(displayItems).map((it, i) => (
-          <a class={`tile ${i >= displayItems.length ? 'duplicate' : ''}`} href={it.href || '#'} aria-label={it.name} tabindex="0" data-idx={i}>
-            <div class="cover">
-              <Image
-                src={it.image}
-                alt={it.alt || it.name}
-                width={300}
-                height={300}
-                loading="lazy"
-                decoding="async"
-                fetchpriority="low"
-              />
-            </div>
-            <div class="label">
-              <span class="name">{it.name}</span>
-              {it.subtitle && <span class="sub">{it.subtitle}</span>}
-            </div>
-          </a>
-        ))}
-      </div>
-    </div>
-    {rows > 1 && (
-      <div class="row" data-dir="left" style={`--speed: ${Math.round(speedMs * 0.82)}ms`}>
-        <div class="track">
-          {displayItems.concat(displayItems).map((it, i) => (
-            <a class={`tile ${i >= displayItems.length ? 'duplicate' : ''}`} href={it.href || '#'} aria-label={it.name} tabindex="0" data-idx={i}>
+        {
+          displayItems.concat(displayItems).map((it, i) => (
+            <a
+              class={`tile ${i >= displayItems.length ? "duplicate" : ""}`}
+              href={it.href || "#"}
+              aria-label={it.name}
+              tabindex="0"
+              data-idx={i}
+            >
               <div class="cover">
                 <Image
                   src={it.image}
@@ -67,24 +55,61 @@ const displayItems = (items && items.length ? items : favorites);
                 {it.subtitle && <span class="sub">{it.subtitle}</span>}
               </div>
             </a>
-          ))}
-        </div>
+          ))
+        }
       </div>
-    )}
+    </div>
+    {
+      rows > 1 && (
+        <div
+          class="row"
+          data-dir="left"
+          style={`--speed: ${Math.round(speedMs * 0.82)}ms`}
+        >
+          <div class="track">
+            {displayItems.concat(displayItems).map((it, i) => (
+              <a
+                class={`tile ${i >= displayItems.length ? "duplicate" : ""}`}
+                href={it.href || "#"}
+                aria-label={it.name}
+                tabindex="0"
+                data-idx={i}
+              >
+                <div class="cover">
+                  <Image
+                    src={it.image}
+                    alt={it.alt || it.name}
+                    width={300}
+                    height={300}
+                    loading="lazy"
+                    decoding="async"
+                    fetchpriority="low"
+                  />
+                </div>
+                <div class="label">
+                  <span class="name">{it.name}</span>
+                  {it.subtitle && <span class="sub">{it.subtitle}</span>}
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )
+    }
   </div>
 </section>
 
 <script is:inline>
   // Pause on hover/focus, restore on leave/blur.
-  const root = document.currentScript?.closest('.marquee');
+  const root = document.currentScript?.closest(".marquee");
   if (root) {
-    const rows = root.querySelectorAll('.row');
-    const pause = () => rows.forEach(r => r.classList.add('paused'));
-    const resume = () => rows.forEach(r => r.classList.remove('paused'));
-    root.addEventListener('mouseenter', pause);
-    root.addEventListener('mouseleave', resume);
-    root.addEventListener('focusin', pause);
-    root.addEventListener('focusout', resume);
+    const rows = root.querySelectorAll(".row");
+    const pause = () => rows.forEach((r) => r.classList.add("paused"));
+    const resume = () => rows.forEach((r) => r.classList.remove("paused"));
+    root.addEventListener("mouseenter", pause);
+    root.addEventListener("mouseleave", resume);
+    root.addEventListener("focusin", pause);
+    root.addEventListener("focusout", resume);
 
     // Mobile: pause while user touches to make tapping easier
     let touchTimer = 0;
@@ -93,46 +118,93 @@ const displayItems = (items && items.length ? items : favorites);
       if (touchTimer) clearTimeout(touchTimer);
       touchTimer = setTimeout(resume, 2200);
     };
-    root.addEventListener('pointerdown', (e) => {
-      // only react to touch/pen
-      if (e.pointerType === 'mouse') return;
-      touchPause();
-    }, { passive: true });
+    root.addEventListener(
+      "pointerdown",
+      (e) => {
+        // only react to touch/pen
+        if (e.pointerType === "mouse") return;
+        touchPause();
+      },
+      { passive: true },
+    );
 
     // Subtle tilt on pointer move
-    root.addEventListener('pointermove', (e) => {
-      const t = e.target.closest('.tile');
-      if (!t) return;
-      const r = t.getBoundingClientRect();
-      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-      const dx = (e.clientX - cx) / r.width;  // -0.5..0.5
-      const dy = (e.clientY - cy) / r.height; // -0.5..0.5
-      t.style.setProperty('--rx', `${(-dy * 6).toFixed(2)}deg`);
-      t.style.setProperty('--ry', `${(dx * 8).toFixed(2)}deg`);
-    }, { passive: true });
-    root.addEventListener('pointerleave', () => {
-      root.querySelectorAll('.tile').forEach(t => {
-        t.style.removeProperty('--rx');
-        t.style.removeProperty('--ry');
-      });
-    }, { passive: true });
+    root.addEventListener(
+      "pointermove",
+      (e) => {
+        const t = e.target.closest(".tile");
+        if (!t) return;
+        const r = t.getBoundingClientRect();
+        const cx = r.left + r.width / 2,
+          cy = r.top + r.height / 2;
+        const dx = (e.clientX - cx) / r.width; // -0.5..0.5
+        const dy = (e.clientY - cy) / r.height; // -0.5..0.5
+        t.style.setProperty("--rx", `${(-dy * 6).toFixed(2)}deg`);
+        t.style.setProperty("--ry", `${(dx * 8).toFixed(2)}deg`);
+      },
+      { passive: true },
+    );
+    root.addEventListener(
+      "pointerleave",
+      () => {
+        root.querySelectorAll(".tile").forEach((t) => {
+          t.style.removeProperty("--rx");
+          t.style.removeProperty("--ry");
+        });
+      },
+      { passive: true },
+    );
   }
 </script>
 
 <style>
   /* Allow narrowing the marquee via CSS var */
-  .marquee { width: 100%; --marquee-max: 960px; max-width: var(--marquee-max); margin: 0 auto; padding: 0 1rem; overflow-x: hidden; contain: paint; box-sizing: border-box; }
-  .header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: .4rem; }
-  .title { margin: 0; font-size: 1.05rem; letter-spacing: .02em; }
+  .marquee {
+    width: 100%;
+    --marquee-max: 960px;
+    max-width: var(--marquee-max);
+    margin: 0 auto;
+    padding: 0 1rem;
+    overflow-x: hidden;
+    contain: paint;
+    box-sizing: border-box;
+  }
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+  }
+  .title {
+    margin: 0;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+  }
 
-  .rows { position: relative; overflow: hidden; border-radius: 16px; isolation: isolate; contain: layout paint; box-sizing: border-box; }
-  .row { overflow: hidden; mask-image: linear-gradient(90deg, transparent 0, black 10%, black 90%, transparent 100%); }
+  .rows {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    isolation: isolate;
+    contain: layout paint;
+    box-sizing: border-box;
+  }
+  .row {
+    overflow: hidden;
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0,
+      black 10%,
+      black 90%,
+      transparent 100%
+    );
+  }
 
   .track {
     display: flex;
     flex-wrap: nowrap;
-    gap: .6rem;
-    padding: .35rem 0 .7rem;
+    gap: 0.6rem;
+    padding: 0.35rem 0 0.7rem;
     width: max-content; /* allow content width for seamless loop */
     box-sizing: border-box;
     will-change: transform; /* isolate animation to compositor */
@@ -140,37 +212,126 @@ const displayItems = (items && items.length ? items : favorites);
   }
 
   /* Animation */
-  .row[data-dir="right"] .track { animation: marquee-right var(--speed) linear infinite; }
-  .row[data-dir="left"] .track  { animation: marquee-left  var(--speed) linear infinite; }
-  .row.paused .track { animation-play-state: paused; }
+  .row[data-dir="right"] .track {
+    animation: marquee-right var(--speed) linear infinite;
+  }
+  .row[data-dir="left"] .track {
+    animation: marquee-left var(--speed) linear infinite;
+  }
+  .row.paused .track {
+    animation-play-state: paused;
+  }
 
-  @keyframes marquee-right { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-  @keyframes marquee-left  { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+  @keyframes marquee-right {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes marquee-left {
+    from {
+      transform: translateX(-50%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
 
   /* Tiles */
-  .tile { position: relative; display: grid; grid-template-rows: auto auto; align-content: start; width: clamp(140px, 20vw, 200px); text-decoration: none; color: inherit; outline: none; filter: drop-shadow(0 8px 18px rgba(0,0,0,.10)); transform-style: preserve-3d; transition: transform .18s ease, filter .18s ease; }
-  .tile:focus-visible { filter: drop-shadow(0 10px 26px rgba(61,123,246,.42)); }
+  .tile {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto auto;
+    align-content: start;
+    width: clamp(140px, 20vw, 200px);
+    text-decoration: none;
+    color: inherit;
+    outline: none;
+    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.1));
+    transform-style: preserve-3d;
+    transition:
+      transform 0.18s ease,
+      filter 0.18s ease;
+  }
+  .tile:focus-visible {
+    filter: drop-shadow(0 10px 26px rgba(61, 123, 246, 0.42));
+  }
 
-  .cover { aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; background: var(--bg); box-shadow: 0 1px 8px rgba(0,0,0,.06); transform: translateZ(0.01px); }
-  .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cover {
+    aspect-ratio: 1 / 1;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--bg);
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+    transform: translateZ(0.01px);
+  }
+  .cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 
-  .label { text-align: center; margin-top: .45rem; }
-  .name { font-weight: 700; font-size: .98rem; }
-  .sub { display: block; margin-top: .12rem; font-size: .88rem; color: var(--grey); }
+  .label {
+    text-align: center;
+    margin-top: 0.45rem;
+  }
+  .name {
+    font-weight: 500;
+    font-size: 0.98rem;
+  }
+  .sub {
+    display: block;
+    margin-top: 0.12rem;
+    font-size: 0.88rem;
+    color: var(--grey);
+  }
 
   /* Idle subtle float */
-  .tile { --rx: 0deg; --ry: 0deg; transform: perspective(800px) rotateX(var(--rx)) rotateY(var(--ry)); }
-  .tile .cover img { will-change: transform; animation: breathe 6.5s ease-in-out infinite; }
-  @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+  .tile {
+    --rx: 0deg;
+    --ry: 0deg;
+    transform: perspective(800px) rotateX(var(--rx)) rotateY(var(--ry));
+  }
+  .tile .cover img {
+    will-change: transform;
+    animation: breathe 6.5s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.02);
+    }
+  }
 
   /* Edge fades */
-  .fade { position: absolute; top: 0; bottom: 0; width: 36px; pointer-events: none; z-index: 1; }
-  .fade.left  { left: 0;  background: linear-gradient(90deg, var(--bg) 0%, rgba(0,0,0,0) 100%); }
-  .fade.right { right: 0; background: linear-gradient(270deg, var(--bg) 0%, rgba(0,0,0,0) 100%); }
+  .fade {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 36px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .fade.left {
+    left: 0;
+    background: linear-gradient(90deg, var(--bg) 0%, rgba(0, 0, 0, 0) 100%);
+  }
+  .fade.right {
+    right: 0;
+    background: linear-gradient(270deg, var(--bg) 0%, rgba(0, 0, 0, 0) 100%);
+  }
 
   /* Respect reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    .tile .cover img { animation: none; }
+    .tile .cover img {
+      animation: none;
+    }
   }
 
   @media (max-width: 768px) {
@@ -186,12 +347,14 @@ const displayItems = (items && items.length ? items : favorites);
     .row[data-dir] .track {
       animation: none;
     }
-    .row + .row { margin-top: .75rem; }
+    .row + .row {
+      margin-top: 0.75rem;
+    }
     .track {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: .6rem;
-      padding: .35rem 0;
+      gap: 0.6rem;
+      padding: 0.35rem 0;
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
@@ -200,11 +363,21 @@ const displayItems = (items && items.length ? items : favorites);
     .tile {
       width: 100%;
       max-width: none;
-      filter: drop-shadow(0 6px 12px rgba(0,0,0,.08));
+      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.08));
     }
-    .label { margin-top: .32rem; }
-    .name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .9rem; }
-    .sub { font-size: .82rem; }
+    .label {
+      margin-top: 0.32rem;
+    }
+    .name {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.9rem;
+    }
+    .sub {
+      font-size: 0.82rem;
+    }
     .fade {
       display: none;
     }

@@ -63,7 +63,7 @@ function getCategoryDisplayName(category: string) {
 
 // Generate smart pagination numbers (with ellipsis)
 function generatePageNumbers(current: number, total: number): (number | 'ellipsis')[] {
-  if (total <= 7) {
+  if (total <= 4) {
     return Array.from({ length: total }, (_, i) => i + 1);
   }
   
@@ -72,17 +72,17 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
   // Always show first page
   pages.push(1);
   
-  // Current page at start (1-3)
-  if (current <= 3) {
-    pages.push(2, 3, 4, 'ellipsis', total);
+  // Current page at start (1-2)
+  if (current <= 2) {
+    pages.push(2, 'ellipsis', total);
   }
-  // Current page at end (last 3)
-  else if (current >= total - 2) {
-    pages.push('ellipsis', total - 3, total - 2, total - 1, total);
+  // Current page at end (last 2)
+  else if (current >= total - 1) {
+    pages.push('ellipsis', total - 1, total);
   }
   // Current page in middle
   else {
-    pages.push('ellipsis', current - 1, current, current + 1, 'ellipsis', total);
+    pages.push('ellipsis', current, 'ellipsis', total);
   }
   
   return pages;
@@ -307,6 +307,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
   .category-badge {
     display: inline-block;
     font-size: 0.8rem;
+    font-family: var(--font-serif);
     background: rgba(162, 89, 236, 0.1);
     color: var(--purple);
     padding: 0.3rem 0.7rem;
@@ -486,9 +487,13 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
     }
     
     .blog-post-meta {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.5rem;
+      /* 保持 flex-direction: row，让原文标签在右侧 */
+      align-items: center;
+    }
+
+    .blog-post-meta-left {
+      /* 左侧元素可以换行 */
+      flex: 1;
     }
 
     .pagination-numbers {

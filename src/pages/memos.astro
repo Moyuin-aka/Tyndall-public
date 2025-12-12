@@ -1,101 +1,392 @@
 ---
-import Layout from '@layouts/Layout.astro';
-import { useTranslations } from '@utils/ui';
-import '@styles/markdown.css';
+import Layout from "@layouts/Layout.astro";
+import { useTranslations } from "@utils/ui";
+import "@styles/markdown.css";
 
 const t = useTranslations(Astro.currentLocale);
 ---
 
-<Layout title={t('memos_page_title')} desc={t('memos_page_desc')}>
+<Layout title={t("memos_page_title")} desc={t("memos_page_desc")}>
   <main
     class="memos-container"
-    data-not-found={t('memos_error_not_found')}
-    data-failed={t('memos_error_failed')}
+    data-not-found={t("memos_error_not_found")}
+    data-failed={t("memos_error_failed")}
   >
     <header class="memos-hero">
       <p class="memos-hero-subtitle">MEMOS</p>
-      <h1 class="memos-hero-slogan">{t('memos_hero_slogan')}</h1>
+      <h1 class="memos-hero-slogan">{t("memos_hero_slogan")}</h1>
     </header>
     <div id="memos-loading" class="loading-indicator">
       <div class="spinner"></div>
-      <p>{t('memos_loading')}</p>
+      <p>{t("memos_loading")}</p>
     </div>
-    <div id="memos-content"></div>
+    <div id="memos-content" class="memos-grid"></div>
     <p id="memos-error" class="error-message"></p>
   </main>
+
+  <!-- Lightbox for image preview -->
+  <div id="lightbox" class="lightbox">
+    <span class="lightbox-close">&times;</span>
+    <img class="lightbox-content" id="lightbox-img" alt="Preview" />
+  </div>
 </Layout>
 
 <script>
-  import { initMemos } from '@utils/memos-render';
+  import { initMemos } from "@utils/memos-render";
   initMemos();
+
+  // Lightbox functionality
+  function initLightbox() {
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById(
+      "lightbox-img",
+    ) as HTMLImageElement;
+    const lightboxClose = document.querySelector(".lightbox-close");
+
+    if (!lightbox || !lightboxImg || !lightboxClose) return;
+
+    // Close lightbox
+    const closeLightbox = () => {
+      lightbox?.classList.remove("active");
+    };
+
+    // Open lightbox on image click
+    document.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains("memo-img")) {
+        e.preventDefault();
+        const imgSrc = target.getAttribute("src");
+        const imgAlt = target.getAttribute("alt");
+        if (imgSrc) {
+          lightboxImg.src = imgSrc;
+          lightboxImg.alt = imgAlt || "";
+          lightbox.classList.add("active");
+        }
+      }
+    });
+
+    // Close on X button click
+    lightboxClose.addEventListener("click", closeLightbox);
+
+    // Close on background click
+    lightbox.addEventListener("click", (e) => {
+      if (e.target === lightbox) {
+        closeLightbox();
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && lightbox.classList.contains("active")) {
+        closeLightbox();
+      }
+    });
+  }
+
+  // Initialize on page load
+  document.addEventListener("astro:page-load", initLightbox);
 </script>
 
 <style is:global>
   .memos-container {
-    max-width: 800px;
-    margin: 5rem auto 2rem; 
-    padding: 20px;
+    max-width: 1000px;
+    margin: 6rem auto 2rem;
+    padding: 0 24px;
   }
   .memos-hero {
     text-align: center;
-    margin-bottom: 4rem;
+    margin-bottom: 5rem;
+    position: relative;
   }
+  .memos-hero::after {
+    content: "";
+    position: absolute;
+    bottom: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple), var(--blue));
+    border-radius: 2px;
+    opacity: 0.5;
+  }
+
   .memos-hero-subtitle {
     font-family: var(--font-serif);
     font-size: 0.9rem;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.2em;
     color: var(--grey);
     text-transform: uppercase;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
   }
   .memos-hero-slogan {
     font-family: var(--font-serif);
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 700;
     color: var(--text);
     line-height: 1.2;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text) 0%, var(--grey) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Masonry Layout */
+  .memos-grid {
+    column-count: 2;
+    column-gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .memos-grid {
+      column-count: 1;
+    }
+    .memos-hero-slogan {
+      font-size: 2.5rem;
+    }
   }
 
   .memo-card {
-    background-color: var(--card-bg, #fff);
-    border: 1px solid var(--border, #eee);
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 16px;
     padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    margin-bottom: 1.5rem;
+    break-inside: avoid; /* Prevent card from splitting across columns */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:
+      0 4px 20px -2px rgba(0, 0, 0, 0.02),
+      0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .memo-card:hover {
-    box-shadow: 0 7px 14px rgba(0,0,0,0.07);
-    border-color: var(--card-border-hover, var(--purple));
+    transform: translateY(-4px);
+    box-shadow:
+      0 12px 30px -4px rgba(162, 89, 236, 0.1),
+      0 0 0 1px rgba(162, 89, 236, 0.2) inset;
+    background: rgba(255, 255, 255, 0.8);
   }
 
   .memo-header {
     margin-bottom: 1rem;
-    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
   }
 
   .memo-time {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--grey);
+    font-family: var(--font-mono, monospace);
+    opacity: 0.7;
+    background: rgba(0, 0, 0, 0.03);
+    padding: 2px 8px;
+    border-radius: 12px;
   }
 
   .memo-body {
-    color: var(--text, #333);
+    color: var(--text);
     line-height: 1.75;
     word-break: break-word;
-    letter-spacing: normal;
-    word-spacing: normal;
-    font-variant-ligatures: normal;
+    font-size: 1rem;
   }
 
-  .loading-indicator { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; color: var(--text-muted, #555); }
-  .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: var(--purple, #09f); animation: spin 1s ease infinite; margin-bottom: 1rem; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .error-message { color: #d9534f; text-align: center; padding: 1rem; }
-  html.dark .memo-card { --card-bg: #1E1E1E; --border: #333; --card-border-hover: var(--purple); background-color: var(--card-bg); border: 1px solid var(--border);}
-  html.dark .memo-time { color: #b5aed6; }
-  html.dark .memo-card { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); }
-  html.dark .memo-card:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); }
+  /* Markdown Content Styling inside Memo */
+  .memo-body p {
+    margin-bottom: 0.8em;
+  }
+  .memo-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Image Styling */
+  .memo-body .memo-img,
+  .memo-attachments .memo-img,
+  img.memo-img {
+    max-width: 100% !important;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 0.5em 0;
+    display: block;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .memo-img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(162, 89, 236, 0.2);
+  }
+
+  /* Image Gallery (Attachments) */
+  .memo-attachments {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .memo-attachments a {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    aspect-ratio: 1;
+  }
+
+  .memo-attachments img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    .memo-attachments {
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+  }
+
+  /* Lightbox Modal */
+  .lightbox {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .lightbox.active {
+    display: flex;
+  }
+
+  .lightbox-content {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    border-radius: 8px;
+    animation: zoomIn 0.3s ease;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+    z-index: 10000;
+  }
+
+  .lightbox-close:hover {
+    color: var(--purple);
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes zoomIn {
+    from {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 0;
+    color: var(--grey);
+  }
+  .spinner {
+    border: 3px solid rgba(162, 89, 236, 0.1);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border-left-color: var(--purple);
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .error-message {
+    color: #ef4444;
+    text-align: center;
+    padding: 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 8px;
+  }
+  .error-message:empty {
+    display: none;
+    padding: 0;
+  }
+
+  /* Dark Mode */
+  html.dark .memo-card {
+    background: rgba(30, 30, 30, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow:
+      0 4px 20px -2px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  }
+  html.dark .memo-card:hover {
+    background: rgba(40, 40, 40, 0.6);
+    box-shadow:
+      0 12px 30px -4px rgba(162, 89, 236, 0.15),
+      0 0 0 1px rgba(162, 89, 236, 0.3) inset;
+  }
+  html.dark .memo-time {
+    background: rgba(255, 255, 255, 0.05);
+    color: #b5aed6;
+  }
+  html.dark .memo-img {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+  html.dark .memo-img:hover {
+    box-shadow: 0 4px 16px rgba(162, 89, 236, 0.3);
+  }
+  html.dark .lightbox {
+    background-color: rgba(0, 0, 0, 0.95);
+  }
 </style>

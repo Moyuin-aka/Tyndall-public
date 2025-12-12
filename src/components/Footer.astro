@@ -1,34 +1,185 @@
 ---
-// No props needed for now
+import { ICONS } from '../utils/icons';
+
+const today = new Date();
 ---
 
 <footer>
   <div class="footer-content">
-    <p>© 2025  - Tyndall - Made by Moyuin with Astro</p>
+    <div class="footer-left">
+      <span class="copyright">© {today.getFullYear()} Moyuin</span>
+    </div>
+    
+    <div class="footer-center">
+      <div class="powered-by">
+        <span class="prefix">Powered by</span>
+        <a href="https://astro.build" target="_blank" class="link">Astro</a>
+        <span class="amp">&</span>
+        <a href="https://github.com/moyuin-aka/tyndall-public" target="_blank" class="link tyndall-link">
+          Tyndall
+          <svg class="tyndall-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z" fill="currentColor" fill-opacity="0.5"/>
+            <path d="M12 6L13.5 9.5L17 11L13.5 12.5L12 16L10.5 12.5L7 11L10.5 9.5L12 6Z" fill="currentColor"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-right">
+      <a href="/rss.xml" aria-label="RSS Feed" class="control-btn" set:html={ICONS.rss} />
+      <a href="https://music.163.com/#/user/home?id=1459120197" target="_blank" aria-label="Netease Music" class="control-btn" set:html={ICONS.netease} />
+    </div>
   </div>
 </footer>
 
 <style>
   footer {
-    font-family: var(--font-sans);
-    text-align: center;
-    padding: 2rem 1rem;
-    color: var(--text-secondary);
+    font-family: var(--font-serif);
+    padding: 1.5rem 1rem;
+    color: var(--grey);
     font-size: 0.9rem;
-    margin-top: 4rem; 
+    font-weight: 400;
+    margin-top: 4rem;
     
+    background-color: rgba(255, 255, 255, 0.5); /* Fallback */
     background-color: var(--header-bg);
-    backdrop-filter: var(--header-backdrop-filter);
-    -webkit-backdrop-filter: var(--header-backdrop-filter);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-top: 1px solid var(--header-border-color);
   }
 
   .footer-content {
     max-width: var(--container-max, 1280px);
     margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0.5rem;
   }
 
-  p {
+  .footer-left, .footer-right, .footer-center {
+    display: flex;
+    align-items: center;
+    flex: 1;
+  }
+
+  .footer-center {
+    justify-content: center;
+  }
+
+  .footer-right {
+    justify-content: flex-end;
+    gap: 0.75rem; /* Match header controls gap */
+  }
+
+  /* Powered By */
+  .powered-by {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+  }
+
+  .powered-by:hover {
+    opacity: 1;
+  }
+
+  .prefix {
+    opacity: 0.7;
+  }
+
+  .amp {
+    opacity: 0.5;
+    font-family: var(--font-sans);
+  }
+
+  .link {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    position: relative;
+    transition: color 0.2s ease;
+  }
+
+  .link:hover {
+    color: var(--primary, #a259ec);
+  }
+
+  .tyndall-link {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .tyndall-icon {
+    color: var(--text);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+  }
+
+  .tyndall-link:hover .tyndall-icon {
+    opacity: 1;
+    transform: scale(1.2) rotate(15deg);
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+  }
+
+  /* Control Buttons (Square Box Style) */
+  .control-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px; /* Match header nav-item-size */
+    height: 34px;
+    padding: 0;
     margin: 0;
+    background: transparent;
+    border: 1px solid var(--header-border-color);
+    border-radius: 8px;
+    color: var(--grey); /* Default to grey to match footer text */
+    box-shadow: none;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .1s ease;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  /* Constrain SVG size */
+  .control-btn :global(svg) {
+    width: 18px;
+    height: 18px;
+    stroke-width: 1.5px; /* Slightly thinner stroke for elegance */
+  }
+
+  .control-btn:hover {
+    background-color: var(--header-controls-hover-bg, rgba(162, 89, 236, 0.12));
+    color: var(--header-text-hover-color, var(--purple));
+    border-color: var(--header-border-color);
+    transform: translateY(-1px);
+  }
+
+  .control-btn:active {
+    transform: translateY(0);
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    footer {
+      padding: 1.5rem 1rem 2rem;
+    }
+    
+    .footer-content {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .footer-left, .footer-center, .footer-right {
+      justify-content: center;
+      width: 100%;
+    }
+
+    .footer-center {
+      order: -1;
+    }
   }
 </style>

@@ -1,0 +1,371 @@
+---
+import RecentlyRead from './RecentlyRead.astro';
+
+// 简单的 i18n
+const locale = Astro.currentLocale || 'zh';
+const labels = {
+  zh: {
+    title: '关于我的特质',
+    mbti: 'MBTI',
+    mbtiDesc: '理性思考者，独立探索',
+    interests: '职业兴趣',
+    interestsText: 'DevOps',
+    interestsDesc: '折腾网络和网络服务',
+    creation: '创作',
+    creationText: '偶尔把脑内剧情落成文字',
+    creationDesc: '不定期更新',
+    social: '社交',
+    socialText: 'HFA 倾向',
+    socialDesc: '社交能量有限',
+    current: '最近在做',
+    currentText: '积极进行期中备考中……',
+    currentDesc: '正在努力学习'
+  },
+  en: {
+    title: 'About My Traits',
+    mbti: 'MBTI',
+    mbtiDesc: 'Rational thinker, independent explorer',
+    interests: 'Interests',
+    interestsText: 'DevSecOps',
+    interestsDesc: 'Tinkering with services & infrastructure',
+    creation: 'Creation',
+    creationText: 'Occasionally turning thoughts into words',
+    creationDesc: 'Irregularly creating rambling texts',
+    social: 'Social',
+    socialText: 'HFA-inclined',
+    socialDesc: 'Limited social energy',
+    current: 'Currently',
+    currentText: 'Studying hard for midterms...',
+    currentDesc: 'Working hard'
+  }
+};
+
+const t = labels[locale as keyof typeof labels] || labels.zh;
+---
+
+<div class="personality-flow-container">
+  <h2 class="section-title">{t.title}</h2>
+  
+  <div class="bento-grid">
+    <!-- MBTI 卡片 -->
+    <div class="bento-card mbti-card" data-layer="1">
+      <div class="card-content">
+        <div class="card-icon">
+          <img src="/svg/istp.svg" alt="MBTI Avatar" class="mbti-avatar" />
+        </div>
+        <div class="text-content">
+          <h3>{t.mbti}</h3>
+          <p class="card-text">ISTP</p>
+          <div class="card-detail">{t.mbtiDesc}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 最近在读 - 占据更多空间 -->
+    <div class="bento-card reading-card" data-layer="2">
+      <div class="card-content">
+        <RecentlyRead limit={1} compact={true} />
+      </div>
+    </div>
+
+    <!-- 兴趣爱好 -->
+    <div class="bento-card interest-card" data-layer="1">
+      <div class="card-content">
+        <div class="card-emoji">🌌</div>
+        <div class="text-content">
+          <h3>{t.interests}</h3>
+          <p class="card-text">{t.interestsText}</p>
+          <div class="card-detail">{t.interestsDesc}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 创作状态 -->
+    <div class="bento-card creation-card" data-layer="2">
+      <div class="card-content">
+        <div class="card-emoji">✍️</div>
+        <div class="text-content">
+          <h3>{t.creation}</h3>
+          <p class="card-text">{t.creationText}</p>
+          <div class="card-detail">{t.creationDesc}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 社交特质 -->
+    <div class="bento-card social-card" data-layer="1">
+      <div class="card-content">
+        <div class="card-emoji">🎭</div>
+        <div class="text-content">
+          <h3>{t.social}</h3>
+          <p class="card-text">{t.socialText}</p>
+          <div class="card-detail">{t.socialDesc}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 当前在做 -->
+    <div class="bento-card current-card" data-layer="1">
+      <div class="card-content">
+        <div class="card-emoji">🎯</div>
+        <div class="text-content">
+          <h3>{t.current}</h3>
+          <p class="card-text">{t.currentText}</p>
+          <div class="card-detail">{t.currentDesc}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .personality-flow-container {
+    margin-top: 5rem;
+    position: relative;
+    padding: 1rem;
+    overflow: hidden; /* Prevent ambient glows from causing scrollbars */
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3rem;
+    text-align: center;
+    opacity: 0;
+    animation: fadeInDown 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+
+  /* Bento Grid 布局 */
+  .bento-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, minmax(180px, auto));
+    gap: 1.5rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 卡片通用样式 */
+  .bento-card {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 24px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+      0 4px 24px -1px rgba(0, 0, 0, 0.02),
+      0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+    opacity: 0;
+    animation: floatIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+
+  /* 暗色模式卡片样式 */
+  :global(.dark) .bento-card {
+    background: rgba(30, 30, 30, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 
+      0 4px 24px -1px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  }
+
+  /* 卡片布局分配 */
+  .mbti-card {
+    grid-column: span 1;
+    grid-row: span 1;
+    animation-delay: 0.1s;
+  }
+
+  .reading-card {
+    grid-column: span 2;
+    grid-row: span 1;
+    animation-delay: 0.2s;
+  }
+
+  .interest-card {
+    grid-column: span 1;
+    grid-row: span 1;
+    animation-delay: 0.3s;
+  }
+
+  .creation-card {
+    grid-column: span 1;
+    grid-row: span 1;
+    animation-delay: 0.4s;
+  }
+
+  .social-card {
+    grid-column: span 1;
+    grid-row: span 1;
+    animation-delay: 0.5s;
+  }
+
+  .current-card {
+    grid-column: span 2;
+    grid-row: span 1;
+    animation-delay: 0.6s;
+  }
+
+  /* 悬停效果 */
+  .bento-card:hover {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 
+      0 20px 40px -4px rgba(162, 89, 236, 0.15),
+      0 0 0 1px rgba(162, 89, 236, 0.3) inset;
+    z-index: 2;
+  }
+
+  :global(.dark) .bento-card:hover {
+    box-shadow: 
+      0 20px 40px -4px rgba(162, 89, 236, 0.2),
+      0 0 0 1px rgba(162, 89, 236, 0.4) inset;
+  }
+
+  /* 内容样式 */
+  .card-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .reading-card .card-content {
+    padding: 0;
+  }
+
+  .card-emoji {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 4px 12px rgba(162, 89, 236, 0.15));
+    transition: transform 0.3s ease;
+  }
+
+  .bento-card:hover .card-emoji {
+    transform: scale(1.2) rotate(10deg);
+  }
+
+  .mbti-avatar {
+    width: 70px;
+    height: 70px;
+    filter: drop-shadow(0 4px 12px rgba(162, 89, 236, 0.2));
+    transition: transform 0.3s ease;
+  }
+
+  .bento-card:hover .mbti-avatar {
+    transform: scale(1.1) rotate(-5deg);
+  }
+
+  h3 {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 0.25rem 0;
+    opacity: 0.9;
+  }
+
+  .card-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .card-detail {
+    font-size: 0.85rem;
+    color: var(--grey);
+    margin-top: 0.5rem;
+    opacity: 0.8;
+    line-height: 1.4;
+  }
+
+  /* 背景光晕 */
+  .ambient-glow {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(162, 89, 236, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(40px);
+  }
+
+  .glow-1 {
+    top: -10%;
+    left: -10%;
+    animation: pulse 8s ease-in-out infinite alternate;
+  }
+
+  .glow-2 {
+    bottom: -10%;
+    right: -10%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+    animation: pulse 10s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1) translate(0, 0); opacity: 0.5; }
+    100% { transform: scale(1.2) translate(20px, -20px); opacity: 0.8; }
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes floatIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 1024px) {
+    .bento-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .reading-card { grid-column: span 2; }
+    .current-card { grid-column: span 1; }
+  }
+
+  @media (max-width: 768px) {
+    .bento-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .mbti-card { grid-column: span 1; }
+    .reading-card { grid-column: span 2; }
+    .interest-card { grid-column: span 1; }
+    .creation-card { grid-column: span 1; }
+    .social-card { grid-column: span 1; }
+    .current-card { grid-column: span 1; }
+
+    .section-title {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .bento-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+    }
+
+    .bento-card { grid-column: span 1 !important; }
+
+    .ambient-glow { display: none; }
+  }
+</style>

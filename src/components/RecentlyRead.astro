@@ -1,0 +1,197 @@
+---
+const { limit = null, compact = false } = Astro.props;
+
+// 简单的 i18n
+const locale = Astro.currentLocale || 'zh';
+const recentlyReadingLabel = locale === 'en' ? 'Currently Reading' : '最近在读';
+---
+<div class="recently-read-container" data-compact={compact}>
+  <div id="reading-list" class="reading-list-grid"></div>
+</div>
+
+<script define:vars={{ limit, compact, recentlyReadingLabel }}>
+  async function fetchRecentlyRead() {
+    const readingListContainer = document.getElementById('reading-list');
+    if (!readingListContainer) return;
+
+    try {
+      const response = await fetch('https://YOURSITE/books/opds/shelf/1');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const xmlString = await response.text();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+
+      let entries = Array.from(xmlDoc.querySelectorAll('entry'));
+      if (limit) {
+        entries = entries.slice(0, limit);
+      }
+      
+      let booksHtml = '';
+
+      entries.forEach(entry => {
+        const title = entry.querySelector('title')?.textContent || 'No title';
+        const author = entry.querySelector('author > name')?.textContent || 'Unknown author';
+        const coverImageLink = entry.querySelector('link[rel="http://opds-spec.org/image"]');
+        const coverImageUrl = coverImageLink ? coverImageLink.getAttribute('href') : '';
+        
+        // 构建豆瓣搜索链接
+        const searchQuery = encodeURIComponent(`${title} ${author}`);
+        const doubanUrl = `https://search.douban.com/book/subject_search?search_text=${searchQuery}`;
+
+        const compactClass = compact ? 'compact' : '';
+        booksHtml += `
+          <div class="book-card ${compactClass}">
+            <a href="${doubanUrl}" class="book-link" target="_blank" rel="noopener noreferrer" title="在豆瓣上查看《${title}》">
+              <img src="https://YOURSITE/books${coverImageUrl}" alt="Cover of ${title}" class="book-cover"/>
+            </a>
+            ${compact ? `<h3 class="reading-label">${recentlyReadingLabel}</h3>` : ''}
+            <div class="book-info">
+              <p class="book-title">${title}</p>
+              <p class="book-author">${author}</p>
+            </div>
+          </div>
+        `;
+      });
+
+      readingListContainer.innerHTML = booksHtml;
+    } catch (error) {
+      console.error('Failed to fetch recently read books:', error);
+      readingListContainer.innerHTML = '<p>无法加载最近在读的书籍。</p>';
+    }
+  }
+
+  document.addEventListener('astro:page-load', fetchRecentlyRead);
+</script>
+
+<style is:global>
+  .recently-read-container h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+  }
+  .reading-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1.5rem;
+  }
+  .book-card {
+    display: flex;
+    flex-direction: column;
+    color: var(--text);
+    background: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--card-border);
+  }
+  
+  .book-link {
+    display: block;
+    text-decoration: none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  .book-link:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+  
+  .book-cover {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    display: block;
+  }
+  .book-info {
+    padding: 0.75rem;
+  }
+  .book-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0;
+    color: var(--text);
+  }
+  .book-author {
+    font-size: 0.8rem;
+    color: var(--grey);
+    margin: 0.25rem 0 0;
+  }
+
+  /* Compact mode for personality tags */
+  .recently-read-container[data-compact="true"] .reading-list-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  
+  .recently-read-container[data-compact="true"] .book-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    text-align: center;
+  }
+
+  .recently-read-container[data-compact="true"] .book-link {
+    display: block;
+    flex-shrink: 0;
+    margin-bottom: 0.25rem;
+  }
+
+  .recently-read-container[data-compact="true"] .book-link:hover {
+    transform: scale(1.08);
+  }
+
+  .recently-read-container[data-compact="true"] .book-cover {
+    width: 53px;
+    height: 80px;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(162, 89, 236, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .recently-read-container[data-compact="true"] .book-link:hover .book-cover {
+    box-shadow: 0 6px 16px rgba(162, 89, 236, 0.25);
+  }
+
+  .recently-read-container[data-compact="true"] .reading-label {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 0.5rem 0;
+    letter-spacing: 0.02em;
+  }
+
+  .recently-read-container[data-compact="true"] .book-info {
+    padding: 0;
+    text-align: center;
+    width: 100%;
+  }
+
+  .recently-read-container[data-compact="true"] .book-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.5;
+    margin: 0 0 0.3rem 0;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .recently-read-container[data-compact="true"] .book-author {
+    font-size: 0.9rem;
+    color: var(--grey);
+    opacity: 0.8;
+    margin: 0;
+  }
+</style>

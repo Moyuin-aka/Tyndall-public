@@ -81,24 +81,21 @@ const tags = Array.from(allTags);
           </div>
         </div>
 
-        <!-- Friend Link Info Box -->
-        <div class="info-box">
-          <div class="info-row">
-            <span class="info-label">Name:</span>
-            <span class="info-value">{guidelines.myInfo.name}</span>
+        <div class="json-box">
+          <div class="json-line"><span class="key">myInfo</span>: <span class="bracket">{'{'}</span></div>
+          <div class="json-line indent">
+            <span class="key">name</span>: <span class="value">'{guidelines.myInfo.name}'</span>,
           </div>
-          <div class="info-row">
-            <span class="info-label">URL:</span>
-            <span class="info-value">{guidelines.myInfo.url}</span>
+          <div class="json-line indent">
+            <span class="key">avatar</span>: <span class="value">'{guidelines.myInfo.avatar}'</span>,
           </div>
-          <div class="info-row">
-            <span class="info-label">Avatar:</span>
-            <span class="info-value">{guidelines.myInfo.avatar}</span>
+          <div class="json-line indent">
+            <span class="key">url</span>: <span class="value">'{guidelines.myInfo.url}'</span>,
           </div>
-          <div class="info-row">
-            <span class="info-label">Desc:</span>
-            <span class="info-value">{guidelines.myInfo.description}</span>
+          <div class="json-line indent">
+            <span class="key">description</span>: <span class="value">'{guidelines.myInfo.description}'</span>
           </div>
+          <div class="json-line"><span class="bracket">{'}'}</span>,</div>
         </div>
 
         <p class="apply-tip" set:html={guidelines.howToApply}></p>
@@ -478,5 +475,76 @@ const tags = Array.from(allTags);
       font-size: 0.85rem;
       padding: 0.4rem 0.8rem;
     }
+
+    /* MyInfo Mobile Adaptation */
+    .apply-section {
+      margin-top: 2rem;
+      padding-top: 2rem;
+    }
+
+    .apply-content h2 {
+      font-size: 1.5rem;
+    }
+
+    .my-avatar {
+      margin-bottom: 0.5rem;
+    }
+
+    .json-box {
+      padding: 1.5em;
+      font-size: 3.2vw;
+      overflow-x: hidden;
+      margin: 1rem 0;
+    }
+
+    .json-line {
+      white-space: nowrap;
+    }
+
+    .json-line.indent {
+      padding-left: 1.5em;
+    }
+  }
+
+  /* JSON Box */
+  .json-box {
+    background: rgba(162, 89, 236, 0.04);
+    border: 1px solid rgba(162, 89, 236, 0.2);
+    border-radius: 8px;
+    padding: 1.5em;
+    margin: 1.5rem 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--grey); /* Punctuation becomes grey */
+    transition: all 0.3s ease;
+  }
+
+  .json-box:hover {
+    background: rgba(162, 89, 236, 0.06);
+    border-color: rgba(162, 89, 236, 0.3);
+  }
+
+  .json-line {
+    display: flex;
+    align-items: center;
+  }
+
+  .json-line.indent {
+    padding-left: 1.5rem;
+  }
+
+  .key {
+    color: var(--purple);
+    margin-right: 0.5rem;
+  }
+
+  .value {
+    color: var(--text); /* Values become main text color */
+    word-break: break-all;
+  }
+
+  .bracket {
+    color: inherit; /* Inherit grey from json-box */
   }
 </style>

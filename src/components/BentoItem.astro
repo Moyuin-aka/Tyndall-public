@@ -1,0 +1,17 @@
+---
+// src/components/BentoItem.astro
+const { colSpan = 1, rowSpan = 1 } = Astro.props;
+---
+<div class="bento-item" style={`grid-column: span ${colSpan}; grid-row: span ${rowSpan};`}>
+  <slot />
+</div>
+
+<style>
+  .bento-item {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
+  }
+</style>

@@ -1,185 +1,344 @@
 ---
 import Layout from '@layouts/Layout.astro';
 import { useTranslations } from '@utils/ui';
+import PersonalityTagsFlow from '@components/PersonalityTagsFlow.astro';
+import TyndallEffect from '@components/TyndallEffect.astro';
 import '@styles/markdown.css';
 
 const t = useTranslations(Astro.currentLocale);
 ---
 
 <Layout title={t('about_title')}>
+  <TyndallEffect />
+  
   <main class="about-container">
-    <header class="about-hero">
-      <p class="about-hero-subtitle">ABOUT</p>
-      <h1 class="about-hero-slogan">{t('about_slogan')}</h1>
+    <header class="about-hero scroll-reveal">
+      <div class="hero-content">
+        <p class="about-hero-subtitle">ABOUT</p>
+        <h1 class="about-hero-slogan">{t('about_slogan')}</h1>
+        <div class="hero-divider"></div>
+      </div>
     </header>
 
-    <article class="about-content markdown-content">
-      <!-- About Me -->
-      <div class="content-section intro-section">
-        <h2>About Me</h2>
-        <p>Hello, I'm Your Name.</p>
-        <blockquote>
-          Floating or Hovering, with no origin and no destination.
-        </blockquote>
-        <p>This is a sample about page where you can introduce yourself.</p>
-      </div>
+    <article class="about-content">
+      <!-- Intro: Poetic & Flowing -->
+      <section class="content-section intro-section scroll-reveal">
+        <div class="intro-text">
+          <p class="greeting">Hello, I'm Moyuin.</p>
+          <p class="poetic-line">Floating or Hovering, with no origin and no destination.</p>
+          <p class="aliases">You can also call me Moyuin / Yun / Momo.</p>
+          <p class="description">
+            I occasionally appear here; rather than a "personal website," this is more like my own retreat.<br>
+            You can read my musings, listen to my trivial matters—you're welcome to stay.
+          </p>
+        </div>
+      </section>
 
-      <!-- Background -->
-      <div class="content-section">
-        <h2>Background</h2>
-        <p>Add your background information here...</p>
-      </div>
+      <!-- The Ginkgo Diary: Featured Narrative -->
+      <section class="content-section diary-section scroll-reveal">
+        <div class="diary-card">
+          <span class="diary-date">From a winter diary</span>
+          <div class="diary-content">
+            <p>
+              Though it was bitterly cold today, I saw new buds on the ginkgo tree outside the window and felt immense joy. I watched snow and ice shards rise and fall in the wind and rain, landing on the earth, never to return to the sky and branches that don't belong to them.
+            </p>
+            <p>
+              Yet under the New Year's sun, they slowly melt into water, returning to the tree's vessels, working anew—evaporating as vapor, generating oxygen through photosynthesis, continuing to return to the boundless world outside, nourishing the ginkgo's new buds.
+            </p>
+            <p class="highlight-text">
+              Perhaps I will be like that too. I dare not claim to be the water that nourishes all things, or the oxygen that benefits the ecosystem. I just feel adrift with no place to return, but the world will need me one day.
+            </p>
+            <p>
+              Of course, being the sun that shines through all ages would also be wonderful. In this way, where the heart finds peace becomes my home, becoming my own inner sun, I continue walking forward with my own two arms.
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <!-- Origins -->
+      <!-- Ender Particles: Floating Personality Tags -->
+      <section class="content-section particles-section scroll-reveal">
+        <div class="void-container">
+          <PersonalityTagsFlow />
+        </div>
+      </section>
+      
+      <!-- Void Map: Contributions -->
+      <section class="content-section map-section scroll-reveal">
+        <div class="chart-wrapper">
+          <img src="https://ghchart.rshah.org/moyuin-aka" alt="Moyuin's Github chart" loading="lazy" />
+        </div>
+      </section>
 
       <!-- Subscribe -->
-      <div class="content-section subscribe-section">
-        <p>You can subscribe to this site's updates via <a href="/rss.xml" target="_blank" rel="noopener noreferrer">RSS</a> 🌱</p>
-      </div>
+      <section class="content-section subscribe-section scroll-reveal">
+        <p>You can subscribe to this site's updates via <a href="/en/rss.xml" target="_blank" rel="noopener noreferrer" class="rss-link">RSS</a> 🌱</p>
+      </section>
     </article>
   </main>
 </Layout>
 
+<script>
+  document.addEventListener('astro:page-load', () => {
+    // Scroll Reveal
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.scroll-reveal').forEach(el => {
+      observer.observe(el);
+    });
+
+    // 3D Tilt Effect for Diary Card
+    const card = document.querySelector('.diary-card') as HTMLElement;
+    if (card) {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const rotateX = ((y - centerY) / centerY) * -2; // Max rotation deg
+        const rotateY = ((x - centerX) / centerX) * 2;
+
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.01, 1.01, 1.01)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+      });
+    }
+  });
+</script>
+
 <style>
   .about-container {
     max-width: 800px;
-    margin: 5rem auto 2rem;
-    padding: 20px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
   }
 
+  /* Scroll Reveal Animation Base */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1s ease, transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .scroll-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Hero Section */
   .about-hero {
+    min-height: 40vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    margin-bottom: 4rem;
+    margin-bottom: 2rem;
+    padding-top: 4rem;
   }
 
   .about-hero-subtitle {
     font-family: var(--font-serif);
-    font-size: 0.9rem;
-    letter-spacing: 0.1em;
+    font-size: 0.85rem;
+    letter-spacing: 0.3em;
     color: var(--grey);
     text-transform: uppercase;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
   }
 
   .about-hero-slogan {
     font-family: var(--font-serif);
-    font-size: 3rem;
+    font-size: 4rem;
     font-weight: 700;
     color: var(--text);
-    line-height: 1.2;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--text) 30%, rgba(162, 89, 236, 0.5) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  /* About Content Area - Rendered with markdown.css */
-  .about-content {
-    font-family: var(--font-sans);
-    color: var(--text);
-    line-height: 1.8;
+  .hero-divider {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--text), transparent);
+    margin: 0 auto;
+    opacity: 0.2;
   }
 
+  /* Content Sections */
   .content-section {
-    margin-bottom: 3rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid rgba(162, 89, 236, 0.15);
+    margin-bottom: 6rem;
   }
 
-  .content-section:last-child {
-    border-bottom: none;
-  }
-
-  .content-section h2 {
+  /* Intro Section */
+  .intro-text {
+    text-align: center;
     font-family: var(--font-serif);
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: var(--text);
+  }
+
+  .greeting {
+    font-size: 1.5rem;
+    font-weight: 500;
     margin-bottom: 1rem;
-    letter-spacing: 0.02em;
   }
 
-  .content-section p {
-    font-size: 1.05rem;
-    color: var(--text);
-    opacity: 0.85;
-    max-width: 65ch;
-    line-height: 1.8;
-    margin-bottom: 0.8rem;
-  }
-
-  .content-section p:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Blockquote styles */
-  .content-section blockquote {
-    margin: 1.5rem 0;
-    padding: 1.2rem 1.5rem;
-    border-left: 4px solid rgba(162, 89, 236, 0.4);
-    background: rgba(162, 89, 236, 0.06);
-    border-radius: 0 8px 8px 0;
-    font-family: var(--font-serif);
+  .poetic-line {
+    font-size: 1.2rem;
     font-style: italic;
-  }
-
-  .content-section blockquote p {
-    margin-bottom: 0.8rem;
-    opacity: 0.9;
-    font-size: 1.02rem;
-    line-height: 1.85;
-  }
-
-  .content-section blockquote p:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Link styles */
-  .content-section a {
-    color: var(--purple);
-    text-decoration: none;
-    font-weight: 600;
-    border-bottom: 1px solid rgba(162, 89, 236, 0.3);
-    transition: all 0.2s ease;
-  }
-
-  .content-section a:hover {
-    color: var(--purple);
-    border-bottom-color: var(--purple);
+    color: var(--grey);
+    margin-bottom: 2rem;
     opacity: 0.8;
   }
 
-  /* First paragraph style (About Me) */
-  .intro-section p:first-of-type {
-    font-size: 1.15rem;
-    font-weight: 500;
+  .aliases {
+    font-size: 0.95rem;
+    color: var(--grey);
+    margin-bottom: 1.5rem;
+    opacity: 0.6;
   }
 
-  /* Subscribe section */
+  .description {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    max-width: 600px;
+    margin: 0 auto;
+    color: var(--text);
+    opacity: 0.9;
+  }
+
+  /* Diary Section - The Book */
+  .diary-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(162, 89, 236, 0.15);
+    padding: 3rem;
+    border-radius: 4px;
+    position: relative;
+    box-shadow: 0 20px 40px -20px rgba(162, 89, 236, 0.1);
+    transition: transform 0.1s ease-out; /* Smooth tilt return */
+    transform-style: preserve-3d;
+  }
+
+  :global(.dark) .diary-card {
+    background: rgba(10, 10, 20, 0.3);
+    border-color: rgba(162, 89, 236, 0.2);
+    box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.4);
+  }
+
+  .diary-date {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg);
+    padding: 0 1rem;
+    font-family: var(--font-serif);
+    font-size: 0.8rem;
+    color: var(--purple);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .diary-content p {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 2;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+    opacity: 0.85;
+    text-align: justify;
+    transform: translateZ(20px); /* Text floats above card */
+  }
+
+  .diary-content .highlight-text {
+    color: var(--purple);
+    font-weight: 500;
+    opacity: 1;
+  }
+
+  /* Void Container for Particles */
+  .void-container {
+    padding: 2rem 0;
+    position: relative;
+    /* Let the particles flow naturally without a container border */
+  }
+
+  /* Void Map */
+  .chart-wrapper {
+    background: transparent;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(162, 89, 236, 0.1);
+    overflow-x: auto;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+  }
+  
+  .chart-wrapper:hover {
+    opacity: 1;
+    border-color: rgba(162, 89, 236, 0.5);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px -10px rgba(162, 89, 236, 0.2);
+  }
+
+  .chart-wrapper img {
+    width: 100%;
+    height: auto;
+    min-width: 600px;
+    filter: hue-rotate(260deg) saturate(0.5); /* Shift to purple tones */
+  }
+
+  /* Subscribe Section */
   .subscribe-section {
     text-align: center;
-    padding-top: 1rem;
+    margin-bottom: 4rem;
   }
 
-  .subscribe-section p {
-    max-width: 100%;
-    font-size: 1.1rem;
+  .rss-link {
+    color: var(--purple);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
   }
 
-  /* Light mode adaptation */
-  :global(html:not(.dark)) .content-section blockquote {
-    background: rgba(162, 89, 236, 0.04);
-    border-left-color: rgba(162, 89, 236, 0.35);
+  .rss-link:hover {
+    border-color: currentColor;
   }
 
-  /* Responsive Design */
+  /* Mobile Responsive */
   @media (max-width: 768px) {
     .about-hero-slogan {
       font-size: 2.5rem;
     }
 
-    .content-section h2 {
-      font-size: 1.5rem;
+    .diary-card {
+      padding: 1.5rem;
     }
 
-    .content-section p {
-      font-size: 1rem;
+    .content-section {
+      margin-bottom: 5rem;
     }
   }
 </style>

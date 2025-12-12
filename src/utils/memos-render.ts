@@ -195,7 +195,7 @@ function run() {
     'memos-loading',
     'memos-content',
     'memos-error',
-    'https://your-memos-api.com',  // 替换为你的 Memos API 地址
+    'https://api.YOURSITE',
     notFoundMsg,
     failedMsg
   );

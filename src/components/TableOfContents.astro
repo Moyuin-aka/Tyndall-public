@@ -107,14 +107,26 @@ if (tocHeadings.length === 0) {
     /* 性能优化提示 */
     will-change: opacity, transform;
     
-    /* 毛玻璃效果 */
-    background: rgba(255, 255, 255, 0.6);
+    /* 毛玻璃效果 - 提高白天模式不透明度以改善可读性 */
+    background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border-color: rgba(162, 89, 236, 0.25);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     max-height: 60vh;
     overflow-y: auto;
+    
+    /* Smooth transition for top position change */
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), 
+                transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                background-color 0.3s ease, 
+                border-color 0.3s ease;
+  }
+  
+  /* TOC position adjustment when header is hidden */
+  .toc-sticky.toc-header-hidden {
+    top: 10px;
   }
 
   /* 吸顶 TOC 显示状态 */
@@ -125,7 +137,7 @@ if (tocHeadings.length === 0) {
   }
 
   .table-of-contents {
-    font-family: var(--font-sans);
+    font-family: var(--font-serif);
     margin: 1.5rem 0 2rem;
     padding: 1rem 1.25rem;
     background: rgba(162, 89, 236, 0.05);
@@ -135,13 +147,7 @@ if (tocHeadings.length === 0) {
     transition: background-color 0.3s ease, border-color 0.3s ease;
   }
 
-  /* 覆盖 table-of-contents 的 transition，确保吸顶 TOC 的过渡生效 */
-  .table-of-contents.toc-sticky {
-    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), 
-                transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                background-color 0.3s ease, 
-                border-color 0.3s ease;
-  }
+
 
   summary {
     display: flex;
@@ -254,6 +260,17 @@ if (tocHeadings.length === 0) {
     background: rgba(162, 89, 236, 0.5);
   }
 
+  /* 白天模式：吸顶 TOC 文字颜色优化 - 使用柔和的深灰色 */
+  .toc-sticky summary,
+  .toc-sticky .toc-item a {
+    color: #5c5b5b;
+  }
+
+  .toc-sticky .toc-item a:hover,
+  .toc-sticky .toc-item a.active {
+    color: var(--purple);
+  }
+
   /* 深色模式 */
   html.dark .table-of-contents {
     background: rgba(162, 89, 236, 0.08);
@@ -272,6 +289,17 @@ if (tocHeadings.length === 0) {
 
   html.dark .toc-sticky.show:hover {
     background: rgba(30, 30, 30, 0.75);
+  }
+
+  /* 夜间模式：恢复浅色文字 */
+  html.dark .toc-sticky summary,
+  html.dark .toc-sticky .toc-item a {
+    color: var(--text);
+  }
+
+  html.dark .toc-sticky .toc-item a:hover,
+  html.dark .toc-sticky .toc-item a.active {
+    color: var(--purple);
   }
 
   /* 移动端适配 */
@@ -467,11 +495,38 @@ if (tocHeadings.length === 0) {
         const targetElement = document.getElementById(targetId!);
         
         if (targetElement) {
-          const offsetTop = targetElement.offsetTop - headerHeight - 20;
+          // 使用 getAbsoluteTop 获取元素相对于文档顶部的绝对位置
+          const absoluteTop = getAbsoluteTop(targetElement);
+          const offsetTop = absoluteTop - headerHeight - 20;
+          
+          // 先立即滚动到接近目标的位置
           window.scrollTo({
             top: offsetTop,
             behavior: 'smooth'
           });
+          
+          // 多次校正机制：在不同时间点重新检查位置
+          // 这样可以处理代码高亮、数学公式、图片等动态加载的内容
+          const correctScroll = (delay: number) => {
+            setTimeout(() => {
+              const correctedTop = getAbsoluteTop(targetElement) - headerHeight - 20;
+              const currentScroll = window.scrollY;
+              const diff = Math.abs(currentScroll - correctedTop);
+              
+              // 如果偏差超过10px，重新滚动
+              if (diff > 10) {
+                window.scrollTo({
+                  top: correctedTop,
+                  behavior: 'smooth'
+                });
+              }
+            }, delay);
+          };
+          
+          // 分别在300ms、600ms和1000ms后进行校正
+          correctScroll(300);
+          correctScroll(600);
+          correctScroll(1000);
         }
       });
     });
@@ -518,7 +573,42 @@ if (tocHeadings.length === 0) {
     document.addEventListener('astro:before-preparation', cleanup, { once: true });
     document.addEventListener('astro:page-load', cleanup, { once: true });
   }
+  
+  /**
+   * Listen for header visibility changes and adjust TOC position
+   */
+  function initHeaderVisibilityListener() {
+    const tocSticky = document.querySelector('.toc-sticky') as HTMLElement;
+    if (!tocSticky) return;
+    
+    const handleHeaderVisibility = (event: Event) => {
+      const customEvent = event as CustomEvent<{ isVisible: boolean }>;
+      const isHeaderVisible = customEvent.detail.isVisible;
+      
+      if (isHeaderVisible) {
+        tocSticky.classList.remove('toc-header-hidden');
+      } else {
+        tocSticky.classList.add('toc-header-hidden');
+      }
+    };
+    
+    window.addEventListener('header-visibility-change', handleHeaderVisibility);
+    
+    // Cleanup on page navigation
+    const cleanupHeaderListener = () => {
+      window.removeEventListener('header-visibility-change', handleHeaderVisibility);
+    };
+    
+    document.addEventListener('astro:before-preparation', cleanupHeaderListener, { once: true });
+    document.addEventListener('astro:page-load', cleanupHeaderListener, { once: true });
+  }
 
-  document.addEventListener('DOMContentLoaded', initTOC);
-  document.addEventListener('astro:page-load', initTOC);
+  document.addEventListener('DOMContentLoaded', () => {
+    initTOC();
+    initHeaderVisibilityListener();
+  });
+  document.addEventListener('astro:page-load', () => {
+    initTOC();
+    initHeaderVisibilityListener();
+  });
 </script>

@@ -22,18 +22,18 @@ services.forEach(service => {
 ---
 
 <div class="service-status-summary">
-  <a href="#" class="status-item online" title="Online">
-    <span class="status-dot up"></span>
+  <div class="status-item online" title="Online">
+    <span class={`status-dot up ${statusCounts.online > 0 ? 'glow' : ''}`}></span>
     <span class="count">{statusCounts.online}</span>
-  </a>
-  <a href="#" class="status-item offline" title="Offline">
-    <span class="status-dot down"></span>
+  </div>
+  <div class="status-item offline" title="Offline">
+    <span class={`status-dot down ${statusCounts.offline > 0 ? 'glow' : ''}`}></span>
     <span class="count">{statusCounts.offline}</span>
-  </a>
-  <a href="#" class="status-item unknown" title="Unknown">
-    <span class="status-dot unknown"></span>
+  </div>
+  <div class="status-item unknown" title="Unknown">
+    <span class={`status-dot unknown ${statusCounts.unknown > 0 ? 'glow' : ''}`}></span>
     <span class="count">{statusCounts.unknown}</span>
-  </a>
+  </div>
 </div>
 
 <style>
@@ -41,42 +41,71 @@ services.forEach(service => {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 1.5rem;
+    gap: 2rem;
     margin-top: 2rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  :global(.dark) .service-status-summary {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
   }
 
   .status-item {
     display: flex;
     align-items: center;
-    text-decoration: none;
+    gap: 0.8rem;
     color: var(--grey);
-    font-size: 0.9rem;
-    background-color: var(--card-bg);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    border: 1px solid var(--border);
+    font-size: 1rem;
+    font-weight: 500;
     transition: all 0.3s ease;
   }
 
-  .status-item:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--card-shadow-hover);
-    color: var(--text);
-  }
-
   .status-dot {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    margin-right: 0.5rem;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.4; /* Increased from 0.2 */
+    transform: scale(0.9); /* Increased from 0.8 */
+    border: 2px solid transparent; /* Add border for better visibility */
   }
 
-  /* Re-using dot colors from global styles */
-  .status-dot.up { background-color: var(--status-ok); }
-  .status-dot.down { background-color: var(--status-down); }
-  .status-dot.unknown { background-color: var(--status-unknown); }
+  /* Traffic Light Colors */
+  .status-dot.up { background-color: #2ecc71; border-color: rgba(46, 204, 113, 0.2); }
+  .status-dot.down { background-color: #ff5252; border-color: rgba(255, 82, 82, 0.2); }
+  .status-dot.unknown { background-color: #ffb142; border-color: rgba(255, 177, 66, 0.2); }
+
+  /* Active State (Glowing) */
+  .status-dot.glow {
+    opacity: 1;
+    transform: scale(1.1);
+    border-color: transparent;
+  }
+
+  .status-dot.up.glow {
+    box-shadow: 0 0 15px #2ecc71, 0 0 30px rgba(46, 204, 113, 0.6);
+  }
+  
+  .status-dot.down.glow {
+    box-shadow: 0 0 15px #ff5252, 0 0 30px rgba(255, 82, 82, 0.6);
+  }
+  
+  .status-dot.unknown.glow {
+    box-shadow: 0 0 15px #ffb142, 0 0 30px rgba(255, 177, 66, 0.6);
+  }
 
   .count {
+    font-family: var(--font-mono);
+    opacity: 0.9;
     font-weight: 600;
   }
 </style>

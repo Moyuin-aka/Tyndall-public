@@ -1,190 +1,344 @@
 ---
 import Layout from '@layouts/Layout.astro';
 import { useTranslations } from '@utils/ui';
+import PersonalityTagsFlow from '@components/PersonalityTagsFlow.astro';
+import TyndallEffect from '@components/TyndallEffect.astro';
 import '@styles/markdown.css';
 
 const t = useTranslations(Astro.currentLocale);
 ---
 
 <Layout title={t('about_title')}>
+  <TyndallEffect />
+  
   <main class="about-container">
-    <header class="about-hero">
-      <p class="about-hero-subtitle">ABOUT</p>
-      <h1 class="about-hero-slogan">{t('about_slogan')}</h1>
+    <header class="about-hero scroll-reveal">
+      <div class="hero-content">
+        <p class="about-hero-subtitle">ABOUT</p>
+        <h1 class="about-hero-slogan">{t('about_slogan')}</h1>
+        <div class="hero-divider"></div>
+      </div>
     </header>
 
-    <article class="about-content markdown-content">
-      <!-- 关于我 -->
-      <div class="content-section intro-section">
-        <h2>关于我</h2>
-        <p>你好，我是 Your Name。</p>
-        <blockquote>
-          缥缈，游荡，没有来路与归处。
-        </blockquote>
-        <p>这是一个示例关于页面，你可以在这里介绍自己。</p>
-      </div>
+    <article class="about-content">
+      <!-- Intro: Poetic & Flowing -->
+      <section class="content-section intro-section scroll-reveal">
+        <div class="intro-text">
+          <p class="greeting">你好，我是 Moyuin。</p>
+          <p class="poetic-line">缥缈，游荡，没有来路与归处。</p>
+          <p class="aliases">也可以叫我 莫昀 / 阿昀 / 莫莫。</p>
+          <p class="description">
+            我在这里不定期出没，比起“个人网站”，这里更像是我的一个自留处。<br>
+            你可以看看我的念叨，听听我说的琐事，欢迎你的驻留。
+          </p>
+        </div>
+      </section>
 
-      <!-- About me -->
-      <div class="content-section">
-        <h2>About me</h2>
-        <p>在这里填写你的个人信息...</p>
-      </div>
+      <!-- The Ginkgo Diary: Featured Narrative -->
+      <section class="content-section diary-section scroll-reveal">
+        <div class="diary-card">
+          <span class="diary-date">From a winter diary</span>
+          <div class="diary-content">
+            <p>
+              今日虽然严寒，但看见窗外银杏的新芽长出来了，不由得十分欢喜。我看雪与冰渣在风雨的起伏中吹动，陨落于大地，再也回不到不属于它们的天空与枝头。
+            </p>
+            <p>
+              可它们在新年的太阳下慢慢化为水，回到了树木的茎脉中，重新作用，或蒸腾为水，或光合生氧，继续回归外面无垠的世界，滋润回银杏树的初芽中。
+            </p>
+            <p class="highlight-text">
+              也许我也会这样吧。不敢说自己是滋润万物的水，补益生态的氧气，只是觉得自己飘零无归处，但世界总会有一天需要我的。
+            </p>
+            <p>
+              当然，做普照万世的太阳也挺好。这样，心之安处是吾乡，成为自己内心的太阳，我又靠着自己的一双胳膊向前走去了。
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <!-- About blog -->
-      <div class="content-section">
-        <h2>About blog</h2>
-        <p>这里是我的记录：生活的碎片、学习的轨迹、世界的观察。</p>
-        <p>有情绪就写，有理解就留；是否发布，也许取决于当下的我是否愿意让未来的我看到。</p>
-      </div>
+      <!-- Ender Particles: Floating Personality Tags -->
+      <section class="content-section particles-section scroll-reveal">
+        <div class="void-container">
+          <PersonalityTagsFlow />
+        </div>
+      </section>
+      
+      <!-- Void Map: Contributions -->
+      <section class="content-section map-section scroll-reveal">
+        <div class="chart-wrapper">
+          <img src="https://ghchart.rshah.org/moyuin-aka" alt="Moyuin's Github chart" loading="lazy" />
+        </div>
+      </section>
 
-      <!-- RSS 订阅 -->
-      <div class="content-section subscribe-section">
-        <p>你可以通过 <a href="/rss.xml" target="_blank" rel="noopener noreferrer">RSS</a> 订阅本站更新 🌱</p>
-      </div>
+      <!-- Subscribe -->
+      <section class="content-section subscribe-section scroll-reveal">
+        <p>你可以通过 <a href="/rss.xml" target="_blank" rel="noopener noreferrer" class="rss-link">RSS</a> 订阅本站更新 🌱</p>
+      </section>
     </article>
   </main>
 </Layout>
 
+<script>
+  document.addEventListener('astro:page-load', () => {
+    // Scroll Reveal
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.scroll-reveal').forEach(el => {
+      observer.observe(el);
+    });
+
+    // 3D Tilt Effect for Diary Card
+    const card = document.querySelector('.diary-card') as HTMLElement;
+    if (card) {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const rotateX = ((y - centerY) / centerY) * -2; // Max rotation deg
+        const rotateY = ((x - centerX) / centerX) * 2;
+
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.01, 1.01, 1.01)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+      });
+    }
+  });
+</script>
+
 <style>
   .about-container {
     max-width: 800px;
-    margin: 5rem auto 2rem;
-    padding: 20px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
   }
 
+  /* Scroll Reveal Animation Base */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1s ease, transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .scroll-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Hero Section */
   .about-hero {
+    min-height: 40vh; /* Reduced from 50vh */
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    margin-bottom: 4rem;
+    margin-bottom: 2rem; /* Reduced from 4rem */
+    padding-top: 4rem;
   }
 
   .about-hero-subtitle {
     font-family: var(--font-serif);
-    font-size: 0.9rem;
-    letter-spacing: 0.1em;
+    font-size: 0.85rem;
+    letter-spacing: 0.3em;
     color: var(--grey);
     text-transform: uppercase;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
   }
 
   .about-hero-slogan {
     font-family: var(--font-serif);
-    font-size: 3rem;
+    font-size: 4rem;
     font-weight: 700;
     color: var(--text);
-    line-height: 1.2;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--text) 30%, rgba(162, 89, 236, 0.5) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  /* About Content Area - 利用 markdown.css 渲染 */
-  .about-content {
-    font-family: var(--font-sans);
-    color: var(--text);
-    line-height: 1.8;
+  .hero-divider {
+    width: 1px;
+    height: 40px; /* Reduced height */
+    background: linear-gradient(to bottom, var(--text), transparent);
+    margin: 0 auto;
+    opacity: 0.2;
   }
 
+  /* Content Sections */
   .content-section {
-    margin-bottom: 3rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid rgba(162, 89, 236, 0.15);
+    margin-bottom: 6rem; /* Reduced from 8rem */
   }
 
-  .content-section:last-child {
-    border-bottom: none;
-  }
-
-  .content-section h2 {
+  /* Intro Section */
+  .intro-text {
+    text-align: center;
     font-family: var(--font-serif);
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: var(--text);
+  }
+
+  .greeting {
+    font-size: 1.5rem;
+    font-weight: 500;
     margin-bottom: 1rem;
-    letter-spacing: 0.02em;
   }
 
-  .content-section p {
-    font-size: 1.05rem;
-    color: var(--text);
-    opacity: 0.85;
-    max-width: 65ch;
-    line-height: 1.8;
-    margin-bottom: 0.8rem;
-  }
-
-  .content-section p:last-child {
-    margin-bottom: 0;
-  }
-
-  /* 引用块样式 */
-  .content-section blockquote {
-    margin: 1.5rem 0;
-    padding: 1.2rem 1.5rem;
-    border-left: 4px solid rgba(162, 89, 236, 0.4);
-    background: rgba(162, 89, 236, 0.06);
-    border-radius: 0 8px 8px 0;
-    font-family: var(--font-serif);
+  .poetic-line {
+    font-size: 1.2rem;
     font-style: italic;
-  }
-
-  .content-section blockquote p {
-    margin-bottom: 0.8rem;
-    opacity: 0.9;
-    font-size: 1.02rem;
-    line-height: 1.85;
-  }
-
-  .content-section blockquote p:last-child {
-    margin-bottom: 0;
-  }
-
-  /* 链接样式 */
-  .content-section a {
-    color: var(--purple);
-    text-decoration: none;
-    font-weight: 600;
-    border-bottom: 1px solid rgba(162, 89, 236, 0.3);
-    transition: all 0.2s ease;
-  }
-
-  .content-section a:hover {
-    color: var(--purple);
-    border-bottom-color: var(--purple);
+    color: var(--grey);
+    margin-bottom: 2rem;
     opacity: 0.8;
   }
 
-  /* 首段样式（关于我） */
-  .intro-section p:first-of-type {
-    font-size: 1.15rem;
-    font-weight: 500;
+  .aliases {
+    font-size: 0.95rem;
+    color: var(--grey);
+    margin-bottom: 1.5rem;
+    opacity: 0.6;
   }
 
-  /* 订阅区域 */
+  .description {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    max-width: 600px;
+    margin: 0 auto;
+    color: var(--text);
+    opacity: 0.9;
+  }
+
+  /* Diary Section - The Book */
+  .diary-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(162, 89, 236, 0.15);
+    padding: 3rem;
+    border-radius: 4px;
+    position: relative;
+    box-shadow: 0 20px 40px -20px rgba(162, 89, 236, 0.1);
+    transition: transform 0.1s ease-out; /* Smooth tilt return */
+    transform-style: preserve-3d;
+  }
+
+  :global(.dark) .diary-card {
+    background: rgba(10, 10, 20, 0.3);
+    border-color: rgba(162, 89, 236, 0.2);
+    box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.4);
+  }
+
+  .diary-date {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg);
+    padding: 0 1rem;
+    font-family: var(--font-serif);
+    font-size: 0.8rem;
+    color: var(--purple);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .diary-content p {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 2;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+    opacity: 0.85;
+    text-align: justify;
+    transform: translateZ(20px); /* Text floats above card */
+  }
+
+  .diary-content .highlight-text {
+    color: var(--purple);
+    font-weight: 500;
+    opacity: 1;
+  }
+
+  /* Void Container for Particles */
+  .void-container {
+    padding: 2rem 0;
+    position: relative;
+    /* Let the particles flow naturally without a container border */
+  }
+
+  /* Void Map */
+  .chart-wrapper {
+    background: transparent;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(162, 89, 236, 0.1);
+    overflow-x: auto;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+  }
+  
+  .chart-wrapper:hover {
+    opacity: 1;
+    border-color: rgba(162, 89, 236, 0.5);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px -10px rgba(162, 89, 236, 0.2);
+  }
+
+  .chart-wrapper img {
+    width: 100%;
+    height: auto;
+    min-width: 600px;
+    filter: hue-rotate(260deg) saturate(0.5); /* Shift to purple tones */
+  }
+
+  /* Subscribe Section */
   .subscribe-section {
     text-align: center;
-    padding-top: 1rem;
+    margin-bottom: 4rem;
   }
 
-  .subscribe-section p {
-    max-width: 100%;
-    font-size: 1.1rem;
+  .rss-link {
+    color: var(--purple);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
   }
 
-  /* 白天模式适配 */
-  :global(html:not(.dark)) .content-section blockquote {
-    background: rgba(162, 89, 236, 0.04);
-    border-left-color: rgba(162, 89, 236, 0.35);
+  .rss-link:hover {
+    border-color: currentColor;
   }
 
-  /* 响应式设计 */
+  /* Mobile Responsive */
   @media (max-width: 768px) {
     .about-hero-slogan {
       font-size: 2.5rem;
     }
 
-    .content-section h2 {
-      font-size: 1.5rem;
+    .diary-card {
+      padding: 1.5rem;
     }
 
-    .content-section p {
-      font-size: 1rem;
+    .content-section {
+      margin-bottom: 5rem;
     }
   }
 </style>
