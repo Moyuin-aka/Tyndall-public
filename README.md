@@ -11,6 +11,8 @@
 [English](./docs/README_EN.md) [配置指南](./src/content/blog/CONFIGURATION.md)
 
 ---
+**ℹ️ 关于本主题**  
+> 这是一个个人使用的 Astro 博客主题，以源代码形式分享。项目侧重于满足个人需求，不是面向大众的开箱即用方案，可能需要一定的技术基础和自定义配置。
 
 ## 🚀 快速开始
 
@@ -40,36 +42,9 @@ pnpm preview
 
 ---
 
-## 💖 致谢
-
-本博客使用了以下优秀的开源项目：
-
-- [Astro](https://astro.build) - 现代静态站点生成器
-- [tsParticles](https://particles.js.org/) - 粒子动画库
-- [Twikoo](https://twikoo.js.org/) - 简洁的评论系统
-- [Mermaid](https://mermaid.js.org/) - 图表绘制
-- [KaTeX](https://katex.org/) - 数学公式渲染
-
-还感谢这些老师的优秀博客为本博客主题提供的设计灵感：
-
-- [Skywt - Nexus](https://skywt.cn)
-- [hiRipple - Gamer](https://hiripple.com)
-- [Cry4o4N0tfound](https://cry4o4n0tfound.cn)
-- [Motues - Momo](https://blog.motues.top)
-……
-
----
-
 ## 📄 LICENSE
 
 `GPL-3.0 license`
  详见 [LICENSE](./docs/LICENSE)
 
 ---
-
-
-<div align="center">
-
-**⭐ 如果觉得不错，给个 Star 吧！**
-
-</div>

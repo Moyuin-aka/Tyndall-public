@@ -11,6 +11,9 @@ A modern Astro blog theme focused on details and visual experience.
 [中文文档](./README.md)
 
 ---
+**ℹ️ About Theme**  
+> This is a personal Astro blog theme shared as source code. It is built to suit individual requirements rather than to be a general-purpose, out-of-the-box solution, and may require technical familiarity and customization.
+
 
 ## 🚀 Quick Start
 
@@ -45,28 +48,3 @@ pnpm preview
 GNU GPLv3 - See [LICENSE](./LICENSE)
 
 ---
-
-## 💖 Credits
-
-This project uses these excellent open source projects:
-
-- [Astro](https://astro.build) - Modern static site generator
-- [tsParticles](https://particles.js.org/) - Particle animation library
-- [Twikoo](https://twikoo.js.org/) - Simple comment system
-- [Mermaid](https://mermaid.js.org/) - Diagram rendering
-- [KaTeX](https://katex.org/) - Math formula rendering
-
-
-I would also like to express my gratitude for the exceptional blogs of these teachers, which provided design inspiration for the theme of this blog:
-- [Skywt - Nexus](https://skywt.cn)
-- [hiRipple - Gamer](https://hiripple.com)
-- [Cry4o4N0tfound](https://cry4o4n0tfound.cn)
-- [Motues - Momo](https://blog.motues.top)
-
----
-
-<div align="center">
-
-**⭐ Star if you like it!**
-
-</div>
