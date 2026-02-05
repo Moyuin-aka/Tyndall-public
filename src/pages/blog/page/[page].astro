@@ -2,30 +2,15 @@
 import { useTranslations } from '@utils/ui';
 import { getCollection } from 'astro:content';
 import Layout from '@layouts/Layout.astro';
+import { localizePosts, sortByPubDateDesc } from '@utils/posts';
 
 export async function getStaticPaths() {
   const all = await getCollection('blog', ({ data }) => {
     // 只包含已发布的文章
     return data.published !== false;
   });
-  
-  // Group by translationKey and prefer zh locale
-  function stripLangPrefix(slug: string) { return slug.replace(/^en\//,''); }
-  const byKey = new Map<string, { key: string; post: any; isCurrentLang: boolean }>();
 
-  for (const p of all) {
-    const key = p.data.translationKey ?? stripLangPrefix(p.slug);
-    const curr = byKey.get(key);
-    const isCurrentLang = p.data.lang === 'zh';
-    
-    if (!curr || (isCurrentLang && !curr.isCurrentLang)) {
-      byKey.set(key, { key, post: p, isCurrentLang });
-    }
-  }
-
-  const sortedPosts = Array.from(byKey.values()).sort(
-    (a, b) => b.post.data.pubDate.getTime() - a.post.data.pubDate.getTime()
-  );
+  const sortedPosts = sortByPubDateDesc(localizePosts(all, 'zh'));
 
   const pageSize = 10;
   const totalPages = Math.ceil(sortedPosts.length / pageSize);
@@ -102,7 +87,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
     </div>
 
     <section class="blog-posts-section">
-      {posts.map(({ key, post, isCurrentLang }: any) => {
+      {posts.map(({ key, post, isFallback }: any) => {
         const category = post.data.category || 'uncategorized';
         const categoryDisplay = getCategoryDisplayName(category);
         
@@ -123,7 +108,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
                   {post.data.pubDate.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
                 </time>
               </div>
-              {!isCurrentLang && (
+              {isFallback && (
                 <span class="language-badge">原文</span>
               )}
             </div>

@@ -1,14 +1,14 @@
 ---
 // LangToggle.astro
-import { getRelativeLocaleUrl } from 'astro:i18n';
+import { getRelativeLocaleUrl } from "astro:i18n";
 
 const { translationKey } = Astro.props;
-const currentLocale = Astro.currentLocale ?? 'zh';
+const currentLocale = Astro.currentLocale ?? "zh";
 
 // 语言列表
 const allLangs = {
-  zh: { name: '简体中文', flag: '🇨🇳' },
-  en: { name: 'English',   flag: '🇬🇧' },
+  zh: { name: "简体中文", flag: "🇨🇳" },
+  en: { name: "English", flag: "🇬🇧" },
 };
 
 // 计算 canonicalPath：blog 文章用 translationKey，其余直接用 pathname
@@ -16,20 +16,25 @@ let basePath = Astro.url.pathname;
 const localePrefix = `/${currentLocale}`;
 
 // 如果路径以语言前缀开头 (例如 /en/about)，则移除它
-if (basePath.startsWith(localePrefix + '/') || basePath === localePrefix) {
-  basePath = basePath.slice(localePrefix.length) || '/';
+if (basePath.startsWith(localePrefix + "/") || basePath === localePrefix) {
+  basePath = basePath.slice(localePrefix.length) || "/";
 }
 
 // 计算最终的 canonicalPath：blog 文章用 translationKey，其余用我们处理好的 basePath
-const canonicalPath = translationKey
-  ? `/blog/${translationKey}`
-  : basePath;
+const canonicalPath = translationKey ? `/blog/${translationKey}` : basePath;
 ---
 
 <div class="lang-dropdown">
-  <button class="dropdown-toggle" aria-label="Select language" aria-haspopup="true" aria-expanded="false">
+  <button
+    class="dropdown-toggle"
+    aria-label="Select language"
+    aria-haspopup="true"
+    aria-expanded="false"
+  >
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z" fill="currentColor"/>
+      <path
+        d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"
+        fill="currentColor"></path>
     </svg>
   </button>
 
@@ -37,39 +42,35 @@ const canonicalPath = translationKey
     {
       Object.entries(allLangs).map(([lang, { name, flag }]) => {
         const targetUrl = getRelativeLocaleUrl(lang, canonicalPath);
-        const isActive  = lang === currentLocale;
+        const isActive = lang === currentLocale;
 
         return (
           <li>
-            {
-              isActive
-              ? (
-                  /* 当前语言：用 span，不可点击 */
-                  <span
-                    aria-current="true"
-                    class:list={{
-                      'dropdown-item': true,
-                      'is-active':     true
-                    }}
-                  >
-                    <span class="active-indicator"></span>
-                    <span class="flag-icon">{flag}</span>
-                    <span class="lang-name">{name}</span>
-                  </span>
-                )
-              : (
-                  /* 其它语言：正常链接 */
-                  <a
-                    href={targetUrl}
-                    hreflang={lang}
-                    class:list={{ 'dropdown-item': true }}
-                  >
-                    <span class="active-indicator"></span>
-                    <span class="flag-icon">{flag}</span>
-                    <span class="lang-name">{name}</span>
-                  </a>
-                )
-            }
+            {isActive ? (
+              /* 当前语言：用 span，不可点击 */
+              <span
+                aria-current="true"
+                class:list={{
+                  "dropdown-item": true,
+                  "is-active": true,
+                }}
+              >
+                <span class="active-indicator" />
+                <span class="flag-icon">{flag}</span>
+                <span class="lang-name">{name}</span>
+              </span>
+            ) : (
+              /* 其它语言：正常链接 */
+              <a
+                href={targetUrl}
+                hreflang={lang}
+                class:list={{ "dropdown-item": true }}
+              >
+                <span class="active-indicator" />
+                <span class="flag-icon">{flag}</span>
+                <span class="lang-name">{name}</span>
+              </a>
+            )}
           </li>
         );
       })
@@ -78,101 +79,140 @@ const canonicalPath = translationKey
 </div>
 
 <style>
-/* dropdown 基础布局 --------------------------------------------------*/
-.lang-dropdown { position: relative; display: inline-block; }
+  /* dropdown 基础布局 --------------------------------------------------*/
+  .lang-dropdown {
+    position: relative;
+    display: inline-block;
+  }
 
-.dropdown-toggle { /* 可复用你已有的 header 按钮样式 */ }
+  .dropdown-toggle {
+    /* 可复用你已有的 header 按钮样式 */
+  }
 
-.flag-icon { font-size: 1.1rem; line-height: 1; }
+  .flag-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
 
-/* 菜单面板 -----------------------------------------------------------*/
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 100;
-  list-style: none;
-  margin: 0;
-  padding: 0.5rem;
-  background-color: var(--header-bg);
-  border: 1px solid var(--header-border-color);
-  backdrop-filter: var(--header-backdrop-filter);
-  -webkit-backdrop-filter: var(--header-backdrop-filter);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.15);
-  /* [MODIFIED] 移除了固定的 min-width，并让宽度由内容决定，更灵活、更紧凑 */
-  width: max-content;
+  /* 菜单面板 -----------------------------------------------------------*/
+  .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 100;
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem;
+    background-color: var(--header-bg);
+    border: 1px solid var(--header-border-color);
+    backdrop-filter: var(--header-backdrop-filter);
+    -webkit-backdrop-filter: var(--header-backdrop-filter);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    /* [MODIFIED] 移除了固定的 min-width，并让宽度由内容决定，更灵活、更紧凑 */
+    width: max-content;
 
-  opacity: 0;
-  transform: translateY(-10px) scale(.95);
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity .2s ease, transform .2s ease, visibility .2s step-end;
-}
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease,
+      visibility 0.2s step-end;
+  }
 
-/* 展开状态 */
-.lang-dropdown.is-open .dropdown-menu {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  visibility: visible;
-  pointer-events: auto;
-  transition-delay: 0s,0s,0s;
-}
+  /* 展开状态 */
+  .lang-dropdown.is-open .dropdown-menu {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s, 0s, 0s;
+  }
 
-/* 菜单项 -------------------------------------------------------------*/
-.dropdown-menu li { display: contents; }  /* 让 li 只保语义，不参与布局 */
+  /* 菜单项 -------------------------------------------------------------*/
+  .dropdown-menu li {
+    display: contents;
+  } /* 让 li 只保语义，不参与布局 */
 
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 8px 12px;
-  border: none;                    /* 关键：覆盖 header 的全局边框 */
-  border-radius: 6px;
-  text-decoration: none;
-  color: var(--text);
-  white-space: nowrap;
-  transition: background-color .2s ease;
-  /* [ADDED] 核心修复：确保宽度计算包含 padding，防止背景溢出 */
-  box-sizing: border-box;
-}
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none; /* 关键：覆盖 header 的全局边框 */
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text);
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+    /* [ADDED] 核心修复：确保宽度计算包含 padding，防止背景溢出 */
+    box-sizing: border-box;
+  }
 
-.dropdown-item:hover { background-color: var(--header-controls-hover-bg); }
+  .dropdown-item:hover {
+    background-color: var(--header-controls-hover-bg);
+  }
 
-.lang-name { font-size: .9rem; }
+  .lang-name {
+    font-size: 0.9rem;
+  }
 
-/* 活动指示圆点 -------------------------------------------------------*/
-.active-indicator {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: transparent;
-  transition: background-color .2s ease;
-}
-.is-active .active-indicator { background-color: var(--purple); }
-.is-active { font-weight: 500; }
+  /* 活动指示圆点 -------------------------------------------------------*/
+  .active-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: transparent;
+    transition: background-color 0.2s ease;
+  }
+  .is-active .active-indicator {
+    background-color: var(--purple);
+  }
+  .is-active {
+    font-weight: 500;
+  }
 </style>
 
 <script>
   // 下拉开合逻辑 ----------------------------------------------
-  // (JavaScript 部分无需修改，保持原样即可)
   function setupLangDropdown(root) {
-    const dropdown = root.querySelector('.lang-dropdown');
-    if (!dropdown || dropdown.dataset.initialized) return;
+    const dropdown = root.querySelector(".lang-dropdown");
+    if (!dropdown) return;
 
-    dropdown.dataset.initialized = 'true';
-    const toggle = dropdown.querySelector('.dropdown-toggle');
+    // 只初始化一次事件监听器
+    if (!dropdown.dataset.initialized) {
+      dropdown.dataset.initialized = "true";
+      const toggle = dropdown.querySelector(".dropdown-toggle");
 
-    const open  = () => dropdown.classList.add('is-open');
-    const close = () => dropdown.classList.remove('is-open');
+      const open = () => dropdown.classList.add("is-open");
+      const close = () => dropdown.classList.remove("is-open");
 
-    toggle.addEventListener('click',  (e: { stopPropagation: () => void; }) => { e.stopPropagation(); dropdown.classList.toggle('is-open'); });
-    document.addEventListener('click', e => { if (!dropdown.contains(e.target)) close(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && dropdown.classList.contains('is-open')) { close(); toggle.focus(); } });
+      toggle.addEventListener("click", (e: { stopPropagation: () => void }) => {
+        e.stopPropagation();
+        dropdown.classList.toggle("is-open");
+      });
+      document.addEventListener("click", (e) => {
+        if (!dropdown.contains(e.target)) close();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && dropdown.classList.contains("is-open")) {
+          close();
+          toggle.focus();
+        }
+      });
+    }
   }
 
-  // 首次加载 + 假如你用了 Astro 的前端路由时的二次加载
-  document.addEventListener('astro:page-load', () => setupLangDropdown(document));
-  
+  // 首次加载 + 页面切换时
+  document.addEventListener("astro:page-load", () => {
+    setupLangDropdown(document);
+  });
+
+  // 立即执行（如果 DOM 已经加载）
+  if (document.readyState !== "loading") {
+    setupLangDropdown(document);
+  }
 </script>

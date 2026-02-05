@@ -7,6 +7,7 @@ interface BlogEnhancements {
   initMermaid: () => Promise<void>;
   wrapTables: () => void;
   enhanceCodeBlocks: () => void;
+  addImageCaptions: () => void;
   initializeAll: () => void;
 }
 
@@ -281,6 +282,151 @@ function enhanceCodeBlocks(): void {
       language = 'text';
     }
 
+    // 语言名称规范化映射
+    const languageDisplayNames: Record<string, string> = {
+      // 编程语言
+      'javascript': 'JavaScript',
+      'js': 'JavaScript',
+      'typescript': 'TypeScript',
+      'ts': 'TypeScript',
+      'python': 'Python',
+      'py': 'Python',
+      'rust': 'Rust',
+      'go': 'Go',
+      'golang': 'Go',
+      'java': 'Java',
+      'kotlin': 'Kotlin',
+      'swift': 'Swift',
+      'csharp': 'C#',
+      'cs': 'C#',
+      'cpp': 'C++',
+      'c': 'C',
+      'ruby': 'Ruby',
+      'rb': 'Ruby',
+      'php': 'PHP',
+      'scala': 'Scala',
+      'dart': 'Dart',
+      'lua': 'Lua',
+      'perl': 'Perl',
+      'r': 'R',
+      'julia': 'Julia',
+      'elixir': 'Elixir',
+      'haskell': 'Haskell',
+      'clojure': 'Clojure',
+      'fsharp': 'F#',
+      'ocaml': 'OCaml',
+      'erlang': 'Erlang',
+      'zig': 'Zig',
+      'nim': 'Nim',
+      'v': 'V',
+
+      // Web 技术
+      'html': 'HTML',
+      'css': 'CSS',
+      'scss': 'SCSS',
+      'sass': 'Sass',
+      'less': 'Less',
+      'jsx': 'JSX',
+      'tsx': 'TSX',
+      'vue': 'Vue',
+      'svelte': 'Svelte',
+      'astro': 'Astro',
+
+      // 数据格式
+      'json': 'JSON',
+      'yaml': 'YAML',
+      'yml': 'YAML',
+      'xml': 'XML',
+      'toml': 'TOML',
+      'csv': 'CSV',
+
+      // Shell/脚本
+      'bash': 'Bash',
+      'sh': 'Shell',
+      'shell': 'Shell',
+      'zsh': 'Zsh',
+      'powershell': 'PowerShell',
+      'ps1': 'PowerShell',
+      'bat': 'Batch',
+      'cmd': 'CMD',
+
+      // 数据库
+      'sql': 'SQL',
+      'mysql': 'MySQL',
+      'postgresql': 'PostgreSQL',
+      'mongodb': 'MongoDB',
+      'graphql': 'GraphQL',
+
+      // 配置/文档
+      'markdown': 'Markdown',
+      'md': 'Markdown',
+      'dockerfile': 'Dockerfile',
+      'docker': 'Docker',
+      'nginx': 'Nginx',
+      'apache': 'Apache',
+      'makefile': 'Makefile',
+      'cmake': 'CMake',
+      'ini': 'INI',
+      'env': 'ENV',
+      'properties': 'Properties',
+
+      // 硬件描述语言
+      'verilog': 'Verilog',
+      'systemverilog': 'SystemVerilog',
+      'sv': 'SystemVerilog',
+      'vhdl': 'VHDL',
+      'tcl': 'Tcl',
+
+      // 汇编/底层
+      'asm': 'Assembly',
+      'assembly': 'Assembly',
+      'nasm': 'NASM',
+      'masm': 'MASM',
+      'wasm': 'WebAssembly',
+      'llvm': 'LLVM IR',
+
+      // 移动开发
+      'objectivec': 'Objective-C',
+      'objc': 'Objective-C',
+      'groovy': 'Groovy',
+
+      // 模板/标记
+      'latex': 'LaTeX',
+      'tex': 'TeX',
+      'rst': 'reStructuredText',
+      'asciidoc': 'AsciiDoc',
+      'handlebars': 'Handlebars',
+      'hbs': 'Handlebars',
+      'ejs': 'EJS',
+      'pug': 'Pug',
+      'jade': 'Jade',
+      'liquid': 'Liquid',
+      'twig': 'Twig',
+      'jinja': 'Jinja',
+      'jinja2': 'Jinja2',
+      'mustache': 'Mustache',
+
+      // 游戏/脚本
+      'gdscript': 'GDScript',
+      'glsl': 'GLSL',
+      'hlsl': 'HLSL',
+      'cuda': 'CUDA',
+      'opencl': 'OpenCL',
+
+      // 其他
+      'regex': 'Regex',
+      'regexp': 'Regex',
+      'diff': 'Diff',
+      'patch': 'Patch',
+      'log': 'Log',
+      'plaintext': 'Plain Text',
+      'text': 'Text',
+      'txt': 'Text',
+      'output': 'Output',
+      'console': 'Console',
+      'terminal': 'Terminal',
+    };
+
     const copyText = document.documentElement.lang === 'en' ? 'Copy' : '复制';
     const copiedText = document.documentElement.lang === 'en' ? 'Copied' : '已复制';
     const failedText = document.documentElement.lang === 'en' ? 'Failed' : '复制失败';
@@ -293,7 +439,7 @@ function enhanceCodeBlocks(): void {
 
     const langLabel = document.createElement('span');
     langLabel.className = 'code-block-language';
-    langLabel.textContent = language;
+    langLabel.textContent = languageDisplayNames[language.toLowerCase()] || language;
 
     const copyButton = document.createElement('button');
     copyButton.className = 'code-block-copy';
@@ -347,6 +493,58 @@ function enhanceCodeBlocks(): void {
 }
 
 /**
+ * 为 Markdown 图片添加说明文字
+ */
+function addImageCaptions(): void {
+  const images = document.querySelectorAll<HTMLImageElement>('.markdown-content img');
+
+  images.forEach((img) => {
+    if (!img.alt || !img.alt.trim()) {
+      return;
+    }
+
+    if (img.closest('figure.image-figure')) {
+      return;
+    }
+
+    const wrapperTarget = img.parentElement?.tagName.toLowerCase() === 'a' ? img.parentElement : img;
+    const parent = wrapperTarget?.parentElement;
+    if (!wrapperTarget || !parent) {
+      return;
+    }
+
+    if (parent.tagName.toLowerCase() === 'p') {
+      const hasExtraContent = Array.from(parent.childNodes).some((node) => {
+        if (node === wrapperTarget) return false;
+        if (node.nodeType === Node.TEXT_NODE) {
+          return (node.textContent || '').trim().length > 0;
+        }
+        return true;
+      });
+
+      if (hasExtraContent) {
+        return;
+      }
+    }
+
+    const figure = document.createElement('figure');
+    figure.className = 'image-figure';
+
+    const caption = document.createElement('figcaption');
+    caption.textContent = img.alt;
+
+    if (parent.tagName.toLowerCase() === 'p') {
+      parent.replaceWith(figure);
+    } else {
+      parent.insertBefore(figure, wrapperTarget);
+    }
+
+    figure.appendChild(wrapperTarget);
+    figure.appendChild(caption);
+  });
+}
+
+/**
  * 初始化所有博客增强功能
  */
 let initTimeout: number | null = null;
@@ -361,6 +559,7 @@ function initializeAll(): void {
   initTimeout = window.setTimeout(() => {
     enhanceCodeBlocks();
     wrapTables();
+    addImageCaptions();
     // Mermaid 延迟初始化，避免阻塞主要功能
     setTimeout(() => {
       initMermaid();
@@ -394,5 +593,5 @@ if (typeof document !== 'undefined') {
 
 // 只导出函数，不自动初始化
 // 初始化由页面脚本控制，避免重复执行
-export { initMermaid, wrapTables, enhanceCodeBlocks, initializeAll };
+export { initMermaid, wrapTables, enhanceCodeBlocks, addImageCaptions, initializeAll };
 export type { BlogEnhancements };

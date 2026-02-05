@@ -1,97 +1,92 @@
 ---
-import { useTranslations } from '@utils/ui';
-import { getCollection } from 'astro:content';
-import Layout from '@layouts/Layout.astro';
+import { useTranslations } from "@utils/ui";
+import { getCollection } from "astro:content";
+import Layout from "@layouts/Layout.astro";
+import { getTranslationKey, localizePosts } from "@utils/posts";
 
 const t = useTranslations(Astro.currentLocale);
 const locale = Astro.currentLocale;
 
-const all = await getCollection('blog', ({ data }) => {
+const all = await getCollection("blog", ({ data }) => {
   // 只包含已发布的文章
   return data.published !== false;
 });
 
-// 去重函数：按 translationKey 去重
-function stripLangPrefix(slug: string) { return slug.replace(/^en\//,''); }
-function getUniqueKey(post: any) {
-  return post.data.translationKey || stripLangPrefix(post.slug);
-}
+const localized = localizePosts(all, locale);
 
 // 统计每个分类的文章数量（按 translationKey 去重）
 const categoryCount = new Map<string, number>();
-const categoryPosts = new Map<string, any[]>();
 const categoryUniqueKeys = new Map<string, Set<string>>(); // 记录每个分类的唯一文章key
 
-for (const post of all) {
-  const category = post.data.category || 'uncategorized';
-  const uniqueKey = getUniqueKey(post);
-  
+for (const { post } of localized) {
+  const category = post.data.category || "uncategorized";
+  const uniqueKey = getTranslationKey(post);
+
   if (!categoryUniqueKeys.has(category)) {
     categoryUniqueKeys.set(category, new Set());
   }
-  
+
   // 只有新的文章才计数
   if (!categoryUniqueKeys.get(category)!.has(uniqueKey)) {
     categoryUniqueKeys.get(category)!.add(uniqueKey);
   }
-  
-  if (!categoryPosts.has(category)) {
-    categoryPosts.set(category, []);
-  }
-  categoryPosts.get(category)!.push(post);
 }
 
-// 使用去重后的数量
+// 计算每个分类的文章数量
 for (const [category, keys] of categoryUniqueKeys) {
   categoryCount.set(category, keys.size);
 }
 
 // 按文章数量降序排序
-const sortedCategories = Array.from(categoryCount.entries())
-  .sort((a, b) => b[1] - a[1]);
+const sortedCategories = Array.from(categoryCount.entries()).sort(
+  (a, b) => b[1] - a[1],
+);
 
 // 分类的中英文映射
 const categoryNames: Record<string, { zh: string; en: string }> = {
-  'ctf': { zh: 'CTF', en: 'CTF' },
-  'notes': { zh: '笔记', en: 'Notes' },
-  'record': { zh: '记录', en: 'Records' },
-  'thoughts': { zh: '随笔', en: 'Thoughts' },
-  'weekly': { zh: '周记', en: 'Weekly' },
-  'tech': { zh: '技术', en: 'Tech' },
-  'life': { zh: '生活', en: 'Life' },
-  'uncategorized': { zh: '未分类', en: 'Uncategorized' },
+  ctf: { zh: "CTF", en: "CTF" },
+  notes: { zh: "笔记", en: "Notes" },
+  record: { zh: "记录", en: "Records" },
+  thoughts: { zh: "随笔", en: "Thoughts" },
+  weekly: { zh: "周记", en: "Weekly" },
+  tech: { zh: "技术", en: "Tech" },
+  life: { zh: "生活", en: "Life" },
+  uncategorized: { zh: "未分类", en: "Uncategorized" },
 };
 
 function getCategoryDisplayName(category: string) {
-  return categoryNames[category]?.[locale as 'zh' | 'en'] || category;
+  return categoryNames[category]?.[locale as "zh" | "en"] || category;
 }
 ---
-<Layout title={t('categories_page_title')}>
+
+<Layout title={t("categories_page_title")}>
   <main class="categories-container">
     <header class="categories-hero">
-      <p class="categories-hero-subtitle">{t('categories_hero_subtitle')}</p>
-      <h1 class="categories-hero-slogan">{t('categories_hero_slogan')}</h1>
+      <p class="categories-hero-subtitle">{t("categories_hero_subtitle")}</p>
+      <h1 class="categories-hero-slogan">{t("categories_hero_slogan")}</h1>
     </header>
 
     <section class="categories-grid">
-      {sortedCategories.map(([category, count]) => (
-        <a href={`/en/category/${category}`} class="category-card">
-          <div class="category-icon">
-            {category === 'ctf' && '🚩'}
-            {category === 'notes' && '📝'}
-            {category === 'record' && '📖'}
-            {category === 'thoughts' && '💭'}
-            {category === 'weekly' && '📅'}
-            {category === 'tech' && '💻'}
-            {category === 'life' && '🌱'}
-            {category === 'uncategorized' && '📦'}
-          </div>
-          <h2 class="category-name">{getCategoryDisplayName(category)}</h2>
-          <p class="category-count">
-            {count} {t('category_posts_count')}
-          </p>
-        </a>
-      ))}
+      {
+        sortedCategories.map(([category, count]) => (
+          <a href={`/en/category/${category}`} class="category-card">
+            <div class="category-icon">
+              {category === "ctf" && "🚩"}
+              {category === "notes" && "📝"}
+              {category === "record" && "📖"}
+              {category === "thoughts" && "💭"}
+              {category === "weekly" && "📅"}
+              {category === "tech" && "💻"}
+              {category === "life" && "🌱"}
+              {category === "uncategorized" && "📦"}
+            </div>
+            <h2 class="category-name">{getCategoryDisplayName(category)}</h2>
+            <p class="category-count">
+              {count} {t("category_posts_count")}
+            </p>
+          </a>
+        ))
+      }
     </section>
   </main>
 </Layout>

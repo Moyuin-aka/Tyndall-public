@@ -2,6 +2,7 @@
 import { useTranslations } from '@utils/ui';
 import { getCollection } from 'astro:content';
 import Layout from '@layouts/Layout.astro';
+import { localizePosts, sortByPubDateDesc } from '@utils/posts';
 
 const t = useTranslations(Astro.currentLocale);
 const locale = Astro.currentLocale;
@@ -11,23 +12,7 @@ const all = await getCollection('blog', ({ data }) => {
   return data.published !== false;
 });
 
-// Group by translationKey and prefer en locale
-function stripLangPrefix(slug: string) { return slug.replace(/^en\//,''); }
-const byKey = new Map<string, { key: string; post: any; isCurrentLang: boolean }>();
-
-for (const p of all) {
-  const key = p.data.translationKey ?? stripLangPrefix(p.slug);
-  const curr = byKey.get(key);
-  const isCurrentLang = p.data.lang === 'en';
-  
-  if (!curr || (isCurrentLang && !curr.isCurrentLang)) {
-    byKey.set(key, { key, post: p, isCurrentLang });
-  }
-}
-
-const sortedPosts = Array.from(byKey.values()).sort(
-  (a, b) => b.post.data.pubDate.getTime() - a.post.data.pubDate.getTime()
-);
+const sortedPosts = sortByPubDateDesc(localizePosts(all, 'en'));
 
 // 第一页的内容
 const pageSize = 10;
@@ -93,7 +78,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
     </div>
 
     <section class="blog-posts-section" id="blog-posts-section">
-      {posts.map(({ key, post, isCurrentLang }) => {
+      {posts.map(({ key, post, isFallback }) => {
         const category = post.data.category || 'uncategorized';
         const categoryDisplay = getCategoryDisplayName(category);
         
@@ -114,7 +99,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
                   {post.data.pubDate.toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </time>
               </div>
-              {!isCurrentLang && (
+              {isFallback && (
                 <span class="language-badge">Original</span>
               )}
             </div>

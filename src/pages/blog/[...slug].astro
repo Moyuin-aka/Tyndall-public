@@ -4,87 +4,42 @@ import { getCollection } from "astro:content";
 import Layout from "@layouts/Layout.astro";
 import "@styles/markdown.css";
 import { useTranslations } from "@utils/ui";
-import TwikooComments from "@components/TwikooComments.astro";
+import SupabaseComments from "@components/SupabaseComments.astro";
 import TableOfContents from "@components/TableOfContents.astro";
+import { getTranslationKey, localizePosts, resolvePostForLocale, sortByPubDateDesc } from "@utils/posts";
 
 export async function getStaticPaths() {
   const allPosts = await getCollection("blog", ({ data }) => {
     return data.published !== false;
   });
-  const paths = [];
-
-  // 为每个 translationKey 生成中文路径
-  const keySet = new Set();
-  for (const post of allPosts) {
-    const key = post.data.translationKey ?? post.slug.replace(/^en\//, "");
-    if (!keySet.has(key)) {
-      keySet.add(key);
-      paths.push({
-        params: { slug: key },
-        props: { translationKey: key },
-      });
-    }
-  }
-
-  return paths;
+  const keys = new Set(allPosts.map(getTranslationKey));
+  return Array.from(keys).map((key) => ({
+    params: { slug: key },
+    props: { translationKey: key },
+  }));
 }
 
 const { translationKey } = Astro.props;
 const t = useTranslations(Astro.currentLocale);
 const locale = Astro.currentLocale;
 
-// 查找当前语言的文章，如果没有则回退到其他语言
 const allPosts = await getCollection("blog", ({ data }) => {
   return data.published !== false;
 });
-const currentLangPost = allPosts.find(
-  (p) =>
-    (p.data.translationKey ?? p.slug.replace(/^en\//, "")) === translationKey &&
-    p.data.lang === locale,
-);
-
-const fallbackPost = allPosts.find(
-  (p) =>
-    (p.data.translationKey ?? p.slug.replace(/^en\//, "")) === translationKey,
-);
-
-const post = currentLangPost || fallbackPost;
-const isFallback = !currentLangPost && !!fallbackPost;
+const { post, isFallback } = resolvePostForLocale(allPosts, translationKey, locale);
 
 if (!post) {
   throw new Error(`Post not found: ${translationKey}`);
 }
 
-// 获取上一篇和下一篇文章
-const uniquePosts = new Map();
-for (const p of allPosts) {
-  const key = p.data.translationKey ?? p.slug.replace(/^en\//, "");
-  if (!uniquePosts.has(key)) {
-    uniquePosts.set(key, p);
-  } else {
-    if (p.data.lang === locale) {
-      uniquePosts.set(key, p);
-    }
-  }
-}
-
-const sortedPosts = Array.from(uniquePosts.values()).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
-
-const currentIndex = sortedPosts.findIndex((p) => {
-  const pKey = p.data.translationKey ?? p.slug.replace(/^en\//, "");
-  const currentKey = post.data.translationKey ?? post.slug.replace(/^en\//, "");
-  return pKey === currentKey;
-});
-
-const prevPost =
-  currentIndex < sortedPosts.length - 1 ? sortedPosts[currentIndex + 1] : null;
-const nextPost = currentIndex > 0 ? sortedPosts[currentIndex - 1] : null;
+const localizedList = sortByPubDateDesc(localizePosts(allPosts, locale));
+const currentIndex = localizedList.findIndex((p) => p.key === translationKey);
+const prevPost = currentIndex < localizedList.length - 1 ? localizedList[currentIndex + 1].post : null;
+const nextPost = currentIndex > 0 ? localizedList[currentIndex - 1].post : null;
 
 function getPostUrl(p) {
   if (!p) return "#";
-  const key = p.data.translationKey ?? p.slug.replace(/^en\//, "");
+  const key = getTranslationKey(p);
   return locale === "en" ? `/en/blog/${key}` : `/blog/${key}`;
 }
 
@@ -167,7 +122,11 @@ const hasMermaid = /```mermaid/.test(rawContent);
 
     <hr class="comment-divider" />
 
-    <TwikooComments />
+    <SupabaseComments 
+      translationKey={translationKey} 
+      postTitle={post.data.title}
+      postUrl={`${Astro.site?.origin || ''}${Astro.url.pathname}`}
+    />
   </main>
 </Layout>
 

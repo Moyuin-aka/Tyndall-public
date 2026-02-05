@@ -1,0 +1,1266 @@
+---
+import { useTranslations } from "@utils/ui";
+
+interface Props {
+  translationKey: string;
+  postTitle?: string;
+  postUrl?: string;
+}
+
+const { translationKey, postTitle = "", postUrl = "" } = Astro.props;
+const t = useTranslations(Astro.currentLocale);
+const locale = Astro.currentLocale || "zh";
+
+// 从环境变量获取通知配置
+const notifyWorkerUrl = import.meta.env.PUBLIC_COMMENT_NOTIFY_URL || "";
+const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
+---
+
+<div class="supabase-comments" data-locale={locale} data-post-title={postTitle} data-post-url={postUrl} data-notify-url={notifyWorkerUrl} data-notify-secret={notifySecret}>
+  <div class="comment-form-container">
+    <form id="comment-form" class="comment-form">
+      <input type="hidden" id="parent-id" value="" />
+      <input type="hidden" id="translation-key" value={translationKey} />
+
+      <!-- 匿名评论表单（未登录时显示） -->
+      <div id="anonymous-form-fields" class="form-grid">
+        <div class="form-field">
+          <label for="author-name">{t("comment_name")}<span class="required">*</span></label>
+          <input
+            type="text"
+            id="author-name"
+            placeholder={t("comment_required")}
+          />
+        </div>
+        <div class="form-field">
+          <label for="author-email">{t("comment_email")}<span class="required">*</span></label>
+          <input
+            type="email"
+            id="author-email"
+            placeholder={t("comment_required")}
+          />
+        </div>
+        <div class="form-field">
+          <label for="author-website">{t("comment_website")}</label>
+          <input
+            type="url"
+            id="author-website"
+            placeholder={t("comment_optional")}
+          />
+        </div>
+      </div>
+
+      <div class="form-field">
+        <textarea
+          id="comment-content"
+          required
+          placeholder={t("comment_placeholder")}
+        ></textarea>
+        <div class="char-counter">
+          <span id="char-count">0</span>
+          <span class="char-limit"> / 2000</span>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <!-- 左侧：OAuth 登录区域 -->
+        <div class="form-footer-left">
+          <!-- 未登录时显示登录按钮 -->
+          <div id="auth-logged-out" class="auth-logged-out">
+            <button type="button" id="btn-github" class="btn-oauth" title="GitHub">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+              </svg>
+            </button>
+            <button type="button" id="btn-google" class="btn-oauth" title="Google">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+            </button>
+          </div>
+          <!-- 已登录时显示用户信息 -->
+          <div id="auth-logged-in" class="auth-logged-in" style="display: none;">
+            <img id="auth-avatar" src="" alt="" class="auth-avatar" />
+            <span id="auth-name" class="auth-name"></span>
+            <span id="auth-admin-badge" class="admin-badge" style="display: none;">{t("comment_admin")}</span>
+            <button type="button" id="btn-logout" class="btn-text">{t("comment_logout")}</button>
+          </div>
+          <div id="form-message" class="form-message"></div>
+        </div>
+        <!-- 右侧：回复预览和发送按钮 -->
+        <div class="form-actions">
+          <div id="reply-preview" class="reply-preview" style="display: none;">
+            <span id="reply-target"></span>
+            <button type="button" id="cancel-reply" class="btn-text">{t("comment_cancel")}</button>
+          </div>
+          <button type="submit" class="btn-submit">{t("comment_submit")}</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div id="comments-list" class="comments-list">
+    <div class="loading">{t("comment_loading")}</div>
+  </div>
+</div>
+
+<script>
+  import { 
+    getComments, 
+    submitComment, 
+    deleteComment,
+    deleteAnonymousComment,
+    getCurrentUser,
+    signInWithOAuth,
+    signOut,
+    onAuthStateChange,
+    isAdmin,
+    canDeleteComment,
+    type Comment 
+  } from "@utils/supabase";
+  import { md5 } from "@utils/md5";
+
+  // i18n 翻译表
+  const i18n = {
+    zh: {
+      no_comments: "暂无评论",
+      load_error: "加载失败",
+      reply: "回复",
+      reply_to: "回复 @",
+      cancel: "取消",
+      submit: "发送",
+      sending: "发送中...",
+      success: "发送成功",
+      error: "发送失败，请稀后重试",
+      fill_required: "请填写必填项",
+      too_long: "评论内容超出限制（不超过 2000 字或 1000 单词）",
+      just_now: "刚刚",
+      minutes_ago: "分钟前",
+      hours_ago: "小时前",
+      days_ago: "天前",
+      months_ago: "个月前",
+      years_ago: "年前",
+      login_hint: "使用以下方式登录，或匿名评论",
+      logout: "登出",
+      admin: "管理员",
+      delete: "删除",
+      delete_confirm: "确定要删除这条评论吗？",
+      delete_success: "已删除",
+      delete_error: "删除失败",
+      delete_expired: "删除时间已过期",
+    },
+    en: {
+      no_comments: "No comments yet",
+      load_error: "Failed to load",
+      reply: "Reply",
+      reply_to: "Reply to @",
+      cancel: "Cancel",
+      submit: "Send",
+      sending: "Sending...",
+      success: "Sent successfully",
+      error: "Failed to send, please try again",
+      fill_required: "Please fill in required fields",
+      too_long: "Comment too long (max 2000 chars or 1000 words)",
+      just_now: "just now",
+      minutes_ago: " minutes ago",
+      hours_ago: " hours ago",
+      days_ago: " days ago",
+      months_ago: " months ago",
+      years_ago: " years ago",
+      login_hint: "Sign in with, or comment anonymously",
+      logout: "Sign out",
+      admin: "Admin",
+      delete: "Delete",
+      delete_confirm: "Are you sure you want to delete this comment?",
+      delete_success: "Deleted",
+      delete_error: "Failed to delete",
+      delete_expired: "Delete window expired",
+    },
+  };
+
+  function getLocale(): "zh" | "en" {
+    const container = document.querySelector(".supabase-comments");
+    const locale = container?.getAttribute("data-locale") || "zh";
+    return locale === "en" ? "en" : "zh";
+  }
+
+  function t(key: keyof typeof i18n.zh): string {
+    const locale = getLocale();
+    return i18n[locale][key] || i18n.zh[key] || key;
+  }
+
+  // 获取通知配置
+  function getNotifyConfig() {
+    const container = document.querySelector(".supabase-comments");
+    return {
+      url: container?.getAttribute("data-notify-url") || "",
+      secret: container?.getAttribute("data-notify-secret") || "",
+      postTitle: container?.getAttribute("data-post-title") || "",
+      postUrl: container?.getAttribute("data-post-url") || window.location.href,
+    };
+  }
+
+  // 发送邮件通知（异步，不阻塞用户）
+  async function sendNotification(
+    type: "new_comment" | "reply",
+    comment: { author_name: string; author_email: string; content: string },
+    replyTo?: { name: string; email: string; content: string }
+  ) {
+    const config = getNotifyConfig();
+    if (!config.url || !config.secret) {
+      console.log("Comment notification not configured");
+      return;
+    }
+
+    try {
+      const response = await fetch(config.url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          secret: config.secret,
+          comment,
+          replyTo,
+          postTitle: config.postTitle,
+          postUrl: config.postUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        console.warn("Failed to send notification:", await response.text());
+      }
+    } catch (error) {
+      console.warn("Failed to send notification:", error);
+    }
+  }
+
+  // 从 localStorage 获取用户信息
+  function getUserInfo() {
+    return {
+      name: localStorage.getItem("comment_author_name") || "",
+      email: localStorage.getItem("comment_author_email") || "",
+      website: localStorage.getItem("comment_author_website") || "",
+    };
+  }
+
+  // 保存用户信息到 localStorage
+  function saveUserInfo(name: string, email: string, website: string) {
+    localStorage.setItem("comment_author_name", name);
+    localStorage.setItem("comment_author_email", email);
+    localStorage.setItem("comment_author_website", website);
+  }
+
+  // 字数统计和限制
+  const MAX_CHARS = 2000;
+  const MAX_WORDS = 1000;
+
+  function getWordCount(text: string): { chars: number; words: number } {
+    const chars = text.length;
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    return { chars, words };
+  }
+
+  function isContentWithinLimit(text: string): boolean {
+    const { chars, words } = getWordCount(text);
+    return chars <= MAX_CHARS && words <= MAX_WORDS;
+  }
+
+  function updateCharCount(text: string) {
+    const charCountEl = document.getElementById("char-count");
+    if (!charCountEl) return;
+
+    const { chars } = getWordCount(text);
+    charCountEl.textContent = chars.toString();
+
+    // 超出限制时标红
+    if (chars > MAX_CHARS) {
+      charCountEl.style.color = "#f56565";
+    } else {
+      charCountEl.style.color = "var(--text-secondary)";
+    }
+  }
+
+  // 构建评论树结构
+  function buildCommentTree(comments: Comment[]): Comment[] {
+    const commentMap = new Map<string, Comment & { replies: Comment[] }>();
+    const rootComments: (Comment & { replies: Comment[] })[] = [];
+
+    // 首先创建所有评论的映射
+    comments.forEach((comment) => {
+      commentMap.set(comment.id, { ...comment, replies: [] });
+    });
+
+    // 构建树结构
+    comments
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+      .forEach((comment) => {
+        const commentWithReplies = commentMap.get(comment.id)!;
+        if (comment.parent_id) {
+          const parent = commentMap.get(comment.parent_id);
+          if (parent) {
+            // 这里我们通常把最新的回复放在后面，但在树形结构里，回复列表的顺序通常最早的在最前或者最新的在最前看个人喜好
+            // 这里按时间升序排回复（对话流）
+            parent.replies.push(commentWithReplies);
+            parent.replies.sort(
+              (a, b) =>
+                new Date(a.created_at).getTime() -
+                new Date(b.created_at).getTime(),
+            );
+          } else {
+            // 如果找不到父评论，作为根评论处理
+            rootComments.push(commentWithReplies);
+          }
+        } else {
+          rootComments.push(commentWithReplies);
+        }
+      });
+
+    return rootComments;
+  }
+
+  function getAvatarUrl(email: string) {
+    const hash = md5(email.trim().toLowerCase());
+    return `https://weavatar.com/avatar/${hash}?s=80&d=mm`;
+  }
+
+  // HTML 转义（用于 data 属性）
+  function escapeHtml(text: string): string {
+    if (!text) return "";
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  // 格式化日期
+  function formatDate(dateStr: string) {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    const locale = getLocale();
+    if (locale === "en") {
+      if (days > 365) return `${Math.floor(days / 365)}${t("years_ago")}`;
+      if (days > 30) return `${Math.floor(days / 30)}${t("months_ago")}`;
+      if (days > 0) return `${days}${t("days_ago")}`;
+      if (hours > 0) return `${hours}${t("hours_ago")}`;
+      if (minutes > 0) return `${minutes}${t("minutes_ago")}`;
+      return t("just_now");
+    } else {
+      if (days > 365) return `${Math.floor(days / 365)}${t("years_ago")}`;
+      if (days > 30) return `${Math.floor(days / 30)}${t("months_ago")}`;
+      if (days > 0) return `${days}${t("days_ago")}`;
+      if (hours > 0) return `${hours}${t("hours_ago")}`;
+      if (minutes > 0) return `${minutes}${t("minutes_ago")}`;
+      return t("just_now");
+    }
+  }
+
+  // 渲染单个评论
+  function renderComment(
+    comment: Comment & { replies?: Comment[] },
+    depth = 0,
+  ): string {
+    const dateStr = formatDate(comment.created_at);
+    // 优先使用 OAuth 头像，否则用 weavatar
+    const avatarUrl = comment.author_avatar || getAvatarUrl(comment.author_email);
+
+    // 如果有website，点击昵称跳转（自动补全协议前缀）
+    let websiteUrl = comment.author_website || "";
+    if (websiteUrl && !websiteUrl.match(/^https?:\/\//i)) {
+      websiteUrl = "https://" + websiteUrl;
+    }
+    const authorHtml = websiteUrl
+      ? `<a href="${websiteUrl}" target="_blank" rel="noopener noreferrer" class="comment-author-name">${comment.author_name}</a>`
+      : `<span class="comment-author-name">${comment.author_name}</span>`;
+
+    // 检查是否可以删除
+    const localIds = getLocalCommentIds();
+    const { canDelete, reason } = canDeleteComment(comment, currentUser, localIds);
+    
+    // 删除按钮
+    const deleteBtn = canDelete 
+      ? `<button class="btn-delete-action" data-comment-id="${comment.id}" data-reason="${reason}">${t("delete")}</button>`
+      : '';
+
+    let html = `
+      <div class="tk-comment" data-comment-id="${comment.id}" id="comment-${comment.id}">
+        <div class="tk-avatar">
+          <img src="${avatarUrl}" alt="${comment.author_name}">
+        </div>
+        <div class="tk-main">
+            <div class="tk-meta">
+              ${authorHtml}
+              <span class="tk-time">${dateStr}</span>
+            </div>
+            <div class="tk-content">
+              ${comment.content.replace(/\n/g, "<br>")}
+            </div>
+             <div class="tk-actions">
+              <button class="btn-reply-action" 
+                      data-comment-id="${comment.id}" 
+                      data-author="${escapeHtml(comment.author_name)}"
+                      data-email="${escapeHtml(comment.author_email)}"
+                      data-content="${escapeHtml(comment.content.substring(0, 200))}">${t("reply")}</button>
+              ${deleteBtn}
+            </div>
+            
+            ${
+              comment.replies && comment.replies.length > 0
+                ? `
+              <div class="tk-replies">
+                ${comment.replies.map((reply) => renderComment(reply, depth + 1)).join("")}
+              </div>
+            `
+                : ""
+            }
+        </div>
+      </div>
+    `;
+
+    return html;
+  }
+
+  // 渲染评论列表
+  function renderComments(comments: Comment[]) {
+    const commentsList = document.getElementById("comments-list");
+    if (!commentsList) return;
+
+    if (comments.length === 0) {
+      commentsList.innerHTML = `<div class="no-comments">${t("no_comments")}</div>`;
+      return;
+    }
+
+    const commentTree = buildCommentTree(comments);
+    const html = commentTree.map((comment) => renderComment(comment)).join("");
+    commentsList.innerHTML = html;
+
+    // 绑定回复按钮事件
+    document.querySelectorAll(".btn-reply-action").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const target = e.target as HTMLButtonElement;
+        const commentId = target.getAttribute("data-comment-id");
+        const authorName = target.getAttribute("data-author");
+        const authorEmail = target.getAttribute("data-email");
+        const content = target.getAttribute("data-content");
+        handleReply(commentId, authorName, authorEmail || undefined, content || undefined);
+      });
+    });
+
+    // 绑定删除按钮事件
+    document.querySelectorAll(".btn-delete-action").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        const target = e.target as HTMLButtonElement;
+        const commentId = target.getAttribute("data-comment-id");
+        const reason = target.getAttribute("data-reason");
+        
+        if (!commentId) return;
+        
+        // 确认删除
+        if (!confirm(t("delete_confirm"))) return;
+        
+        try {
+          target.disabled = true;
+          target.textContent = "...";
+          
+          if (reason === "anonymous_window") {
+            // 匿名评论通过数据库函数删除（验证时间窗口）
+            const success = await deleteAnonymousComment(commentId);
+            if (!success) {
+              alert(t("delete_expired"));
+              return;
+            }
+            removeLocalCommentId(commentId);
+          } else {
+            // OAuth 用户或管理员直接删除
+            await deleteComment(commentId);
+          }
+          
+          // 重新加载评论
+          await loadComments();
+        } catch (error) {
+          console.error("Delete failed:", error);
+          alert(t("delete_error"));
+          target.disabled = false;
+          target.textContent = t("delete");
+        }
+      });
+    });
+  }
+
+  // 存储当前回复的父评论信息
+  let currentReplyTo: { id: string; name: string; email: string; content: string } | null = null;
+
+  // 当前登录用户
+  let currentUser: any = null;
+
+  // localStorage 中存储的匿名评论 ID 和创建时间
+  function getLocalCommentIds(): Record<string, number> {
+    try {
+      const stored = localStorage.getItem('my_comment_ids');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveLocalCommentId(commentId: string) {
+    const ids = getLocalCommentIds();
+    ids[commentId] = Date.now();
+    // 清理过期的记录（超过 10 分钟的）
+    const tenMinutes = 10 * 60 * 1000;
+    Object.keys(ids).forEach(id => {
+      if (Date.now() - ids[id] > tenMinutes) {
+        delete ids[id];
+      }
+    });
+    localStorage.setItem('my_comment_ids', JSON.stringify(ids));
+  }
+
+  function removeLocalCommentId(commentId: string) {
+    const ids = getLocalCommentIds();
+    delete ids[commentId];
+    localStorage.setItem('my_comment_ids', JSON.stringify(ids));
+  }
+
+  // 更新 UI 显示登录状态
+  function updateAuthUI(user: any) {
+    currentUser = user;
+    const loggedOut = document.getElementById('auth-logged-out');
+    const loggedIn = document.getElementById('auth-logged-in');
+    const anonymousFields = document.getElementById('anonymous-form-fields');
+    const authAvatar = document.getElementById('auth-avatar') as HTMLImageElement;
+    const authName = document.getElementById('auth-name');
+    const adminBadge = document.getElementById('auth-admin-badge');
+
+    if (user) {
+      // 已登录
+      if (loggedOut) loggedOut.style.display = 'none';
+      if (loggedIn) loggedIn.style.display = 'flex';
+      if (anonymousFields) anonymousFields.style.display = 'none';
+      
+      if (authAvatar) {
+        authAvatar.src = user.user_metadata?.avatar_url || '';
+        authAvatar.alt = user.user_metadata?.full_name || user.email || '';
+      }
+      if (authName) {
+        authName.textContent = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '';
+      }
+      if (adminBadge) {
+        adminBadge.style.display = isAdmin(user) ? 'inline' : 'none';
+      }
+    } else {
+      // 未登录
+      if (loggedOut) loggedOut.style.display = 'flex';
+      if (loggedIn) loggedIn.style.display = 'none';
+      if (anonymousFields) anonymousFields.style.display = 'grid';
+    }
+
+    // 重新渲染评论列表以更新删除按钮
+    loadComments();
+  }
+
+  // 处理回复操作
+  function handleReply(commentId: string | null, authorName: string | null, authorEmail?: string, content?: string) {
+    const parentIdInput = document.getElementById(
+      "parent-id",
+    ) as HTMLInputElement;
+    const replyPreview = document.getElementById("reply-preview");
+    const replyTarget = document.getElementById("reply-target");
+
+    // 滚动到表单
+    const formContainer = document.querySelector(".comment-form-container");
+
+    if (!parentIdInput || !replyPreview || !replyTarget) return;
+
+    if (commentId && authorName) {
+      parentIdInput.value = commentId;
+      replyTarget.textContent = `${t("reply_to")}${authorName}`;
+      replyPreview.style.display = "flex";
+      formContainer?.scrollIntoView({ behavior: "smooth", block: "center" });
+      
+      // 保存父评论信息用于邮件通知
+      currentReplyTo = {
+        id: commentId,
+        name: authorName,
+        email: authorEmail || "",
+        content: content || "",
+      };
+    } else {
+      parentIdInput.value = "";
+      replyPreview.style.display = "none";
+      currentReplyTo = null;
+    }
+  }
+
+  // 加载评论
+  async function loadComments() {
+    const translationKey = (
+      document.getElementById("translation-key") as HTMLInputElement
+    )?.value;
+    if (!translationKey) {
+      console.warn("No translation key found");
+      return;
+    }
+
+    try {
+      const comments = await getComments(translationKey);
+      renderComments(comments);
+    } catch (error) {
+      console.error("Failed to load comments:", error);
+      const commentsList = document.getElementById("comments-list");
+      if (commentsList) {
+        commentsList.innerHTML = `<div class="error-message">${t("load_error")}</div>`;
+      }
+    }
+  }
+
+  // 初始化函数
+  async function initComments() {
+    // 检查登录状态
+    const user = await getCurrentUser();
+    updateAuthUI(user);
+
+    // 监听认证状态变化
+    onAuthStateChange((user) => {
+      updateAuthUI(user);
+    });
+
+    // OAuth 登录按钮
+    const githubBtn = document.getElementById("btn-github");
+    const googleBtn = document.getElementById("btn-google");
+    const logoutBtn = document.getElementById("btn-logout");
+
+    if (githubBtn) {
+      githubBtn.addEventListener("click", () => signInWithOAuth("github"));
+    }
+    if (googleBtn) {
+      googleBtn.addEventListener("click", () => signInWithOAuth("google"));
+    }
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        await signOut();
+        updateAuthUI(null);
+      });
+    }
+
+    // 填充用户信息（仅匿名模式）
+    const userInfo = getUserInfo();
+    const nameInput = document.getElementById(
+      "author-name",
+    ) as HTMLInputElement;
+    const emailInput = document.getElementById(
+      "author-email",
+    ) as HTMLInputElement;
+    const websiteInput = document.getElementById(
+      "author-website",
+    ) as HTMLInputElement;
+    const contentTextarea = document.getElementById(
+      "comment-content",
+    ) as HTMLTextAreaElement;
+
+    if (nameInput && userInfo.name) nameInput.value = userInfo.name;
+    if (emailInput && userInfo.email) emailInput.value = userInfo.email;
+    if (websiteInput && userInfo.website) websiteInput.value = userInfo.website;
+
+    // 监听内容输入，更新字数统计
+    if (contentTextarea) {
+      contentTextarea.addEventListener("input", (e) => {
+        const target = e.target as HTMLTextAreaElement;
+        updateCharCount(target.value);
+      });
+      // 初始化字数显示
+      updateCharCount(contentTextarea.value);
+    }
+
+    // 取消回复按钮
+    const cancelBtn = document.getElementById("cancel-reply");
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", () => handleReply(null, null));
+    }
+
+    // 表单提交
+    const form = document.getElementById("comment-form") as HTMLFormElement;
+    if (form) {
+      let submitting = false; // 防重复提交标志
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // 防止重复提交
+        if (submitting) return;
+
+        const translationKey = (
+          document.getElementById("translation-key") as HTMLInputElement
+        ).value;
+        
+        // 根据登录状态获取用户信息
+        let authorName: string;
+        let authorEmail: string;
+        let authorWebsite: string | undefined;
+        let userId: string | undefined;
+        let authorAvatar: string | undefined;
+        
+        if (currentUser) {
+          // OAuth 用户
+          authorName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'Anonymous';
+          authorEmail = currentUser.email || '';
+          authorAvatar = currentUser.user_metadata?.avatar_url;
+          userId = currentUser.id;
+        } else {
+          // 匿名用户
+          authorName = (document.getElementById("author-name") as HTMLInputElement).value.trim();
+          authorEmail = (document.getElementById("author-email") as HTMLInputElement).value.trim();
+          authorWebsite = (document.getElementById("author-website") as HTMLInputElement).value.trim() || undefined;
+        }
+        
+        const content = (
+          document.getElementById("comment-content") as HTMLTextAreaElement
+        ).value.trim();
+        const parentId =
+          (document.getElementById("parent-id") as HTMLInputElement).value ||
+          undefined;
+
+        const messageDiv = document.getElementById("form-message");
+        const submitBtn = form.querySelector(".btn-submit") as HTMLButtonElement;
+        const originalBtnText = submitBtn?.textContent || t("submit");
+        if (!messageDiv || !submitBtn) return;
+
+        // 验证必填项（匿名用户需要填写名字和邮箱）
+        if (!currentUser && (!authorName || !authorEmail)) {
+          messageDiv.textContent = t("fill_required");
+          messageDiv.className = "form-message error";
+          setTimeout(() => {
+            messageDiv.textContent = "";
+            messageDiv.className = "form-message";
+          }, 2000);
+          return;
+        }
+        
+        if (!content) {
+          messageDiv.textContent = t("fill_required");
+          messageDiv.className = "form-message error";
+          setTimeout(() => {
+            messageDiv.textContent = "";
+            messageDiv.className = "form-message";
+          }, 2000);
+          return;
+        }
+
+        // 验证字数限制
+        if (!isContentWithinLimit(content)) {
+          messageDiv.textContent = t("too_long");
+          messageDiv.className = "form-message error";
+          setTimeout(() => {
+            messageDiv.textContent = "";
+            messageDiv.className = "form-message";
+          }, 3000);
+          return;
+        }
+
+        // 提交评论
+        try {
+          submitting = true;
+          submitBtn.disabled = true;
+          submitBtn.textContent = t("sending");
+
+          const newComment = await submitComment(
+            translationKey,
+            authorName,
+            authorEmail,
+            content,
+            authorWebsite,
+            parentId,
+            userId,
+            authorAvatar,
+          );
+
+          // 匿名评论：保存到 localStorage 以便 5 分钟内删除
+          if (!currentUser && newComment?.id) {
+            saveLocalCommentId(newComment.id);
+          }
+
+          // 匿名用户：保存信息到 localStorage
+          if (!currentUser) {
+            saveUserInfo(authorName, authorEmail, authorWebsite || '');
+          }
+
+          // 发送邮件通知（异步，不阻塞）
+          const commentData = { author_name: authorName, author_email: authorEmail, content };
+          if (parentId && currentReplyTo) {
+            // 回复通知
+            sendNotification("reply", commentData, {
+              name: currentReplyTo.name,
+              email: currentReplyTo.email,
+              content: currentReplyTo.content,
+            });
+          } else {
+            // 新评论通知
+            sendNotification("new_comment", commentData);
+          }
+
+          messageDiv.textContent = t("success");
+          messageDiv.className = "form-message success";
+
+          // 清空内容字段
+          (
+            document.getElementById("comment-content") as HTMLTextAreaElement
+          ).value = "";
+          updateCharCount(""); // 重置字数统计
+          handleReply(null, null);
+
+          // 重新加载评论列表
+          await loadComments();
+
+          setTimeout(() => {
+            messageDiv.textContent = "";
+            messageDiv.className = "form-message";
+          }, 3000);
+        } catch (error) {
+          console.error("Failed to submit comment:", error);
+          messageDiv.textContent = t("error");
+          messageDiv.className = "form-message error";
+          setTimeout(() => {
+            messageDiv.textContent = "";
+            messageDiv.className = "form-message";
+          }, 3000);
+        } finally {
+          submitting = false;
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalBtnText;
+        }
+      });
+    }
+  }
+
+  // 防止重复初始化的标志
+  let initialized = false;
+
+  function safeInitComments() {
+    // 检查当前页面是否有评论组件
+    const container = document.querySelector(".supabase-comments");
+    if (!container) return;
+
+    // 使用 data 属性标记是否已初始化，防止重复绑定事件
+    if (container.getAttribute("data-initialized") === "true") {
+      return;
+    }
+    container.setAttribute("data-initialized", "true");
+
+    initComments();
+  }
+
+  // 使用 astro:page-load 事件支持 View Transitions
+  document.addEventListener("astro:page-load", safeInitComments);
+  
+  // 首次加载时也需要初始化
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", safeInitComments);
+  } else {
+    safeInitComments();
+  }
+</script>
+
+<style>
+  /* 整体容器 */
+  .supabase-comments {
+    max-width: 768px;
+    margin: 2rem auto 0;
+    padding: 0 1rem;
+  }
+
+  /* OAuth 登录区域 - 在发送按钮左侧 */
+  .auth-logged-out {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .btn-oauth {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 0;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--grey);
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  :global(html.dark) .btn-oauth {
+    border-color: rgba(166, 166, 193, 0.3);
+  }
+
+  .btn-oauth:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+  }
+
+  .btn-oauth svg {
+    flex-shrink: 0;
+  }
+
+  .auth-logged-in {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .auth-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .auth-name {
+    font-size: 0.8125rem;
+    color: var(--text);
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-badge {
+    font-size: 0.625rem;
+    padding: 0.0625rem 0.25rem;
+    background: var(--purple);
+    color: #fff;
+    border-radius: 0.1875rem;
+  }
+
+  /* 表单样式 - 参考 Momo 的简洁设计 */
+  .comment-form-container {
+    margin-bottom: 2rem;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .form-field {
+    margin-bottom: 0;
+  }
+
+  .form-field label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+  }
+
+  .required {
+    color: #ef4444;
+    margin-left: 2px;
+  }
+
+  .form-field input,
+  .form-field textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--grey);
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+    box-sizing: border-box;
+  }
+
+  /* Dark mode 下边框更淡 */
+  :global(html.dark) .form-field input,
+  :global(html.dark) .form-field textarea {
+    border-color: rgba(166, 166, 193, 0.3);
+  }
+
+  .form-field input::placeholder,
+  .form-field textarea::placeholder {
+    color: var(--grey);
+  }
+
+  :global(html.dark) .form-field input::placeholder,
+  :global(html.dark) .form-field textarea::placeholder {
+    color: rgba(166, 166, 193, 0.6);
+  }
+
+  .form-field input:focus,
+  .form-field textarea:focus {
+    outline: none;
+    border-color: var(--purple);
+  }
+
+  .form-field textarea {
+    min-height: 100px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  .char-counter {
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--grey);
+    margin-top: 0.25rem;
+  }
+
+  #char-count {
+    font-weight: 500;
+  }
+
+  .form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.75rem;
+    gap: 1rem;
+  }
+
+  .form-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .form-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .reply-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    opacity: 0.8;
+  }
+
+  .btn-text {
+    background: none;
+    border: none;
+    color: var(--purple);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-family: inherit;
+    padding: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn-text:hover {
+    opacity: 0.7;
+  }
+
+  .btn-submit {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: inherit;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--grey);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  :global(html.dark) .btn-submit {
+    border-color: rgba(166, 166, 193, 0.3);
+  }
+  }
+
+  .btn-submit:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+  }
+
+  .btn-submit:active {
+    transform: scale(0.95);
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .form-message {
+    font-size: 0.875rem;
+  }
+
+  .form-message.error {
+    color: #ef4444;
+  }
+
+  .form-message.success {
+    color: #10b981;
+  }
+
+  /* 评论列表 */
+  .comments-list {
+    margin-top: 2rem;
+  }
+
+  .loading,
+  .no-comments,
+  .error-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--grey);
+  }
+
+  .error-message {
+    color: #ef4444;
+  }
+
+  /* 动态生成的评论内容需要使用 :global() */
+  /* 单条评论 - 参考 Momo 的布局 */
+  .comments-list :global(.tk-comment) {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .comments-list :global(.tk-avatar) {
+    flex-shrink: 0;
+  }
+
+  .comments-list :global(.tk-avatar img) {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--grey);
+  }
+
+  .comments-list :global(.tk-main) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .comments-list :global(.tk-meta) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+  }
+
+  .comments-list :global(.comment-author-name) {
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .comments-list :global(a.comment-author-name:hover) {
+    color: var(--purple);
+  }
+
+  .comments-list :global(.tk-time) {
+    font-size: 0.75rem;
+    color: var(--grey);
+  }
+
+  .comments-list :global(.tk-content) {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    word-wrap: break-word;
+  }
+
+  .comments-list :global(.tk-actions) {
+    font-size: 0.875rem;
+  }
+
+  .comments-list :global(.btn-reply-action) {
+    background: none;
+    border: none;
+    color: var(--grey);
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.8125rem;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .comments-list :global(.btn-reply-action:hover) {
+    color: var(--purple);
+  }
+
+  .comments-list :global(.btn-delete-action) {
+    background: none;
+    border: none;
+    color: var(--grey);
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.8125rem;
+    font-family: inherit;
+    margin-left: 0.75rem;
+    transition: all 0.2s;
+  }
+
+  .comments-list :global(.btn-delete-action:hover) {
+    color: #ef4444;
+  }
+
+  .comments-list :global(.btn-delete-action:disabled) {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* 嵌套回复 */
+  .comments-list :global(.tk-replies) {
+    margin-top: 1rem;
+    padding-left: 1.25rem;
+    border-left: 2px solid var(--purple);
+  }
+
+  .comments-list :global(.tk-replies .tk-comment) {
+    margin-bottom: 1rem;
+  }
+
+  .comments-list :global(.tk-replies .tk-avatar img) {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* 响应式 */
+  @media (max-width: 640px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .comments-list :global(.tk-avatar img) {
+      width: 32px;
+      height: 32px;
+    }
+
+    .comments-list :global(.tk-replies) {
+      padding-left: 0.75rem;
+    }
+  }
+</style>

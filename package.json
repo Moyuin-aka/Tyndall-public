@@ -1,7 +1,7 @@
 {
   "name": "tyndall",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A modern Astro blog theme focused on details and visual experience",
   "author": "Moyuin",
   "license": "GPL-3.0-or-later",
@@ -9,27 +9,34 @@
     "type": "git",
     "url": "https://github.com/Moyuin-aka/tyndall-public.git"
   },
-  "scripts": {
+"scripts": {
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "devDependencies": {
-    "astro": "^5.14.3",
-    "sharp": "^0.34.4"
+    "astro": "^5.16.6",
+    "rehype-autolink-headings": "^7.1.0",
+    "rehype-slug": "^6.0.0",
+    "sharp": "^0.34.4",
+    "unist-util-visit": "^5.0.0"
   },
   "dependencies": {
-    "@astrojs/prefetch": "^0.4.1",
-    "@astrojs/rss": "^4.0.12",
+    "@astrojs/check": "^0.9.6",
+    "@astrojs/rss": "^4.0.13",
     "@astrojs/sitemap": "^3.6.0",
-    "@astrojs/vercel": "^8.2.9",
-    "marked": "^16.4.0",
+    "@astrojs/vercel": "^8.2.11",
+    "@supabase/supabase-js": "^2.93.3",
+    "@vercel/speed-insights": "^1.2.0",
+    "marked": "^16.4.1",
     "rehype-katex": "^7.0.1",
+    "remark-breaks": "^4.0.0",
     "remark-math": "^6.0.0",
     "sanitize-html": "^2.17.0",
     "tsparticles-engine": "^2.12.0",
-    "tsparticles-slim": "^2.12.0"
+    "tsparticles-slim": "^2.12.0",
+    "typescript": "^5.9.3"
   },
   "overrides": {
     "path-to-regexp": "6.3.0"

@@ -1,10 +1,10 @@
 ---
-import { useTranslations } from '@utils/ui';
-import Layout from '@layouts/Layout.astro';
-import ServiceCard from '@components/ServiceCard.astro';
-import ServiceStatus from '@components/ServiceStatus.astro';
-import servicesData from '@data/services.json';
-import { ICONS } from '@utils/icons';
+import { useTranslations } from "@utils/ui";
+import Layout from "@layouts/Layout.astro";
+import ServiceCard from "@components/ServiceCard.astro";
+import ServiceStatus from "@components/ServiceStatus.astro";
+import servicesData from "@data/services.json";
+import { ICONS } from "@utils/icons";
 
 interface Service {
     name: string;
@@ -28,38 +28,50 @@ for (const service of services) {
 }
 
 const categoryIcons: { [key: string]: string } = {
-    'Tools': ICONS.tools,
-    'Storage': ICONS.storage,
-    'DevOps': ICONS.operations,
-    'Admin': ICONS.admin,
+    Tools: ICONS.tools,
+    Storage: ICONS.storage,
+    DevOps: ICONS.operations,
+    Admin: ICONS.admin,
 };
 ---
 
-<Layout title={t('lab_title')}>
-
+<Layout title={t("lab_title")}>
     <div class="lab-container">
         <header class="hero-section">
             <p class="hero-subtitle">Lab</p>
-            <h1 class="hero-slogan">{t('lab_desc')}</h1>
+            <h1 class="hero-slogan">{t("lab_desc")}</h1>
             <ServiceStatus />
         </header>
 
         <main id="lab-main">
-            {Object.entries(categories).map(([categoryName, services], index) => (
-                <section class="category-section" style={`--delay: ${index * 0.1}s`}>
-                    <h2 class="category-title">
-                        <div class="category-icon" set:html={categoryIcons[categoryName] || ''}></div>
-                        <span>{t(`categories.${categoryName}`)}</span>
-                    </h2>
-                    <div class="services-grid">
-                        {services.map((service, sIndex) => (
-                            <div class="service-wrapper" style={`--delay: ${(index * 0.1) + (sIndex * 0.05)}s`}>
-                                <ServiceCard service={service} t={t} />
+            {
+                Object.entries(categories).map(
+                    ([categoryName, services], index) => (
+                        <section
+                            class="category-section"
+                            style={`--delay: ${index * 0.1}s`}
+                        >
+                            <h2 class="category-title">
+                                <div
+                                    class="category-icon"
+                                    set:html={categoryIcons[categoryName] || ""}
+                                />
+                                <span>{t(`categories.${categoryName}`)}</span>
+                            </h2>
+                            <div class="services-grid">
+                                {services.map((service, sIndex) => (
+                                    <div
+                                        class="service-wrapper"
+                                        style={`--delay: ${index * 0.1 + sIndex * 0.05}s`}
+                                    >
+                                        <ServiceCard service={service} t={t} />
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                </section>
-            ))}
+                        </section>
+                    ),
+                )
+            }
         </main>
     </div>
 </Layout>
@@ -73,8 +85,6 @@ const categoryIcons: { [key: string]: string } = {
         align-items: initial;
     }
 
-
-
     .hero-subtitle {
         font-family: var(--font-serif);
         font-size: 0.9rem;
@@ -84,7 +94,7 @@ const categoryIcons: { [key: string]: string } = {
         margin-bottom: 1rem;
         opacity: 0.8;
     }
-  
+
     /* Lab Page Layout */
     .lab-container {
         max-width: 1000px;
@@ -98,9 +108,9 @@ const categoryIcons: { [key: string]: string } = {
         margin-bottom: 5rem;
         position: relative;
     }
-    
+
     .hero-section::after {
-        content: '';
+        content: "";
         position: absolute;
         bottom: -2.5rem;
         left: 50%;
@@ -168,15 +178,21 @@ const categoryIcons: { [key: string]: string } = {
         position: relative; /* Ensure z-index works */
         transition: z-index 0s step-end 0.3s;
     }
-    
+
     .service-wrapper:hover {
         z-index: 10;
         transition: z-index 0s step-start;
     }
 
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* Service Card Redesign - Global Styles for Component */
@@ -194,7 +210,7 @@ const categoryIcons: { [key: string]: string } = {
         min-height: 140px;
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        box-shadow: 
+        box-shadow:
             0 4px 20px -2px rgba(0, 0, 0, 0.02),
             0 0 0 1px rgba(255, 255, 255, 0.5) inset;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -202,7 +218,7 @@ const categoryIcons: { [key: string]: string } = {
 
     .service-card:hover {
         transform: translateY(-6px) scale(1.02);
-        box-shadow: 
+        box-shadow:
             0 20px 40px -4px rgba(162, 89, 236, 0.15),
             0 0 0 1px rgba(162, 89, 236, 0.3) inset;
         background: rgba(255, 255, 255, 0.8);
@@ -267,9 +283,18 @@ const categoryIcons: { [key: string]: string } = {
         box-shadow: 0 0 8px currentColor;
     }
 
-    .status-dot.up { background-color: #10b981; color: rgba(16, 185, 129, 0.4); }
-    .status-dot.down { background-color: #ef4444; color: rgba(239, 68, 68, 0.4); }
-    .status-dot.unknown { background-color: #9ca3af; color: rgba(156, 163, 175, 0.4); }
+    .status-dot.up {
+        background-color: #10b981;
+        color: rgba(16, 185, 129, 0.4);
+    }
+    .status-dot.down {
+        background-color: #ef4444;
+        color: rgba(239, 68, 68, 0.4);
+    }
+    .status-dot.unknown {
+        background-color: #9ca3af;
+        color: rgba(156, 163, 175, 0.4);
+    }
 
     .status-text {
         font-size: 0.8rem;
@@ -283,7 +308,7 @@ const categoryIcons: { [key: string]: string } = {
         transition: all 0.3s ease;
         transform: translateX(0);
     }
-    
+
     .service-card:hover .external-link-icon {
         opacity: 1;
         color: var(--purple);
@@ -297,16 +322,16 @@ const categoryIcons: { [key: string]: string } = {
 
     /* Dark Mode */
     html.dark .service-card {
-        background: rgba(30, 30, 30, 0.4);
+        background: rgba(30, 30, 30, 0.2);
         border: 1px solid rgba(255, 255, 255, 0.05);
-        box-shadow: 
+        box-shadow:
             0 4px 20px -2px rgba(0, 0, 0, 0.2),
             0 0 0 1px rgba(255, 255, 255, 0.05) inset;
     }
 
     html.dark .service-card:hover {
-        background: rgba(40, 40, 40, 0.95);
-        box-shadow: 
+        background: rgba(40, 40, 40, 0.5);
+        box-shadow:
             0 20px 40px -4px rgba(162, 89, 236, 0.15),
             0 0 0 1px rgba(162, 89, 236, 0.3) inset;
     }
@@ -323,7 +348,7 @@ const categoryIcons: { [key: string]: string } = {
         .hero-slogan {
             font-size: 2.5rem;
         }
-        
+
         .services-grid {
             grid-template-columns: 1fr;
         }

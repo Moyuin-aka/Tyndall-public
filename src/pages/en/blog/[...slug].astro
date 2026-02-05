@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 import Layout from '@layouts/Layout.astro';
 import '@styles/markdown.css';
 import { useTranslations } from '@utils/ui';
-import TwikooComments from '@components/TwikooComments.astro';
+import SupabaseComments from '@components/SupabaseComments.astro';
 import TableOfContents from '@components/TableOfContents.astro';
 
 export async function getStaticPaths() {
@@ -160,7 +160,11 @@ const hasMermaid = /```mermaid/.test(rawContent);
     
     <hr class="comment-divider" />
     
-    <TwikooComments />
+    <SupabaseComments 
+      translationKey={translationKey} 
+      postTitle={post.data.title}
+      postUrl={`${Astro.site?.origin || ''}${Astro.url.pathname}`}
+    />
   </main>
 </Layout>
 

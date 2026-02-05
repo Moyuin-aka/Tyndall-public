@@ -1,21 +1,21 @@
 ---
-import Layout from '@layouts/Layout.astro';
-import { useTranslations } from '@utils/ui';
-import { friends, friendshipGuidelines } from '@data/friends';
-import '@styles/markdown.css';
+import Layout from "@layouts/Layout.astro";
+import { useTranslations } from "@utils/ui";
+import { friends, friendshipGuidelines } from "@data/friends";
+import "@styles/markdown.css";
 
 const t = useTranslations(Astro.currentLocale);
 const guidelines = friendshipGuidelines.zh;
 
 // 自动收集所有标签
 const allTags = new Set<string>();
-friends.forEach(friend => {
-  friend.tags?.forEach(tag => allTags.add(tag));
+friends.forEach((friend) => {
+  friend.tags?.forEach((tag) => allTags.add(tag));
 });
 const tags = Array.from(allTags);
 ---
 
-<Layout title={t('friends_title')}>
+<Layout title={t("friends_title")}>
   <main class="friends-container">
     <!-- Hero Section -->
     <header class="friends-hero">
@@ -24,52 +24,56 @@ const tags = Array.from(allTags);
     </header>
 
     <!-- 分类筛选 - 类似blog页的通告设计 -->
-    {tags.length > 0 && (
-      <div class="category-filter">
-        <button class="filter-btn active" data-category="all">
-          全部 ({friends.length})
-        </button>
-        {tags.map(tag => {
-          const count = friends.filter(f => f.tags?.includes(tag)).length;
-          return (
-            <button class="filter-btn" data-category={tag}>
-              {tag} ({count})
-            </button>
-          );
-        })}
-      </div>
-    )}
+    {
+      tags.length > 0 && (
+        <div class="category-filter">
+          <button class="filter-btn active" data-category="all">
+            全部 ({friends.length})
+          </button>
+          {tags.map((tag) => {
+            const count = friends.filter((f) => f.tags?.includes(tag)).length;
+            return (
+              <button class="filter-btn" data-category={tag}>
+                {tag} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )
+    }
 
     <!-- Friends Grid -->
     <section class="friends-grid">
-      {friends.map((friend) => (
-        <a 
-          href={friend.url} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          class="friend-card"
-          data-tags={friend.tags?.join(',') || ''}
-        >
-          <div class="friend-avatar">
-            {friend.avatar ? (
-              <img src={friend.avatar} alt={friend.name} loading="lazy" />
-            ) : (
-              <div class="avatar-placeholder">{friend.name.charAt(0)}</div>
-            )}
-          </div>
-          <div class="friend-info">
-            <h3 class="friend-name">{friend.name}</h3>
-            <p class="friend-description">{friend.description}</p>
-          </div>
-        </a>
-      ))}
+      {
+        friends.map((friend) => (
+          <a
+            href={friend.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="friend-card"
+            data-tags={friend.tags?.join(",") || ""}
+          >
+            <div class="friend-avatar">
+              {friend.avatar ? (
+                <img src={friend.avatar} alt={friend.name} loading="lazy" />
+              ) : (
+                <div class="avatar-placeholder">{friend.name.charAt(0)}</div>
+              )}
+            </div>
+            <div class="friend-info">
+              <h3 class="friend-name">{friend.name}</h3>
+              <p class="friend-description">{friend.description}</p>
+            </div>
+          </a>
+        ))
+      }
     </section>
 
     <!-- 申请友链 Section -->
     <section class="apply-section">
       <div class="apply-content">
         <h2>添加友链</h2>
-        
+
         <div class="my-info-card">
           <div class="my-avatar">
             <img src={guidelines.myInfo.avatar} alt={guidelines.myInfo.name} />
@@ -82,52 +86,62 @@ const tags = Array.from(allTags);
         </div>
 
         <div class="json-box">
-          <div class="json-line"><span class="key">myInfo</span>: <span class="bracket">{'{'}</span></div>
-          <div class="json-line indent">
-            <span class="key">name</span>: <span class="value">'{guidelines.myInfo.name}'</span>,
+          <div class="json-line">
+            <span class="key">myInfo</span>: <span class="bracket">{"{"}</span>
           </div>
           <div class="json-line indent">
-            <span class="key">avatar</span>: <span class="value">'{guidelines.myInfo.avatar}'</span>,
+            <span class="key">name</span>: <span class="value"
+              >'{guidelines.myInfo.name}'</span
+            >,
           </div>
           <div class="json-line indent">
-            <span class="key">url</span>: <span class="value">'{guidelines.myInfo.url}'</span>,
+            <span class="key">avatar</span>: <span class="value"
+              >'{guidelines.myInfo.avatar}'</span
+            >,
           </div>
           <div class="json-line indent">
-            <span class="key">description</span>: <span class="value">'{guidelines.myInfo.description}'</span>
+            <span class="key">url</span>: <span class="value"
+              >'{guidelines.myInfo.url}'</span
+            >,
           </div>
-          <div class="json-line"><span class="bracket">{'}'}</span>,</div>
+          <div class="json-line indent">
+            <span class="key">description</span>: <span class="value"
+              >'{guidelines.myInfo.description}'</span
+            >
+          </div>
+          <div class="json-line"><span class="bracket">{"}"}</span>,</div>
         </div>
 
-        <p class="apply-tip" set:html={guidelines.howToApply}></p>
+        <p class="apply-tip" set:html={guidelines.howToApply} />
       </div>
     </section>
   </main>
 </Layout>
 
 <script>
-  document.addEventListener('astro:page-load', () => {
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    const friendCards = document.querySelectorAll('.friend-card');
+  document.addEventListener("astro:page-load", () => {
+    const filterBtns = document.querySelectorAll(".filter-btn");
+    const friendCards = document.querySelectorAll(".friend-card");
 
-    filterBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const category = btn.getAttribute('data-category');
-        
+    filterBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const category = btn.getAttribute("data-category");
+
         // 更新按钮状态
-        filterBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        filterBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
 
         // 筛选卡片
-        friendCards.forEach(card => {
-          const cardTags = card.getAttribute('data-tags') || '';
-          const tagsArray = cardTags.split(',').filter(t => t);
+        friendCards.forEach((card) => {
+          const cardTags = card.getAttribute("data-tags") || "";
+          const tagsArray = cardTags.split(",").filter((t) => t);
 
-          if (category === 'all' || tagsArray.includes(category)) {
-            card.style.display = 'flex';
+          if (category === "all" || tagsArray.includes(category)) {
+            card.style.display = "flex";
             // 添加淡入动画
-            card.style.animation = 'fadeIn 0.3s ease';
+            card.style.animation = "fadeIn 0.3s ease";
           } else {
-            card.style.display = 'none';
+            card.style.display = "none";
           }
         });
       });
@@ -246,7 +260,7 @@ const tags = Array.from(allTags);
   }
 
   .friend-card::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -373,7 +387,7 @@ const tags = Array.from(allTags);
   }
 
   .my-url {
-    font-family: 'Courier New', monospace;
+    font-family: "Courier New", monospace;
     font-size: 0.95rem;
     color: var(--purple);
     margin-bottom: 0.5rem;
@@ -392,7 +406,7 @@ const tags = Array.from(allTags);
     border-radius: 8px;
     padding: 1.5em;
     margin: 1.5rem 0;
-    font-family: 'Courier New', monospace;
+    font-family: "Courier New", monospace;
     font-size: 0.9rem;
     line-height: 1.6;
     color: var(--grey); /* Punctuation becomes grey */

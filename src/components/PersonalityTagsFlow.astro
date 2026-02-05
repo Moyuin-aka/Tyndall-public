@@ -1,65 +1,92 @@
 ---
-import RecentlyRead from './RecentlyRead.astro';
+import RecentlyRead from "./RecentlyRead.astro";
 
 // 简单的 i18n
-const locale = Astro.currentLocale || 'zh';
+const locale = Astro.currentLocale || "zh";
 const labels = {
   zh: {
-    title: '关于我的特质',
-    mbti: 'MBTI',
-    mbtiDesc: '理性思考者，独立探索',
-    interests: '职业兴趣',
-    interestsText: 'DevOps',
-    interestsDesc: '折腾网络和网络服务',
-    creation: '创作',
-    creationText: '偶尔把脑内剧情落成文字',
-    creationDesc: '不定期更新',
-    social: '社交',
-    socialText: 'HFA 倾向',
-    socialDesc: '社交能量有限',
-    current: '最近在做',
-    currentText: '积极进行期中备考中……',
-    currentDesc: '正在努力学习'
+    title: "关于我的特质",
+    mbti: "MBTI",
+    mbtiDesc: "理性思考者，独立探索",
+    interests: "职业兴趣",
+    interestsText: "网络工程",
+    interestsDesc: "实现网络功能与协议",
+    major: "所学专业",
+    majorText: "信息安全",
+    majorDesc: "网络安全与密码学",
+    social: "社交",
+    socialText: "HFA 倾向",
+    socialDesc: "社交能量有限",
+    current: "最近在做",
+    currentText: "寒假开始，快乐过年玩游戏！",
+    currentDesc: "努力玩野炊中",
   },
   en: {
-    title: 'About My Traits',
-    mbti: 'MBTI',
-    mbtiDesc: 'Rational thinker, independent explorer',
-    interests: 'Interests',
-    interestsText: 'DevSecOps',
-    interestsDesc: 'Tinkering with services & infrastructure',
-    creation: 'Creation',
-    creationText: 'Occasionally turning thoughts into words',
-    creationDesc: 'Irregularly creating rambling texts',
-    social: 'Social',
-    socialText: 'HFA-inclined',
-    socialDesc: 'Limited social energy',
-    current: 'Currently',
-    currentText: 'Studying hard for midterms...',
-    currentDesc: 'Working hard'
-  }
+    title: "About My Traits",
+    mbti: "MBTI",
+    mbtiDesc: "Rational thinker, independent explorer",
+    interests: "Interests",
+    interestsText: "Network Engineering",
+    interestsDesc: "Implementing network functions & protocols",
+    major: "Major",
+    majorText: "Information Security",
+    majorDesc: "Cybersecurity & Cryptography",
+    social: "Social",
+    socialText: "HFA-inclined",
+    socialDesc: "Limited social energy",
+    current: "Currently",
+    currentText: "Forwarding the first holiday of the new year",
+    currentDesc: "Playing Zelda: Breath of the Wild",
+  },
 };
 
 const t = labels[locale as keyof typeof labels] || labels.zh;
+
+// URL mapping for clickable cards
+const cardLinks = {
+  zh: {
+    istp: "https://www.16personalities.com/ch/istp-人格",
+    networking: "https://zh.wikipedia.org/wiki/计算机网络",
+    infosec: "https://zh.wikipedia.org/wiki/信息安全",
+    hfa: "https://zh.wikipedia.org/wiki/高功能自閉症",
+    zelda: "https://zh.wikipedia.org/wiki/塞尔达传说",
+  },
+  en: {
+    istp: "https://www.16personalities.com/istp-personality",
+    networking: "https://en.wikipedia.org/wiki/Computer_network_engineering",
+    infosec: "https://en.wikipedia.org/wiki/Information_security",
+    hfa: "https://en.wikipedia.org/wiki/High-functioning_autism",
+    zelda: "https://en.wikipedia.org/wiki/The_Legend_of_Zelda",
+  },
+};
+
+const links = cardLinks[locale as keyof typeof cardLinks] || cardLinks.zh;
 ---
 
 <div class="personality-flow-container">
   <h2 class="section-title">{t.title}</h2>
-  
+
   <div class="bento-grid">
     <!-- MBTI 卡片 -->
-    <div class="bento-card mbti-card" data-layer="1">
-      <div class="card-content">
-        <div class="card-icon">
-          <img src="/svg/istp.svg" alt="MBTI Avatar" class="mbti-avatar" />
-        </div>
-        <div class="text-content">
-          <h3>{t.mbti}</h3>
-          <p class="card-text">ISTP</p>
-          <div class="card-detail">{t.mbtiDesc}</div>
+    <a
+      href={links.istp}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="card-link"
+    >
+      <div class="bento-card mbti-card" data-layer="1">
+        <div class="card-content">
+          <div class="card-icon">
+            <img src="/svg/istp.svg" alt="MBTI Avatar" class="mbti-avatar" />
+          </div>
+          <div class="text-content">
+            <h3>{t.mbti}</h3>
+            <p class="card-text">ISTP</p>
+            <div class="card-detail">{t.mbtiDesc}</div>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
 
     <!-- 最近在读 - 占据更多空间 -->
     <div class="bento-card reading-card" data-layer="2">
@@ -69,40 +96,61 @@ const t = labels[locale as keyof typeof labels] || labels.zh;
     </div>
 
     <!-- 兴趣爱好 -->
-    <div class="bento-card interest-card" data-layer="1">
-      <div class="card-content">
-        <div class="card-emoji">🌌</div>
-        <div class="text-content">
-          <h3>{t.interests}</h3>
-          <p class="card-text">{t.interestsText}</p>
-          <div class="card-detail">{t.interestsDesc}</div>
+    <a
+      href={links.networking}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="card-link"
+    >
+      <div class="bento-card interest-card" data-layer="1">
+        <div class="card-content">
+          <div class="card-emoji">🌌</div>
+          <div class="text-content">
+            <h3>{t.interests}</h3>
+            <p class="card-text">{t.interestsText}</p>
+            <div class="card-detail">{t.interestsDesc}</div>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
 
-    <!-- 创作状态 -->
-    <div class="bento-card creation-card" data-layer="2">
-      <div class="card-content">
-        <div class="card-emoji">✍️</div>
-        <div class="text-content">
-          <h3>{t.creation}</h3>
-          <p class="card-text">{t.creationText}</p>
-          <div class="card-detail">{t.creationDesc}</div>
+    <!-- 所学专业 -->
+    <a
+      href={links.infosec}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="card-link"
+    >
+      <div class="bento-card creation-card" data-layer="2">
+        <div class="card-content">
+          <div class="card-emoji">🔐</div>
+          <div class="text-content">
+            <h3>{t.major}</h3>
+            <p class="card-text">{t.majorText}</p>
+            <div class="card-detail">{t.majorDesc}</div>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
 
     <!-- 社交特质 -->
-    <div class="bento-card social-card" data-layer="1">
-      <div class="card-content">
-        <div class="card-emoji">🎭</div>
-        <div class="text-content">
-          <h3>{t.social}</h3>
-          <p class="card-text">{t.socialText}</p>
-          <div class="card-detail">{t.socialDesc}</div>
+    <a
+      href={links.hfa}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="card-link"
+    >
+      <div class="bento-card social-card" data-layer="1">
+        <div class="card-content">
+          <div class="card-emoji">🗣️</div>
+          <div class="text-content">
+            <h3>{t.social}</h3>
+            <p class="card-text">{t.socialText}</p>
+            <div class="card-detail">{t.socialDesc}</div>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
 
     <!-- 当前在做 -->
     <div class="bento-card current-card" data-layer="1">
@@ -149,6 +197,20 @@ const t = labels[locale as keyof typeof labels] || labels.zh;
     z-index: 1;
   }
 
+  /* Clickable card link wrapper */
+  .card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    border-radius: 24px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-link:focus {
+    outline: 2px solid rgba(162, 89, 236, 0.5);
+    outline-offset: 2px;
+  }
+
   /* 卡片通用样式 */
   .bento-card {
     background: rgba(255, 255, 255, 0.6);
@@ -160,7 +222,7 @@ const t = labels[locale as keyof typeof labels] || labels.zh;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 
+    box-shadow:
       0 4px 24px -1px rgba(0, 0, 0, 0.02),
       0 0 0 1px rgba(255, 255, 255, 0.4) inset;
     opacity: 0;
@@ -169,9 +231,9 @@ const t = labels[locale as keyof typeof labels] || labels.zh;
 
   /* 暗色模式卡片样式 */
   :global(.dark) .bento-card {
-    background: rgba(30, 30, 30, 0.4);
+    background: rgba(30, 30, 30, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 
+    box-shadow:
       0 4px 24px -1px rgba(0, 0, 0, 0.2),
       0 0 0 1px rgba(255, 255, 255, 0.05) inset;
   }
@@ -216,14 +278,19 @@ const t = labels[locale as keyof typeof labels] || labels.zh;
   /* 悬停效果 */
   .bento-card:hover {
     transform: translateY(-6px) scale(1.01);
-    box-shadow: 
+    box-shadow:
       0 20px 40px -4px rgba(162, 89, 236, 0.15),
       0 0 0 1px rgba(162, 89, 236, 0.3) inset;
     z-index: 2;
   }
 
+  /* Add cursor pointer for clickable cards */
+  .card-link .bento-card {
+    cursor: pointer;
+  }
+
   :global(.dark) .bento-card:hover {
-    box-shadow: 
+    box-shadow:
       0 20px 40px -4px rgba(162, 89, 236, 0.2),
       0 0 0 1px rgba(162, 89, 236, 0.4) inset;
   }
@@ -294,7 +361,11 @@ const t = labels[locale as keyof typeof labels] || labels.zh;
     position: absolute;
     width: 400px;
     height: 400px;
-    background: radial-gradient(circle, rgba(162, 89, 236, 0.15) 0%, transparent 70%);
+    background: radial-gradient(
+      circle,
+      rgba(162, 89, 236, 0.15) 0%,
+      transparent 70%
+    );
     border-radius: 50%;
     pointer-events: none;
     z-index: 0;
@@ -310,23 +381,45 @@ const t = labels[locale as keyof typeof labels] || labels.zh;
   .glow-2 {
     bottom: -10%;
     right: -10%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+    background: radial-gradient(
+      circle,
+      rgba(99, 102, 241, 0.15) 0%,
+      transparent 70%
+    );
     animation: pulse 10s ease-in-out infinite alternate-reverse;
   }
 
   @keyframes pulse {
-    0% { transform: scale(1) translate(0, 0); opacity: 0.5; }
-    100% { transform: scale(1.2) translate(20px, -20px); opacity: 0.8; }
+    0% {
+      transform: scale(1) translate(0, 0);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(1.2) translate(20px, -20px);
+      opacity: 0.8;
+    }
   }
 
   @keyframes fadeInDown {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   @keyframes floatIn {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* 响应式设计 */
@@ -334,9 +427,13 @@ const t = labels[locale as keyof typeof labels] || labels.zh;
     .bento-grid {
       grid-template-columns: repeat(3, 1fr);
     }
-    
-    .reading-card { grid-column: span 2; }
-    .current-card { grid-column: span 1; }
+
+    .reading-card {
+      grid-column: span 2;
+    }
+    .current-card {
+      grid-column: span 1;
+    }
   }
 
   @media (max-width: 768px) {
@@ -345,12 +442,24 @@ const t = labels[locale as keyof typeof labels] || labels.zh;
       gap: 1rem;
     }
 
-    .mbti-card { grid-column: span 1; }
-    .reading-card { grid-column: span 2; }
-    .interest-card { grid-column: span 1; }
-    .creation-card { grid-column: span 1; }
-    .social-card { grid-column: span 1; }
-    .current-card { grid-column: span 1; }
+    .mbti-card {
+      grid-column: span 1;
+    }
+    .reading-card {
+      grid-column: span 2;
+    }
+    .interest-card {
+      grid-column: span 1;
+    }
+    .creation-card {
+      grid-column: span 1;
+    }
+    .social-card {
+      grid-column: span 1;
+    }
+    .current-card {
+      grid-column: span 1;
+    }
 
     .section-title {
       font-size: 1.5rem;
@@ -364,8 +473,12 @@ const t = labels[locale as keyof typeof labels] || labels.zh;
       grid-template-rows: auto;
     }
 
-    .bento-card { grid-column: span 1 !important; }
+    .bento-card {
+      grid-column: span 1 !important;
+    }
 
-    .ambient-glow { display: none; }
+    .ambient-glow {
+      display: none;
+    }
   }
 </style>

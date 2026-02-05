@@ -1,7 +1,7 @@
 /* src/styles/markdown.css */
 
 .markdown-content {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
   line-height: 1.8;
   font-size: 1.0rem;
   color: var(--text);
@@ -81,79 +81,142 @@
   word-break: break-word;
 }
 
-/* ========== 代码块容器 ========== */
+/* ========== 代码块容器（Apple 风格）========== */
+/* Light 模式：白灰色调 */
 .markdown-content .code-block-wrapper {
   position: relative;
   margin-bottom: 1em;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
-  background-color: #24292e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #f5f5f7;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
+/* Apple 风格头部 - Light */
 .markdown-content .code-block-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #1c2128;
-  padding: 0.6em 1em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, #e8e8ed 0%, #dcdce2 100%);
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  min-height: 32px;
 }
 
+/* 交通灯容器 */
+.markdown-content .code-block-header::before {
+  content: '';
+  display: flex;
+  width: 54px;
+  height: 12px;
+  background:
+    radial-gradient(circle at 6px 6px, #ff5f57 5px, transparent 5px),
+    radial-gradient(circle at 24px 6px, #febc2e 5px, transparent 5px),
+    radial-gradient(circle at 42px 6px, #28c840 5px, transparent 5px);
+  flex-shrink: 0;
+}
+
+/* 语言标签 - Light */
 .markdown-content .code-block-language {
-  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
-  font-size: 0.85em;
-  color: #c9d1d9;
-  text-transform: lowercase;
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.8em;
+  color: rgba(0, 0, 0, 0.45);
   user-select: none;
   font-weight: 500;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
+/* 复制按钮 - Light */
 .markdown-content .code-block-copy {
   background: transparent;
   border: none;
-  color: #c9d1d9;
+  color: rgba(0, 0, 0, 0.4);
   cursor: pointer;
-  padding: 0.4em 0.7em;
+  padding: 4px 8px;
   display: flex;
   align-items: center;
-  gap: 0.5em;
-  font-size: 0.85em;
-  font-family: var(--font-sans);
+  gap: 6px;
+  font-size: 0.75em;
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
   transition: all 0.2s ease;
   border-radius: 4px;
+  margin-left: auto;
 }
 
 .markdown-content .code-block-copy:hover {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.12);
+  color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.06);
 }
 
 .markdown-content .code-block-copy svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
 }
 
 .markdown-content .code-block-copy.copied {
-  color: #4caf50;
+  color: #28c840;
 }
 
+/* ========== Dark 模式：紫色边框 + 黑色内部（参考 TOC）========== */
+html.dark .markdown-content .code-block-wrapper {
+  background-color: rgba(30, 30, 30, 0.6);
+  border: 1px solid rgba(162, 89, 236, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+html.dark .markdown-content .code-block-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(162, 89, 236, 0.3);
+}
+
+html.dark .markdown-content .code-block-language {
+  color: rgba(162, 89, 236, 0.7);
+}
+
+html.dark .markdown-content .code-block-copy {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+html.dark .markdown-content .code-block-copy:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(162, 89, 236, 0.2);
+}
+
+/* 代码块主体 - Light 模式（强制覆盖 Shiki 背景）*/
 .markdown-content pre,
 .markdown-content .astro-code {
-  background-color: #24292e;
-  color: #e1e4e8;
-  padding: 1em;
+  background-color: transparent !important;
+  color: #1d1d1f;
+  padding: 1em 1.2em;
   margin-bottom: 0;
-  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
-  font-size: 0.95em;
-  line-height: 1.5;
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.9em;
+  line-height: 1.6;
   max-width: 100%;
   overflow-x: auto;
   white-space: pre;
   box-sizing: border-box;
   border-radius: 0;
+}
+
+/* ========== Shiki 双主题切换 ========== */
+/* Light 模式：使用 --shiki-light 颜色 */
+.markdown-content .astro-code,
+.markdown-content .astro-code span {
+  color: var(--shiki-light) !important;
+  background-color: transparent !important;
+}
+
+/* Dark 模式：使用 --shiki-dark 颜色 */
+html.dark .markdown-content .astro-code,
+html.dark .markdown-content .astro-code span {
+  color: var(--shiki-dark) !important;
+  background-color: transparent !important;
 }
 
 /* 当代码块有 header 时，移除独立代码块的样式 */
@@ -171,6 +234,8 @@
   border-radius: 0;
   white-space: inherit;
 }
+
+
 
 /* 移动端优化：适度减小字体，更好地利用空间 */
 @media (max-width: 768px) {
@@ -198,12 +263,14 @@
   }
 }
 
+/* 行内代码 - Light 模式 */
 .markdown-content :not(pre)>code {
-  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
-  background-color: rgba(128, 128, 128, 0.2);
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-size: 0.9em;
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  background-color: rgba(0, 0, 0, 0.06);
+  color: #1d1d1f;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.88em;
   /* 允许行内代码换行，防止撑开页面 */
   word-wrap: break-word;
   word-break: break-word;
@@ -214,6 +281,12 @@
   hyphens: auto;
   /* 保持行内显示，不使用 inline-block */
   display: inline;
+}
+
+/* 行内代码 - Dark 模式（紫色调）*/
+html.dark .markdown-content :not(pre)>code {
+  background-color: rgba(162, 89, 236, 0.15);
+  color: #e8e6f0;
 }
 
 .markdown-content pre code,
@@ -296,6 +369,21 @@
   border-radius: 5px;
 }
 
+.markdown-content figure.image-figure {
+  margin: 1.2em auto;
+  text-align: center;
+}
+
+.markdown-content figure.image-figure img {
+  margin: 0 auto;
+}
+
+.markdown-content figure.image-figure figcaption {
+  margin-top: 0.5em;
+  font-size: 0.9em;
+  color: var(--grey);
+}
+
 .markdown-content hr {
   border: none;
   border-top: 1px solid var(--grey);
@@ -353,7 +441,7 @@
 .markdown-content kbd {
   display: inline-block;
   padding: 0.2em 0.5em;
-  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
   font-size: 0.85em;
   color: var(--text);
   background-color: #f4f4f4;
@@ -512,9 +600,6 @@
 }
 
 /* Dark mode adjustments */
-html.dark .markdown-content :not(pre)>code {
-  background-color: rgba(255, 255, 255, 0.1);
-}
 
 html.dark .markdown-content kbd {
   background-color: #2d2d2d;

@@ -34,7 +34,15 @@ const { title, translationKey } = Astro.props;
             mode === "dark" ||
             (!mode &&
               window.matchMedia("(prefers-color-scheme: dark)").matches);
-          if (isDark) document.documentElement.classList.add("dark");
+
+          if (isDark) {
+            document.documentElement.classList.add("dark");
+            document.documentElement.classList.remove("light-forced");
+          } else if (mode === "light") {
+            // 用户明确选择了 light 模式，添加 light-forced 类来覆盖媒体查询
+            document.documentElement.classList.add("light-forced");
+            document.documentElement.classList.remove("dark");
+          }
         } catch (e) {}
       })();
     </script>
@@ -93,6 +101,16 @@ const { title, translationKey } = Astro.props;
 
     <!-- instant.page: 鼠标悬停 65ms 即开始预加载，实现瞬间切换 -->
     <script src="https://instant.page/5.2.0" type="module" defer></script>
+
+    <!-- 资源状态管理 -->
+    <script>
+      // 简化的资源管理，避免与按需加载冲突
+      if (typeof window !== "undefined") {
+        import("@utils/smart-preload").catch(() => {
+          // 静默失败，不影响主要功能
+        });
+      }
+    </script>
   </head>
   <body class="has-header">
     <Header translationKey={translationKey} />
@@ -108,33 +126,52 @@ const { title, translationKey } = Astro.props;
 
     <!-- 优化 ViewTransitions 的过渡效果 -->
     <style is:global>
-      /* 加快页面切换动画，减少等待感 */
+      /* 更丝滑的页面切换动画 */
       @media (prefers-reduced-motion: no-preference) {
         ::view-transition-old(root),
         ::view-transition-new(root) {
-          animation-duration: 0.2s;
+          animation-duration: 0.35s;
+          animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         }
       }
 
-      /* 使用更流畅的淡入淡出 */
+      /* 旧页面：淡出 + 轻微缩小 */
       ::view-transition-old(root) {
-        animation-name: fade-out;
+        animation-name: page-fade-out;
       }
 
+      /* 新页面：淡入 + 轻微放大进入 */
       ::view-transition-new(root) {
-        animation-name: fade-in;
+        animation-name: page-fade-in;
       }
 
-      @keyframes fade-out {
-        to {
+      @keyframes page-fade-out {
+        0% {
+          opacity: 1;
+        }
+        100% {
           opacity: 0;
         }
       }
 
-      @keyframes fade-in {
-        from {
+      @keyframes page-fade-in {
+        0% {
           opacity: 0;
         }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      /* 保持 Header 在过渡期间稳定 */
+      [transition\:persist] {
+        view-transition-name: persist-header;
+      }
+
+      ::view-transition-old(persist-header),
+      ::view-transition-new(persist-header) {
+        animation: none;
+        mix-blend-mode: normal;
       }
     </style>
 
