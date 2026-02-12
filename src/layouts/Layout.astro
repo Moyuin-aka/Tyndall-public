@@ -12,6 +12,7 @@ import Header from "@components/Header.astro";
 import Footer from "@components/Footer.astro";
 
 const { title, translationKey } = Astro.props;
+const isDev = import.meta.env.DEV;
 
 // 检测是否为 Safari（服务端无法判断，需要客户端处理）
 // 我们在客户端禁用 Safari 的 View Transitions
@@ -111,16 +112,13 @@ const { title, translationKey } = Astro.props;
         });
       }
     </script>
+
+    <slot name="head" />
   </head>
   <body class="has-header">
     <Header translationKey={translationKey} />
     <slot />
     <Footer />
-    <script
-      defer
-      src="https://umami.moyuin.top/script.js"
-      data-website-id="06448a1e-4437-4ab7-8f41-ecfd6ba7aace"></script>
-
     <!-- Smooth page transitions with built-in animations -->
     <ViewTransitions />
 
@@ -214,24 +212,48 @@ const { title, translationKey } = Astro.props;
       });
     </script>
 
-    <!-- Service Worker registration for performance caching -->
-    <script>
-      // Register Service Worker for caching static assets
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/sw.js")
-            .then((registration) => {
-              setInterval(
-                () => {
-                  registration.update();
-                },
-                60 * 60 * 1000,
-              );
-            })
-            .catch((error) => {});
-        });
-      }
-    </script>
+    {
+      isDev ? (
+        <script>
+          // Dev mode: ensure no stale Service Worker/cache interferes with Vite deps.
+          if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.getRegistrations().then((registrations) => {
+              registrations.forEach((registration) => {
+                registration.unregister();
+              });
+            });
+          }
+
+          if ("caches" in window) {
+            caches.keys().then((keys) => {
+              keys
+                .filter((key) => key.startsWith("tyndall-"))
+                .forEach((key) => caches.delete(key));
+            });
+          }
+        </script>
+      ) : (
+        <>
+          <!-- Service Worker registration for performance caching -->
+          <script>
+            if ("serviceWorker" in navigator) {
+              window.addEventListener("load", () => {
+                navigator.serviceWorker
+                  .register("/sw.js")
+                  .then((registration) => {
+                    setInterval(
+                      () => {
+                        registration.update();
+                      },
+                      60 * 60 * 1000,
+                    );
+                  })
+                  .catch((error) => {});
+              });
+            }
+          </script>
+        </>
+      )
+    }
   </body>
 </html>

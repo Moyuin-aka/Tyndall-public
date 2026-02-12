@@ -48,11 +48,24 @@ export async function renderMemos(
     }
   };
 
+  // Fallback autospace for browsers that don't support `text-autospace`.
+  // Only spaces between CJK and ASCII alnum are inserted.
+  const autoSpaceCjkLatin = (text: string) =>
+    String(text || '')
+      .replace(
+        /([\u2e80-\u2eff\u2f00-\u2fdf\u3040-\u30ff\u3100-\u312f\u3200-\u32ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff])([A-Za-z0-9])/g,
+        '$1 $2',
+      )
+      .replace(
+        /([A-Za-z0-9])([\u2e80-\u2eff\u2f00-\u2fdf\u3040-\u30ff\u3100-\u312f\u3200-\u32ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff])/g,
+        '$1 $2',
+      );
+
   const renderPlaintext = (content: string) => {
     const frag = document.createDocumentFragment();
     const lines = String(content || '').split('\n');
     lines.forEach((line, idx) => {
-      frag.appendChild(document.createTextNode(line));
+      frag.appendChild(document.createTextNode(autoSpaceCjkLatin(line)));
       if (idx < lines.length - 1) frag.appendChild(document.createElement('br'));
     });
     return frag;
@@ -67,7 +80,7 @@ export async function renderMemos(
         return p;
       }
       case 'TEXT':
-        return document.createTextNode(String(getContent(node)));
+        return document.createTextNode(autoSpaceCjkLatin(String(getContent(node))));
       case 'BOLD': {
         const strong = document.createElement('strong');
         appendChildren(strong, getChildren(node));
@@ -156,7 +169,7 @@ export async function renderMemos(
           return frag;
         }
         const content = getContent(node);
-        return content ? document.createTextNode(String(content)) : null;
+        return content ? document.createTextNode(autoSpaceCjkLatin(String(content))) : null;
       }
     }
   };

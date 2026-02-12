@@ -10,13 +10,9 @@ interface Props {
 const { translationKey, postTitle = "", postUrl = "" } = Astro.props;
 const t = useTranslations(Astro.currentLocale);
 const locale = Astro.currentLocale || "zh";
-
-// 从环境变量获取通知配置
-const notifyWorkerUrl = import.meta.env.PUBLIC_COMMENT_NOTIFY_URL || "";
-const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
 ---
 
-<div class="supabase-comments" data-locale={locale} data-post-title={postTitle} data-post-url={postUrl} data-notify-url={notifyWorkerUrl} data-notify-secret={notifySecret}>
+<div class="supabase-comments" data-locale={locale} data-post-title={postTitle} data-post-url={postUrl} data-notify-endpoint="/api/comment-notify">
   <div class="comment-form-container">
     <form id="comment-form" class="comment-form">
       <input type="hidden" id="parent-id" value="" />
@@ -43,8 +39,10 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
         <div class="form-field">
           <label for="author-website">{t("comment_website")}</label>
           <input
-            type="url"
+            type="text"
             id="author-website"
+            inputmode="url"
+            autocomplete="url"
             placeholder={t("comment_optional")}
           />
         </div>
@@ -122,6 +120,16 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
     type Comment 
   } from "@utils/supabase";
   import { md5 } from "@utils/md5";
+  import { marked } from "marked";
+  import sanitizeHtml from "sanitize-html";
+
+  type CommentWithReplies = Comment & { replies: CommentWithReplies[] };
+  type AuthSubscription = { unsubscribe: () => void };
+
+  // 评论索引（仅驻留内存，不写入 DOM）
+  const commentStore = new Map<string, Comment>();
+  const pendingDeleteIds = new Set<string>();
+  let authSubscription: AuthSubscription | null = null;
 
   // i18n 翻译表
   const i18n = {
@@ -137,6 +145,7 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
       error: "发送失败，请稀后重试",
       fill_required: "请填写必填项",
       too_long: "评论内容超出限制（不超过 2000 字或 1000 单词）",
+      invalid_website: "请输入有效的网址（如 moyuin.top 或 https://moyuin.top）",
       just_now: "刚刚",
       minutes_ago: "分钟前",
       hours_ago: "小时前",
@@ -164,6 +173,7 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
       error: "Failed to send, please try again",
       fill_required: "Please fill in required fields",
       too_long: "Comment too long (max 2000 chars or 1000 words)",
+      invalid_website: "Please enter a valid website URL (e.g. moyuin.top or https://moyuin.top)",
       just_now: "just now",
       minutes_ago: " minutes ago",
       hours_ago: " hours ago",
@@ -196,8 +206,7 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
   function getNotifyConfig() {
     const container = document.querySelector(".supabase-comments");
     return {
-      url: container?.getAttribute("data-notify-url") || "",
-      secret: container?.getAttribute("data-notify-secret") || "",
+      url: container?.getAttribute("data-notify-endpoint") || "/api/comment-notify",
       postTitle: container?.getAttribute("data-post-title") || "",
       postUrl: container?.getAttribute("data-post-url") || window.location.href,
     };
@@ -210,7 +219,7 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
     replyTo?: { name: string; email: string; content: string }
   ) {
     const config = getNotifyConfig();
-    if (!config.url || !config.secret) {
+    if (!config.url) {
       console.log("Comment notification not configured");
       return;
     }
@@ -221,7 +230,6 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type,
-          secret: config.secret,
           comment,
           replyTo,
           postTitle: config.postTitle,
@@ -284,42 +292,39 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
   }
 
   // 构建评论树结构
-  function buildCommentTree(comments: Comment[]): Comment[] {
-    const commentMap = new Map<string, Comment & { replies: Comment[] }>();
-    const rootComments: (Comment & { replies: Comment[] })[] = [];
+  function buildCommentTree(comments: Comment[]): CommentWithReplies[] {
+    const commentMap = new Map<string, CommentWithReplies>();
+    const rootComments: CommentWithReplies[] = [];
 
     // 首先创建所有评论的映射
     comments.forEach((comment) => {
       commentMap.set(comment.id, { ...comment, replies: [] });
     });
 
-    // 构建树结构
-    comments
-      .sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      )
-      .forEach((comment) => {
-        const commentWithReplies = commentMap.get(comment.id)!;
-        if (comment.parent_id) {
-          const parent = commentMap.get(comment.parent_id);
-          if (parent) {
-            // 这里我们通常把最新的回复放在后面，但在树形结构里，回复列表的顺序通常最早的在最前或者最新的在最前看个人喜好
-            // 这里按时间升序排回复（对话流）
-            parent.replies.push(commentWithReplies);
-            parent.replies.sort(
-              (a, b) =>
-                new Date(a.created_at).getTime() -
-                new Date(b.created_at).getTime(),
-            );
-          } else {
-            // 如果找不到父评论，作为根评论处理
-            rootComments.push(commentWithReplies);
-          }
-        } else {
-          rootComments.push(commentWithReplies);
-        }
-      });
+    // 根评论按时间降序（最新评论在前）
+    const sortedByNewest = [...comments].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+    sortedByNewest.forEach((comment) => {
+      const current = commentMap.get(comment.id);
+      if (!current) return;
+      if (!comment.parent_id || !commentMap.has(comment.parent_id)) {
+        rootComments.push(current);
+      }
+    });
+
+    // 回复按时间升序（对话流）
+    const sortedByOldest = [...comments].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+    sortedByOldest.forEach((comment) => {
+      if (!comment.parent_id) return;
+      const parent = commentMap.get(comment.parent_id);
+      const current = commentMap.get(comment.id);
+      if (parent && current) {
+        parent.replies.push(current);
+      }
+    });
 
     return rootComments;
   }
@@ -338,6 +343,102 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  }
+
+  function sanitizeHttpUrl(url: string, fallback = ""): string {
+    const trimmed = (url || "").trim();
+    if (!trimmed) return fallback;
+
+    try {
+      const parsed = new URL(trimmed, window.location.origin);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+        return parsed.toString();
+      }
+    } catch {
+      // Ignore invalid URL and fallback.
+    }
+    return fallback;
+  }
+
+  function sanitizeLinkUrl(url: string, fallback = ""): string {
+    const trimmed = (url || "").trim();
+    if (!trimmed) return fallback;
+
+    try {
+      const parsed = new URL(trimmed, window.location.origin);
+      if (
+        parsed.protocol === "http:" ||
+        parsed.protocol === "https:" ||
+        parsed.protocol === "mailto:"
+      ) {
+        return parsed.toString();
+      }
+    } catch {
+      // Ignore invalid URL and fallback.
+    }
+    return fallback;
+  }
+
+  function normalizeWebsiteUrl(url: string): string {
+    const trimmed = (url || "").trim();
+    if (!trimmed) return "";
+    const hasScheme = /^[a-z][a-z\d+\-.]*:/i.test(trimmed);
+
+    if (hasScheme) {
+      return /^https?:\/\//i.test(trimmed) ? sanitizeHttpUrl(trimmed, "") : "";
+    }
+
+    const withProtocol = trimmed.startsWith("//")
+      ? `https:${trimmed}`
+      : `https://${trimmed}`;
+    return sanitizeHttpUrl(withProtocol, "");
+  }
+
+  function renderCommentMarkdown(markdownText: string): string {
+    const rawHtml = marked.parse(markdownText || "", {
+      async: false,
+      gfm: true,
+      breaks: true,
+    }) as string;
+
+    return sanitizeHtml(rawHtml, {
+      allowedTags: [
+        "p",
+        "br",
+        "strong",
+        "em",
+        "del",
+        "code",
+        "pre",
+        "blockquote",
+        "ul",
+        "ol",
+        "li",
+        "a",
+      ],
+      allowedAttributes: {
+        a: ["href", "title", "target", "rel"],
+      },
+      allowedSchemes: ["http", "https", "mailto"],
+      allowProtocolRelative: false,
+      transformTags: {
+        a: (_tagName: string, attribs: Record<string, string | undefined>) => {
+          const safeHref = sanitizeLinkUrl(attribs.href || "");
+          if (!safeHref) {
+            return { tagName: "span", attribs: {} };
+          }
+          return {
+            tagName: "a",
+            attribs: {
+              href: safeHref,
+              target: "_blank",
+              rel: "noopener noreferrer nofollow",
+              title: attribs.title || "",
+            },
+          };
+        },
+      },
+    });
   }
 
   // 格式化日期
@@ -371,35 +472,38 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
 
   // 渲染单个评论
   function renderComment(
-    comment: Comment & { replies?: Comment[] },
-    depth = 0,
+    comment: CommentWithReplies,
+    localIds: Record<string, number>,
   ): string {
     const dateStr = formatDate(comment.created_at);
+    const safeCommentId = escapeHtml(comment.id || "");
+    const safeAuthorName = escapeHtml(comment.author_name || "Anonymous");
+    const safeContentMarkdown = renderCommentMarkdown(comment.content || "");
+
     // 优先使用 OAuth 头像，否则用 weavatar
-    const avatarUrl = comment.author_avatar || getAvatarUrl(comment.author_email);
+    const avatarUrl = sanitizeHttpUrl(
+      comment.author_avatar || "",
+      getAvatarUrl(comment.author_email || ""),
+    );
 
     // 如果有website，点击昵称跳转（自动补全协议前缀）
-    let websiteUrl = comment.author_website || "";
-    if (websiteUrl && !websiteUrl.match(/^https?:\/\//i)) {
-      websiteUrl = "https://" + websiteUrl;
-    }
+    const websiteUrl = normalizeWebsiteUrl(comment.author_website || "");
     const authorHtml = websiteUrl
-      ? `<a href="${websiteUrl}" target="_blank" rel="noopener noreferrer" class="comment-author-name">${comment.author_name}</a>`
-      : `<span class="comment-author-name">${comment.author_name}</span>`;
+      ? `<a href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer nofollow" class="comment-author-name">${safeAuthorName}</a>`
+      : `<span class="comment-author-name">${safeAuthorName}</span>`;
 
     // 检查是否可以删除
-    const localIds = getLocalCommentIds();
     const { canDelete, reason } = canDeleteComment(comment, currentUser, localIds);
     
     // 删除按钮
     const deleteBtn = canDelete 
-      ? `<button class="btn-delete-action" data-comment-id="${comment.id}" data-reason="${reason}">${t("delete")}</button>`
+      ? `<button class="btn-delete-action" data-comment-id="${safeCommentId}" data-reason="${escapeHtml(reason || "")}">${t("delete")}</button>`
       : '';
 
     let html = `
-      <div class="tk-comment" data-comment-id="${comment.id}" id="comment-${comment.id}">
+      <div class="tk-comment" data-comment-id="${safeCommentId}" id="comment-${safeCommentId}">
         <div class="tk-avatar">
-          <img src="${avatarUrl}" alt="${comment.author_name}">
+          <img src="${escapeHtml(avatarUrl)}" alt="${safeAuthorName}">
         </div>
         <div class="tk-main">
             <div class="tk-meta">
@@ -407,14 +511,11 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
               <span class="tk-time">${dateStr}</span>
             </div>
             <div class="tk-content">
-              ${comment.content.replace(/\n/g, "<br>")}
+              ${safeContentMarkdown}
             </div>
-             <div class="tk-actions">
+            <div class="tk-actions">
               <button class="btn-reply-action" 
-                      data-comment-id="${comment.id}" 
-                      data-author="${escapeHtml(comment.author_name)}"
-                      data-email="${escapeHtml(comment.author_email)}"
-                      data-content="${escapeHtml(comment.content.substring(0, 200))}">${t("reply")}</button>
+                      data-comment-id="${safeCommentId}">${t("reply")}</button>
               ${deleteBtn}
             </div>
             
@@ -422,7 +523,7 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
               comment.replies && comment.replies.length > 0
                 ? `
               <div class="tk-replies">
-                ${comment.replies.map((reply) => renderComment(reply, depth + 1)).join("")}
+                ${comment.replies.map((reply) => renderComment(reply, localIds)).join("")}
               </div>
             `
                 : ""
@@ -438,6 +539,12 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
   function renderComments(comments: Comment[]) {
     const commentsList = document.getElementById("comments-list");
     if (!commentsList) return;
+    const localIds = getLocalCommentIds();
+
+    commentStore.clear();
+    comments.forEach((comment) => {
+      commentStore.set(comment.id, comment);
+    });
 
     if (comments.length === 0) {
       commentsList.innerHTML = `<div class="no-comments">${t("no_comments")}</div>`;
@@ -445,60 +552,59 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
     }
 
     const commentTree = buildCommentTree(comments);
-    const html = commentTree.map((comment) => renderComment(comment)).join("");
+    const html = commentTree.map((comment) => renderComment(comment, localIds)).join("");
     commentsList.innerHTML = html;
+  }
 
-    // 绑定回复按钮事件
-    document.querySelectorAll(".btn-reply-action").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const target = e.target as HTMLButtonElement;
-        const commentId = target.getAttribute("data-comment-id");
-        const authorName = target.getAttribute("data-author");
-        const authorEmail = target.getAttribute("data-email");
-        const content = target.getAttribute("data-content");
-        handleReply(commentId, authorName, authorEmail || undefined, content || undefined);
-      });
-    });
+  async function handleCommentsListClick(event: Event) {
+    const commentsList = document.getElementById("comments-list");
+    if (!commentsList) return;
+    if (!(event.target instanceof Element)) return;
 
-    // 绑定删除按钮事件
-    document.querySelectorAll(".btn-delete-action").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        const target = e.target as HTMLButtonElement;
-        const commentId = target.getAttribute("data-comment-id");
-        const reason = target.getAttribute("data-reason");
-        
-        if (!commentId) return;
-        
-        // 确认删除
-        if (!confirm(t("delete_confirm"))) return;
-        
-        try {
-          target.disabled = true;
-          target.textContent = "...";
-          
-          if (reason === "anonymous_window") {
-            // 匿名评论通过数据库函数删除（验证时间窗口）
-            const success = await deleteAnonymousComment(commentId);
-            if (!success) {
-              alert(t("delete_expired"));
-              return;
-            }
-            removeLocalCommentId(commentId);
-          } else {
-            // OAuth 用户或管理员直接删除
-            await deleteComment(commentId);
-          }
-          
-          // 重新加载评论
-          await loadComments();
-        } catch (error) {
-          console.error("Delete failed:", error);
-          alert(t("delete_error"));
-          target.disabled = false;
-          target.textContent = t("delete");
+    const replyBtn = event.target.closest(".btn-reply-action") as HTMLButtonElement | null;
+    if (replyBtn && commentsList.contains(replyBtn)) {
+      const commentId = replyBtn.getAttribute("data-comment-id");
+      if (!commentId) return;
+      const sourceComment = commentStore.get(commentId) || null;
+      handleReply(sourceComment);
+      return;
+    }
+
+    const deleteBtn = event.target.closest(".btn-delete-action") as HTMLButtonElement | null;
+    if (!deleteBtn || !commentsList.contains(deleteBtn)) return;
+
+    const commentId = deleteBtn.getAttribute("data-comment-id");
+    const reason = deleteBtn.getAttribute("data-reason");
+    if (!commentId) return;
+    if (pendingDeleteIds.has(commentId)) return;
+
+    if (!confirm(t("delete_confirm"))) return;
+
+    try {
+      pendingDeleteIds.add(commentId);
+      deleteBtn.disabled = true;
+      deleteBtn.textContent = "...";
+
+      if (reason === "anonymous_window") {
+        const success = await deleteAnonymousComment(commentId);
+        if (!success) {
+          alert(t("delete_expired"));
+          return;
         }
-      });
-    });
+        removeLocalCommentId(commentId);
+      } else {
+        await deleteComment(commentId);
+      }
+
+      await loadComments();
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert(t("delete_error"));
+      deleteBtn.disabled = false;
+      deleteBtn.textContent = t("delete");
+    } finally {
+      pendingDeleteIds.delete(commentId);
+    }
   }
 
   // 存储当前回复的父评论信息
@@ -574,7 +680,7 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
   }
 
   // 处理回复操作
-  function handleReply(commentId: string | null, authorName: string | null, authorEmail?: string, content?: string) {
+  function handleReply(comment: Comment | null) {
     const parentIdInput = document.getElementById(
       "parent-id",
     ) as HTMLInputElement;
@@ -586,18 +692,19 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
 
     if (!parentIdInput || !replyPreview || !replyTarget) return;
 
-    if (commentId && authorName) {
-      parentIdInput.value = commentId;
+    if (comment) {
+      const authorName = comment.author_name || "Anonymous";
+      parentIdInput.value = comment.id;
       replyTarget.textContent = `${t("reply_to")}${authorName}`;
       replyPreview.style.display = "flex";
       formContainer?.scrollIntoView({ behavior: "smooth", block: "center" });
       
       // 保存父评论信息用于邮件通知
       currentReplyTo = {
-        id: commentId,
+        id: comment.id,
         name: authorName,
-        email: authorEmail || "",
-        content: content || "",
+        email: comment.author_email || "",
+        content: comment.content || "",
       };
     } else {
       parentIdInput.value = "";
@@ -634,10 +741,17 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
     const user = await getCurrentUser();
     updateAuthUI(user);
 
+    // 避免重复注册认证状态监听
+    if (authSubscription) {
+      authSubscription.unsubscribe();
+      authSubscription = null;
+    }
+
     // 监听认证状态变化
-    onAuthStateChange((user) => {
+    const authStateChangeResult = onAuthStateChange((user) => {
       updateAuthUI(user);
     });
+    authSubscription = authStateChangeResult.data?.subscription || null;
 
     // OAuth 登录按钮
     const githubBtn = document.getElementById("btn-github");
@@ -655,6 +769,12 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
         await signOut();
         updateAuthUI(null);
       });
+    }
+
+    const commentsList = document.getElementById("comments-list");
+    if (commentsList && commentsList.getAttribute("data-events-bound") !== "true") {
+      commentsList.addEventListener("click", handleCommentsListClick);
+      commentsList.setAttribute("data-events-bound", "true");
     }
 
     // 填充用户信息（仅匿名模式）
@@ -675,6 +795,14 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
     if (nameInput && userInfo.name) nameInput.value = userInfo.name;
     if (emailInput && userInfo.email) emailInput.value = userInfo.email;
     if (websiteInput && userInfo.website) websiteInput.value = userInfo.website;
+    if (websiteInput) {
+      websiteInput.addEventListener("blur", () => {
+        const normalized = normalizeWebsiteUrl(websiteInput.value);
+        if (normalized) {
+          websiteInput.value = normalized;
+        }
+      });
+    }
 
     // 监听内容输入，更新字数统计
     if (contentTextarea) {
@@ -689,7 +817,7 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
     // 取消回复按钮
     const cancelBtn = document.getElementById("cancel-reply");
     if (cancelBtn) {
-      cancelBtn.addEventListener("click", () => handleReply(null, null));
+      cancelBtn.addEventListener("click", () => handleReply(null));
     }
 
     // 表单提交
@@ -738,6 +866,21 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
         const submitBtn = form.querySelector(".btn-submit") as HTMLButtonElement;
         const originalBtnText = submitBtn?.textContent || t("submit");
         if (!messageDiv || !submitBtn) return;
+
+        // website 可选；有值时统一规范为 https/http URL
+        if (authorWebsite) {
+          const normalizedWebsite = normalizeWebsiteUrl(authorWebsite);
+          if (!normalizedWebsite) {
+            messageDiv.textContent = t("invalid_website");
+            messageDiv.className = "form-message error";
+            setTimeout(() => {
+              messageDiv.textContent = "";
+              messageDiv.className = "form-message";
+            }, 2500);
+            return;
+          }
+          authorWebsite = normalizedWebsite;
+        }
 
         // 验证必填项（匿名用户需要填写名字和邮箱）
         if (!currentUser && (!authorName || !authorEmail)) {
@@ -820,7 +963,7 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
             document.getElementById("comment-content") as HTMLTextAreaElement
           ).value = "";
           updateCharCount(""); // 重置字数统计
-          handleReply(null, null);
+          handleReply(null);
 
           // 重新加载评论列表
           await loadComments();
@@ -846,8 +989,19 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
     }
   }
 
-  // 防止重复初始化的标志
-  let initialized = false;
+  function cleanupComments() {
+    if (authSubscription) {
+      authSubscription.unsubscribe();
+      authSubscription = null;
+    }
+    const commentsList = document.getElementById("comments-list");
+    if (commentsList) {
+      commentsList.removeEventListener("click", handleCommentsListClick);
+      commentsList.removeAttribute("data-events-bound");
+    }
+    commentStore.clear();
+    pendingDeleteIds.clear();
+  }
 
   function safeInitComments() {
     // 检查当前页面是否有评论组件
@@ -865,6 +1019,7 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
 
   // 使用 astro:page-load 事件支持 View Transitions
   document.addEventListener("astro:page-load", safeInitComments);
+  document.addEventListener("astro:before-swap", cleanupComments);
   
   // 首次加载时也需要初始化
   if (document.readyState === "loading") {
@@ -1089,7 +1244,6 @@ const notifySecret = import.meta.env.PUBLIC_COMMENT_NOTIFY_SECRET || "";
 
   :global(html.dark) .btn-submit {
     border-color: rgba(166, 166, 193, 0.3);
-  }
   }
 
   .btn-submit:hover {

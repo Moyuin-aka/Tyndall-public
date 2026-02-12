@@ -9,8 +9,13 @@ import { rehypeOptimizeImages } from './src/utils/rehype-optimize-images.mjs';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://moyuin.top',
+  site: 'https://yoursite.com',
   output: 'static',
+  vite: {
+    optimizeDeps: {
+      include: ['marked', 'sanitize-html'],
+    },
+  },
   integrations: [sitemap()],
   i18n: {
     locales: ['en', 'zh'],

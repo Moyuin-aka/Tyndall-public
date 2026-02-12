@@ -1,7 +1,7 @@
 {
   "name": "tyndall",
   "type": "module",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A modern Astro blog theme focused on details and visual experience",
   "author": "Moyuin",
   "license": "GPL-3.0-or-later",
@@ -9,7 +9,7 @@
     "type": "git",
     "url": "https://github.com/Moyuin-aka/tyndall-public.git"
   },
-"scripts": {
+  "scripts": {
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",

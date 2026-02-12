@@ -171,20 +171,29 @@ const hasMermaid = /```mermaid/.test(rawContent);
 <script>
   // 使用立即执行的方式初始化博客增强功能
   import { initializeAll } from '@utils/blog-enhancements';
+  import { applyAutoSpaceToTextNodes } from '@utils/auto-space';
+
+  const runPageEnhancements = () => {
+    initializeAll();
+    const markdown = document.querySelector('.post-container .markdown-content');
+    if (markdown) {
+      applyAutoSpaceToTextNodes(markdown);
+    }
+  };
   
   // 立即执行初始化
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      initializeAll();
+      runPageEnhancements();
     });
   } else {
     // DOM 已经加载完成，立即执行
-    initializeAll();
+    runPageEnhancements();
   }
   
   // 支持 Astro View Transitions
   document.addEventListener('astro:page-load', () => {
-    initializeAll();
+    runPageEnhancements();
   });
 </script>
 
@@ -212,6 +221,7 @@ const hasMermaid = /```mermaid/.test(rawContent);
     max-width: 100%;
     overflow-wrap: break-word;
     word-wrap: break-word;
+    text-autospace: ideograph-alpha ideograph-numeric;
   }
 
   .post-container h1 {

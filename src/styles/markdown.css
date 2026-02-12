@@ -639,14 +639,6 @@ html.dark .markdown-content pre code .line {
 /* ========== LaTeX 数学公式样式 ========== */
 
 
-.markdown-content .katex .katex-mathml {
-  display: inline;
-}
-
-.markdown-content .katex .katex-html {
-  display: none !important;
-}
-
 /* 行内公式 */
 .markdown-content .katex {
   font-size: 1.05em;

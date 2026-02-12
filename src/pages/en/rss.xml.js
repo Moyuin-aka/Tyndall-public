@@ -91,10 +91,6 @@ export async function GET(context) {
     <webMaster>me@moyuin.top</webMaster>
     <lastBuildDate>${lastBuildDate.toUTCString()}</lastBuildDate>
     <pubDate>${lastBuildDate.toUTCString()}</pubDate>
-    <follow_challenge>
-    <feedId>198470139602333696</feedId>
-    <userId>152623330881389568</userId>
-    </follow_challenge>
     <generator><![CDATA[Astro Feed Generator (Modified by Moyuin)]]></generator>`,
     
   });

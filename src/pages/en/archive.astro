@@ -328,7 +328,6 @@ const years = Object.keys(postsByYear).sort((a, b) => parseInt(b) - parseInt(a))
       margin-top: 0.75rem;
     }
   }
-  }
 </style>
 
 <script>
@@ -340,6 +339,40 @@ const years = Object.keys(postsByYear).sort((a, b) => parseInt(b) - parseInt(a))
     const yearSections = document.querySelectorAll('.year-section');
     
     if (!searchInput || !searchCount) return;
+    const searchCountEl = searchCount;
+
+    function escapeHtml(text: string): string {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function highlightLiteral(text: string, query: string): string {
+      if (!query) return escapeHtml(text);
+      const lowerText = text.toLowerCase();
+      const lowerQuery = query.toLowerCase();
+      const qlen = query.length;
+
+      let cursor = 0;
+      let result = '';
+
+      while (cursor < text.length) {
+        const hit = lowerText.indexOf(lowerQuery, cursor);
+        if (hit === -1) {
+          result += escapeHtml(text.slice(cursor));
+          break;
+        }
+
+        result += escapeHtml(text.slice(cursor, hit));
+        result += `<mark>${escapeHtml(text.slice(hit, hit + qlen))}</mark>`;
+        cursor = hit + qlen;
+      }
+
+      return result;
+    }
 
     // Extract text excerpt showing match context
     function getExcerpt(text: string, query: string, maxLength = 150): string {
@@ -355,8 +388,11 @@ const years = Object.keys(postsByYear).sort((a, b) => parseInt(b) - parseInt(a))
       if (end < text.length) excerpt = excerpt + '...';
       
       // Highlight keywords
-      const regex = new RegExp(`(${query})`, 'gi');
-      excerpt = excerpt.replace(regex, '<mark>$1</mark>');
+      try {
+        excerpt = highlightLiteral(excerpt, query);
+      } catch {
+        excerpt = escapeHtml(excerpt);
+      }
       
       return excerpt;
     }
@@ -413,7 +449,7 @@ const years = Object.keys(postsByYear).sort((a, b) => parseInt(b) - parseInt(a))
         yearSections.forEach(section => {
           (section as HTMLElement).style.display = '';
         });
-        searchCount.textContent = '';
+        searchCountEl.textContent = '';
         return;
       }
       
@@ -455,9 +491,9 @@ const years = Object.keys(postsByYear).sort((a, b) => parseInt(b) - parseInt(a))
       
       // Update search results count
       if (results.length === 0) {
-        searchCount.textContent = 'No results';
+        searchCountEl.textContent = 'No results';
       } else {
-        searchCount.textContent = `${results.length} post${results.length > 1 ? 's' : ''}`;
+        searchCountEl.textContent = `${results.length} post${results.length > 1 ? 's' : ''}`;
       }
     }
     

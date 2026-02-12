@@ -30,6 +30,7 @@ const socialLinks = [
   <div class="ender-hero" data-particles="on">
     <!-- Ender particles background (tsParticles) -->
     <div id="ender-particles" class="ender-particles" aria-hidden="true"></div>
+    <canvas class="grain-canvas" aria-hidden="true"></canvas>
     <!-- Floating dust/particles (optional) -->
     <canvas class="particles-canvas" aria-hidden="true"></canvas>
 
@@ -144,14 +145,15 @@ const socialLinks = [
     function tweakParticles() {
       tries++;
       const ts = window.tsParticles || window?.window?.tsParticles;
-      if (!ts || !ts.dom || !ts.dom.length) {
+      const containers = typeof ts?.dom === "function" ? ts.dom() : ts?.dom;
+      const list = Array.isArray(containers) ? containers : [];
+      if (!ts || list.length === 0) {
         if (tries < MAX_TRIES) requestAnimationFrame(tweakParticles);
         return;
       }
       // 尝试定位 id="ender-particles" 的容器
-      const containers = ts.dom;
       const container =
-        containers.find?.((c) => c?.id === "ender-particles") || containers[0];
+        list.find((c) => c?.id === "ender-particles") || list[0];
       if (!container || !container.options) return;
       try {
         const opts = container.options;
@@ -279,6 +281,7 @@ const socialLinks = [
   }
 
   /* 画布固定到视口，保证顶端与全屏覆盖 */
+  .manifesto-section .grain-canvas,
   .manifesto-section .particles-canvas,
   .info-section .particles-canvas {
     position: absolute;
@@ -291,6 +294,7 @@ const socialLinks = [
 
   /* Desktop: ensure hero canvases span the full viewport (avoid section clipping) */
   @media (min-width: 769px) {
+    .manifesto-section .grain-canvas,
     .manifesto-section .particles-canvas,
     .info-section .particles-canvas {
       position: fixed;
@@ -298,6 +302,9 @@ const socialLinks = [
       width: 100vw;
       height: 100vh;
     }
+  }
+  .manifesto-section .grain-canvas {
+    z-index: 1;
   }
   .manifesto-section .particles-canvas {
     z-index: 2;

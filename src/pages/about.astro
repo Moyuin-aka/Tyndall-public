@@ -79,26 +79,6 @@ const t = useTranslations(Astro.currentLocale);
 
 <script>
   document.addEventListener('astro:page-load', () => {
-    // Scroll Reveal
-    const observerOptions = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.1
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, observerOptions);
-
-    document.querySelectorAll('.scroll-reveal').forEach(el => {
-      observer.observe(el);
-    });
-
     // 3D Tilt Effect for Diary Card
     const card = document.querySelector('.diary-card') as HTMLElement;
     if (card) {
@@ -132,16 +112,16 @@ const t = useTranslations(Astro.currentLocale);
     z-index: 1;
   }
 
-  /* Scroll Reveal Animation Base */
+  /* Disable scroll reveal effect on about page */
   .scroll-reveal {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 1s ease, transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 
   .scroll-reveal.is-visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 
   /* Hero Section */

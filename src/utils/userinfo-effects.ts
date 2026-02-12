@@ -30,12 +30,14 @@ const initEnderHero = () => {
   let rafParticles = 0;
 
   if (root && canvasGrain && canvasP) {
-    const ctxG = canvasGrain.getContext('2d');
-    const ctxP = canvasP.getContext('2d');
-    if (!ctxG || !ctxP) {
+    const ctxGMaybe = canvasGrain.getContext('2d');
+    const ctxPMaybe = canvasP.getContext('2d');
+    if (!ctxGMaybe || !ctxPMaybe) {
       console.warn('[EnderHero] canvas 2D context unavailable.');
       return () => {};
-    } 
+    }
+    const ctxG: CanvasRenderingContext2D = ctxGMaybe;
+    const ctxP: CanvasRenderingContext2D = ctxPMaybe;
 
     const DPR = Math.min(window.devicePixelRatio || 1, 2);
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
