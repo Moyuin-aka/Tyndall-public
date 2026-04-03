@@ -1,6 +1,6 @@
 ---
 import GlobalStyles from "@components/GlobalStyles.astro";
-import { ViewTransitions } from "astro:transitions";
+import { ClientRouter } from "astro:transitions";
 import "@styles/fonts.css";
 
 interface Props {
@@ -26,25 +26,54 @@ const isDev = import.meta.env.DEV;
     <title>{title}</title>
 
     <!-- Critical: Inline minimal theme script to prevent FOUC -->
-    <script>
+    <script is:inline>
       // 极简主题初始化（同步执行，防止闪烁）
       (function () {
-        try {
-          var mode = localStorage.getItem("theme-mode");
-          var isDark =
-            mode === "dark" ||
-            (!mode &&
-              window.matchMedia("(prefers-color-scheme: dark)").matches);
+        function resolveThemeState() {
+          var stored = null;
+          try {
+            stored = localStorage.getItem("theme-mode");
+          } catch (e) {}
 
-          if (isDark) {
-            document.documentElement.classList.add("dark");
-            document.documentElement.classList.remove("light-forced");
-          } else if (mode === "light") {
-            // 用户明确选择了 light 模式，添加 light-forced 类来覆盖媒体查询
-            document.documentElement.classList.add("light-forced");
-            document.documentElement.classList.remove("dark");
-          }
-        } catch (e) {}
+          var hasStored = stored === "dark" || stored === "light";
+          var mode = hasStored
+            ? stored
+            : window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+
+          return {
+            mode: mode,
+            isUserSelectedLight: stored === "light",
+          };
+        }
+
+        function applyThemeState(root, themeState) {
+          var isDark = themeState.mode === "dark";
+          root.classList.toggle("dark", isDark);
+          root.classList.toggle("light-forced", themeState.isUserSelectedLight);
+          root.setAttribute("data-theme", isDark ? "dark" : "light");
+          root.style.colorScheme = isDark ? "dark" : "light";
+        }
+
+        applyThemeState(document.documentElement, resolveThemeState());
+      })();
+    </script>
+
+    <script is:inline>
+      // Safari 下禁用 Astro ClientRouter 过渡，回退到原生整页跳转
+      (function () {
+        var ua = navigator.userAgent;
+        var isSafari =
+          /Safari\//.test(ua) &&
+          !/Chrome|Chromium|Edg|OPR|CriOS|FxiOS|Android/i.test(ua);
+
+        if (!isSafari) return;
+
+        document.documentElement.classList.add("is-safari");
+        document.addEventListener("astro:before-preparation", function (event) {
+          event.preventDefault();
+        });
       })();
     </script>
 
@@ -79,25 +108,20 @@ const isDev = import.meta.env.DEV;
     }
 
     <!-- Preconnect to external domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 
     <!-- Critical CSS -->
     <GlobalStyles />
 
-    <!-- Optimized font loading: combined request, reduced font weights -->
+    <!-- Local mirrored Google Fonts CSS (same families/weights, local hosting) -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap"
+      href="/fonts/google-fonts.css"
       media="print"
       onload="this.media='all'; this.onload=null;"
     />
     <noscript>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap"
-      />
+      <link rel="stylesheet" href="/fonts/google-fonts.css" />
     </noscript>
 
     <!-- instant.page: 鼠标悬停 65ms 即开始预加载，实现瞬间切换 -->
@@ -120,7 +144,7 @@ const isDev = import.meta.env.DEV;
     <slot />
     <Footer />
     <!-- Smooth page transitions with built-in animations -->
-    <ViewTransitions />
+    <ClientRouter />
 
     <!-- 优化 ViewTransitions 的过渡效果 -->
     <style is:global>
@@ -171,13 +195,60 @@ const isDev = import.meta.env.DEV;
         animation: none;
         mix-blend-mode: normal;
       }
+
+      html.is-safari::view-transition-old(root),
+      html.is-safari::view-transition-new(root),
+      html.is-safari::view-transition-old(persist-header),
+      html.is-safari::view-transition-new(persist-header) {
+        animation: none !important;
+      }
     </style>
 
     <!-- Deferred theme logic - non-blocking -->
-    <script>
-      const isSafari = /^((?!chrome|android).)*safari/i.test(
-        navigator.userAgent,
-      );
+    <script is:inline>
+      function resolveThemeState() {
+        var stored = null;
+        try {
+          stored = localStorage.getItem("theme-mode");
+        } catch (e) {}
+
+        var hasStored = stored === "dark" || stored === "light";
+        var mode = hasStored
+          ? stored
+          : window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+
+        return {
+          mode: mode,
+          isUserSelectedLight: stored === "light",
+        };
+      }
+
+      function applyThemeStateToRoot(root, themeState) {
+        var isDark = themeState.mode === "dark";
+        root.classList.toggle("dark", isDark);
+        root.classList.toggle("light-forced", themeState.isUserSelectedLight);
+        root.setAttribute("data-theme", isDark ? "dark" : "light");
+        root.style.colorScheme = isDark ? "dark" : "light";
+      }
+
+      function readThemeStateFromRoot(root) {
+        var mode =
+          root.classList.contains("dark") || root.getAttribute("data-theme") === "dark"
+            ? "dark"
+            : "light";
+
+        return {
+          mode: mode,
+          isUserSelectedLight: root.classList.contains("light-forced"),
+        };
+      }
+
+      function syncThemeStateToDocument(targetDocument) {
+        var themeState = resolveThemeState();
+        applyThemeStateToRoot(targetDocument.documentElement, themeState);
+      }
 
       function handleThemeLoaded() {
         document.body.classList.add("theme-loaded", "lang-loaded");
@@ -185,75 +256,59 @@ const isDev = import.meta.env.DEV;
 
       document.addEventListener("DOMContentLoaded", handleThemeLoaded);
 
-      document.addEventListener("astro:before-swap", (e) => {
-        const mode = localStorage.getItem("theme-mode");
-        const isDark =
-          mode === "dark" ||
-          (!mode && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.addEventListener("astro:before-swap", function (event) {
+        var newDocument = event && event.newDocument ? event.newDocument : null;
+        if (!newDocument || !newDocument.documentElement) return;
 
-        if (isDark) {
-          e.newDocument.documentElement.classList.add("dark");
-        }
-
-        if (isSafari) {
-          document.documentElement.classList.add("no-transition");
-          e.newDocument.documentElement.classList.add("no-transition");
-        }
+        var currentTheme = readThemeStateFromRoot(document.documentElement);
+        applyThemeStateToRoot(newDocument.documentElement, currentTheme);
+        document.documentElement.classList.add("no-transition");
+        newDocument.documentElement.classList.add("no-transition");
       });
 
-      document.addEventListener("astro:after-swap", () => {
+      document.addEventListener("astro:after-swap", function () {
+        syncThemeStateToDocument(document);
         handleThemeLoaded();
-
-        if (isSafari) {
-          setTimeout(() => {
-            document.documentElement.classList.remove("no-transition");
-          }, 30);
-        }
+        requestAnimationFrame(function () {
+          document.documentElement.classList.remove("no-transition");
+        });
       });
     </script>
 
-    {
-      isDev ? (
-        <script>
-          // Dev mode: ensure no stale Service Worker/cache interferes with Vite deps.
-          if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.getRegistrations().then((registrations) => {
-              registrations.forEach((registration) => {
-                registration.unregister();
-              });
+    <!-- Service Worker lifecycle -->
+    <script is:inline define:vars={{ isDev }}>
+      if (isDev) {
+        // Dev mode: ensure no stale Service Worker/cache interferes with Vite deps.
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.getRegistrations().then((registrations) => {
+            registrations.forEach((registration) => {
+              registration.unregister();
             });
-          }
+          });
+        }
 
-          if ("caches" in window) {
-            caches.keys().then((keys) => {
-              keys
-                .filter((key) => key.startsWith("tyndall-"))
-                .forEach((key) => caches.delete(key));
-            });
-          }
-        </script>
-      ) : (
-        <>
-          <!-- Service Worker registration for performance caching -->
-          <script>
-            if ("serviceWorker" in navigator) {
-              window.addEventListener("load", () => {
-                navigator.serviceWorker
-                  .register("/sw.js")
-                  .then((registration) => {
-                    setInterval(
-                      () => {
-                        registration.update();
-                      },
-                      60 * 60 * 1000,
-                    );
-                  })
-                  .catch((error) => {});
-              });
-            }
-          </script>
-        </>
-      )
-    }
+        if ("caches" in window) {
+          caches.keys().then((keys) => {
+            keys
+              .filter((key) => key.startsWith("tyndall-"))
+              .forEach((key) => caches.delete(key));
+          });
+        }
+      } else if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/sw.js")
+            .then((registration) => {
+              setInterval(
+                () => {
+                  registration.update();
+                },
+                60 * 60 * 1000,
+              );
+            })
+            .catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>

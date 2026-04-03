@@ -55,60 +55,63 @@ const { title } = Astro.props;
 <script>
     function setupThemeToggle() {
         const btn = document.getElementById("themeToggleBtn");
-        if (!btn) return;
-
-        const html = document.documentElement;
+        if (!(btn instanceof HTMLButtonElement)) return;
 
         // 获取存储
         function getSavedTheme() {
-            return localStorage.getItem("theme-mode");
+            try {
+                return localStorage.getItem("theme-mode");
+            } catch {
+                return null;
+            }
         }
 
         // 设置主题
-        function setTheme(mode: string) {
-            if (mode === "dark") {
-                html.classList.add("dark");
-                html.classList.remove("light-forced");
-            } else {
-                html.classList.remove("dark");
-                html.classList.add("light-forced");
-            }
+        function setTheme(mode: string, isUserSelectedLight = false) {
+            const html = document.documentElement;
+            const isDark = mode === "dark";
+
+            html.classList.toggle("dark", isDark);
+            html.classList.toggle("light-forced", !isDark && isUserSelectedLight);
+            html.setAttribute("data-theme", isDark ? "dark" : "light");
+            html.style.colorScheme = isDark ? "dark" : "light";
         }
 
         // 先移除旧事件监听器，再添加新的（防止重复绑定）
         const handleThemeClick = () => {
-            const isDark = html.classList.contains("dark");
+            const isDark = document.documentElement.classList.contains("dark");
             const newMode = isDark ? "light" : "dark";
-            setTheme(newMode);
+            setTheme(newMode, newMode === "light");
             localStorage.setItem("theme-mode", newMode);
         };
 
-        btn.removeEventListener("click", handleThemeClick);
-        btn.addEventListener("click", handleThemeClick);
+        if (btn.dataset.themeClickBound !== "true") {
+            btn.addEventListener("click", handleThemeClick);
+            btn.dataset.themeClickBound = "true";
+        }
 
         // 初始化主题
-        let mode = getSavedTheme();
-        if (!mode) {
-            // 默认跟随系统
-            if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-                mode = "dark";
-            } else {
-                mode = "light";
-            }
-        }
-        setTheme(mode);
+        const savedMode = getSavedTheme();
+        const mode =
+            savedMode === "dark" || savedMode === "light"
+                ? savedMode
+                : window.matchMedia("(prefers-color-scheme: dark)").matches
+                  ? "dark"
+                  : "light";
+        setTheme(mode, savedMode === "light");
 
         // 系统主题变更时联动（自动模式下）
         const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-        const handleSystemThemeChange = (e: any) => {
-            if (!getSavedTheme()) {
-                // 没手动设置过才自动跟随
-                setTheme(e.matches ? "dark" : "light");
-            }
-        };
-
-        mediaQuery.removeEventListener("change", handleSystemThemeChange);
-        mediaQuery.addEventListener("change", handleSystemThemeChange);
+        const w = window as Window & { __themeMediaBound?: boolean };
+        if (!w.__themeMediaBound) {
+            mediaQuery.addEventListener("change", (e: MediaQueryListEvent) => {
+                if (!getSavedTheme()) {
+                    // 没手动设置过才自动跟随
+                    setTheme(e.matches ? "dark" : "light", false);
+                }
+            });
+            w.__themeMediaBound = true;
+        }
     }
 
     // 三重保险：确保在任何情况下都能初始化

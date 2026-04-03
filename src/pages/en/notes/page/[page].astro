@@ -1,0 +1,392 @@
+---
+import { useTranslations } from '@utils/ui';
+import { getCollection } from 'astro:content';
+import Layout from '@layouts/Layout.astro';
+import {
+  filterPostsBySection,
+  getNoteTopicLabel,
+  getSectionPostUrl,
+  localizePosts,
+  sortByPubDateDesc,
+} from '@utils/posts';
+
+export async function getStaticPaths() {
+  const all = await getCollection('blog', ({ data }) => {
+    return data.published !== false;
+  });
+
+  const sortedPosts = sortByPubDateDesc(localizePosts(filterPostsBySection(all, 'notes'), 'en'));
+  const pageSize = 10;
+  const totalPages = Math.ceil(sortedPosts.length / pageSize);
+
+  return Array.from({ length: totalPages }, (_, i) => ({
+    params: { page: String(i + 1) },
+    props: {
+      posts: sortedPosts.slice(i * pageSize, (i + 1) * pageSize),
+      currentPage: i + 1,
+      totalPages,
+      totalPosts: sortedPosts.length,
+    },
+  }));
+}
+
+const { posts, currentPage, totalPages, totalPosts } = Astro.props;
+const t = useTranslations(Astro.currentLocale);
+const locale = 'en';
+
+function generatePageNumbers(current: number, total: number): (number | 'ellipsis')[] {
+  if (total <= 4) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  const pages: (number | 'ellipsis')[] = [1];
+
+  if (current <= 2) {
+    pages.push(2, 'ellipsis', total);
+  } else if (current >= total - 1) {
+    pages.push('ellipsis', total - 1, total);
+  } else {
+    pages.push('ellipsis', current, 'ellipsis', total);
+  }
+
+  return pages;
+}
+---
+<Layout title={t('notes_page_title')}>
+  <main class="blog-list-container">
+    <header class="blog-hero notes-hero">
+      <p class="blog-hero-subtitle">NOTES</p>
+      <h1 class="blog-hero-slogan">{t('notes_hero_slogan')}</h1>
+      <p class="notes-intro">{t('notes_intro')}</p>
+    </header>
+
+    <section class="blog-posts-section">
+      {posts.map(({ key, post, isFallback }: any) => {
+        const topicLabel = getNoteTopicLabel(post);
+
+        return (
+          <article class="blog-post-item">
+            <a href={getSectionPostUrl(key, 'notes', locale)} class="blog-post-title-link">
+              <h2 class="blog-post-title">{post.data.title}</h2>
+            </a>
+            {post.data.description && <p class="blog-post-summary">{post.data.description}</p>}
+            <div class="blog-post-meta">
+              <div class="blog-post-meta-left">
+                {topicLabel && <span class="category-badge note-topic-badge">{topicLabel}</span>}
+                <time datetime={post.data.pubDate.toISOString()} class="blog-post-date">
+                  {post.data.pubDate.toLocaleDateString('en', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </time>
+              </div>
+              {isFallback && <span class="language-badge">Original</span>}
+            </div>
+          </article>
+        );
+      })}
+    </section>
+
+    {totalPages > 1 && (
+      <nav class="pagination" aria-label="Pagination navigation">
+        <div class="pagination-info">
+          Page {currentPage} / {totalPages} · {totalPosts} notes
+        </div>
+        <div class="pagination-controls">
+          {currentPage > 1 && (
+            <a
+              href={currentPage === 2 ? '/en/notes' : `/en/notes/page/${currentPage - 1}`}
+              class="pagination-btn pagination-prev"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              Previous
+            </a>
+          )}
+
+          <div class="pagination-numbers">
+            {generatePageNumbers(currentPage, totalPages).map((item) => {
+              if (item === 'ellipsis') {
+                return <span class="pagination-ellipsis">...</span>;
+              }
+
+              return (
+                <a
+                  href={item === 1 ? '/en/notes' : `/en/notes/page/${item}`}
+                  class:list={['pagination-number', { active: item === currentPage }]}
+                  aria-current={item === currentPage ? 'page' : undefined}
+                >
+                  {item}
+                </a>
+              );
+            })}
+          </div>
+
+          {currentPage < totalPages && (
+            <a href={`/en/notes/page/${currentPage + 1}`} class="pagination-btn pagination-next">
+              Next
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </a>
+          )}
+        </div>
+      </nav>
+    )}
+  </main>
+</Layout>
+
+<style>
+  .blog-list-container {
+    font-family: var(--font-sans);
+    max-width: 800px;
+    margin: 5rem auto 2rem;
+    padding: 20px;
+  }
+
+  .blog-hero {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .notes-hero {
+    margin-bottom: 1.7rem;
+  }
+
+  .blog-hero-subtitle {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    color: var(--grey);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .blog-hero-slogan {
+    font-family: var(--font-serif);
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .blog-posts-section {
+    list-style: none;
+    padding: 0;
+  }
+
+  .blog-post-item {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid rgba(162, 89, 236, 0.15);
+  }
+
+  .blog-post-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .blog-post-title-link {
+    text-decoration: none;
+    color: var(--text);
+    transition: color 0.2s ease;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .blog-post-title {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0;
+  }
+
+  .blog-post-title-link:hover .blog-post-title {
+    color: var(--purple);
+  }
+
+  .blog-post-summary {
+    font-size: 1rem;
+    color: var(--text);
+    opacity: 0.7;
+    line-height: 1.6;
+    margin-bottom: 0.8rem;
+  }
+
+  .blog-post-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .blog-post-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .blog-post-date {
+    font-size: 0.85rem;
+    color: var(--grey);
+    opacity: 0.8;
+  }
+
+  .language-badge {
+    font-size: 0.75rem;
+    background: rgba(162, 89, 236, 0.1);
+    color: var(--purple);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: normal;
+  }
+
+  .category-badge {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-family: var(--font-serif);
+    background: rgba(162, 89, 236, 0.1);
+    color: var(--purple);
+    padding: 0.3rem 0.7rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .note-topic-badge {
+    cursor: default;
+  }
+
+  .pagination {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(162, 89, 236, 0.15);
+  }
+
+  .pagination-info {
+    text-align: center;
+    font-size: 0.95rem;
+    font-family: "Noto Serif", Georgia, "Times New Roman", Times, serif;
+    color: var(--grey);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    height: 40px;
+    background-color: transparent;
+    color: color-mix(in oklab, var(--text) 70%, var(--purple));
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-family: "Noto Serif", Georgia, "Times New Roman", Times, serif;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: all 0.24s cubic-bezier(.16,1,.3,1);
+    border: 1px solid rgba(162, 89, 236, 0.12);
+  }
+
+  .pagination-btn:hover {
+    color: var(--purple);
+    transform: translateY(-2px);
+    background-color: rgba(162, 89, 236, 0.12);
+    border-color: rgba(162, 89, 236, 0.3);
+    box-shadow: 0 4px 12px rgba(162, 89, 236, 0.2);
+  }
+
+  .pagination-numbers {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .pagination-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 0.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: color-mix(in oklab, var(--text) 70%, var(--purple));
+    background-color: transparent;
+    font-family: "Noto Serif", Georgia, "Times New Roman", Times, serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.24s cubic-bezier(.16,1,.3,1);
+    border: 1px solid rgba(162, 89, 236, 0.12);
+  }
+
+  .pagination-number:hover {
+    color: var(--purple);
+    transform: translateY(-2px);
+    background-color: rgba(162, 89, 236, 0.12);
+    border-color: rgba(162, 89, 236, 0.3);
+    box-shadow: 0 4px 12px rgba(162, 89, 236, 0.2);
+  }
+
+  .pagination-number.active {
+    background-color: rgba(162, 89, 236, 0.15);
+    color: var(--purple);
+    border-color: rgba(162, 89, 236, 0.4);
+    font-weight: 600;
+    pointer-events: none;
+  }
+
+  .pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    color: var(--grey);
+    font-family: "Noto Serif", Georgia, "Times New Roman", Times, serif;
+    font-size: 0.95rem;
+    user-select: none;
+    opacity: 0.6;
+  }
+
+  @media (max-width: 768px) {
+    .blog-hero-slogan {
+      font-size: 2.5rem;
+    }
+
+    .blog-post-meta {
+      align-items: center;
+    }
+
+    .blog-post-meta-left {
+      flex: 1;
+    }
+
+    .pagination-numbers {
+      order: -1;
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .pagination-btn {
+      flex: 1;
+      justify-content: center;
+      max-width: 150px;
+    }
+  }
+</style>

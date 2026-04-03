@@ -1,18 +1,25 @@
 ---
-import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
 import Layout from "@layouts/Layout.astro";
 import "@styles/markdown.css";
 import { useTranslations } from "@utils/ui";
 import SupabaseComments from "@components/SupabaseComments.astro";
 import TableOfContents from "@components/TableOfContents.astro";
-import { getTranslationKey, localizePosts, resolvePostForLocale, sortByPubDateDesc } from "@utils/posts";
+import {
+  filterPostsBySection,
+  getSectionBasePath,
+  getSectionPostUrl,
+  getTranslationKey,
+  localizePosts,
+  resolvePostForLocale,
+  sortByPubDateDesc,
+} from "@utils/posts";
 
 export async function getStaticPaths() {
   const allPosts = await getCollection("blog", ({ data }) => {
     return data.published !== false;
   });
-  const keys = new Set(allPosts.map(getTranslationKey));
+  const keys = new Set(filterPostsBySection(allPosts, "blog").map(getTranslationKey));
   return Array.from(keys).map((key) => ({
     params: { slug: key },
     props: { translationKey: key },
@@ -26,26 +33,53 @@ const locale = Astro.currentLocale;
 const allPosts = await getCollection("blog", ({ data }) => {
   return data.published !== false;
 });
-const { post, isFallback } = resolvePostForLocale(allPosts, translationKey, locale);
+const blogPosts = filterPostsBySection(allPosts, "blog");
+const { post, isFallback } = resolvePostForLocale(blogPosts, translationKey, locale ?? "zh");
 
 if (!post) {
   throw new Error(`Post not found: ${translationKey}`);
 }
 
-const localizedList = sortByPubDateDesc(localizePosts(allPosts, locale));
+const localizedList = sortByPubDateDesc(localizePosts(blogPosts, locale ?? "zh"));
 const currentIndex = localizedList.findIndex((p) => p.key === translationKey);
 const prevPost = currentIndex < localizedList.length - 1 ? localizedList[currentIndex + 1].post : null;
 const nextPost = currentIndex > 0 ? localizedList[currentIndex - 1].post : null;
 
-function getPostUrl(p) {
+function getPostUrl(p: typeof post | null) {
   if (!p) return "#";
   const key = getTranslationKey(p);
-  return locale === "en" ? `/en/blog/${key}` : `/blog/${key}`;
+  return getSectionPostUrl(key, "blog", locale);
+}
+
+const categoryNames: Record<string, { zh: string; en: string }> = {
+  ctf: { zh: "CTF", en: "CTF" },
+  notes: { zh: "笔记", en: "Notes" },
+  record: { zh: "记录", en: "Records" },
+  thoughts: { zh: "随笔", en: "Thoughts" },
+  weekly: { zh: "周记", en: "Weekly" },
+  tech: { zh: "技术", en: "Tech" },
+  life: { zh: "生活", en: "Life" },
+  uncategorized: { zh: "未分类", en: "Uncategorized" },
+};
+
+function getCategoryDisplayName(category: string) {
+  return categoryNames[category]?.[locale === "en" ? "en" : "zh"] || category;
 }
 
 import { ICONS } from "@utils/icons";
 
 const { Content, headings } = await post.render();
+const category = post.data.category || "uncategorized";
+const categoryDisplay = getCategoryDisplayName(category);
+const categoryUrl = locale === "en" ? `/en/category/${category}` : `/category/${category}`;
+const blogIndexUrl = getSectionBasePath("blog", locale);
+const backToBlogLabel = locale === "en" ? "Back to Blog" : "返回博客";
+const languageDisplay = post.data.lang === "zh" ? "zh-CN" : "en-US";
+const postDateLabel = post.data.pubDate.toLocaleDateString(locale, {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
 
 // 检测内容中是否包含数学公式或 Mermaid 图表
 const rawContent = post.body;
@@ -68,19 +102,31 @@ const hasMermaid = /```mermaid/.test(rawContent);
   }
 
   <main class="post-container">
+    <div class="post-topbar">
+      <a href={blogIndexUrl} class="post-back-link" aria-label={backToBlogLabel}>
+        <span class="post-back-icon" set:html={ICONS.arrowLeft} />
+        <span>{backToBlogLabel}</span>
+      </a>
+    </div>
+
     <h1>{post.data.title}</h1>
 
     {isFallback && <div class="fallback-tip">{t("post_not_translated")}</div>}
 
-    <p class="post-date">
-      {
-        post.data.pubDate.toLocaleDateString(locale, {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
-      }
-    </p>
+    <div class="post-meta">
+      <time datetime={post.data.pubDate.toISOString()} class="post-meta-item post-meta-date">
+        <span class="post-meta-icon" set:html={ICONS.calendar} />
+        <span class="post-meta-text">{postDateLabel}</span>
+      </time>
+      <a href={categoryUrl} class="post-meta-item post-meta-link">
+        <span class="post-meta-icon" set:html={ICONS.category} />
+        <span class="post-meta-text">{categoryDisplay}</span>
+      </a>
+      <span class="post-meta-item">
+        <span class="post-meta-icon" set:html={ICONS.language} />
+        <span class="post-meta-text">{languageDisplay}</span>
+      </span>
+    </div>
 
     <TableOfContents headings={headings} />
 
@@ -141,6 +187,28 @@ const hasMermaid = /```mermaid/.test(rawContent);
     if (markdown) {
       applyAutoSpaceToTextNodes(markdown);
     }
+
+    const backLink = document.querySelector<HTMLAnchorElement>(".post-back-link");
+    if (backLink && backLink.dataset.smartBackBound !== "true") {
+      backLink.dataset.smartBackBound = "true";
+      backLink.addEventListener("click", (event) => {
+        const hasHistory = window.history.length > 1;
+        if (!hasHistory || !document.referrer) return;
+
+        let sameOriginReferrer = false;
+        try {
+          sameOriginReferrer =
+            new URL(document.referrer).origin === window.location.origin;
+        } catch {
+          sameOriginReferrer = false;
+        }
+
+        if (sameOriginReferrer) {
+          event.preventDefault();
+          window.history.back();
+        }
+      });
+    }
   };
 
   // 立即执行初始化
@@ -175,6 +243,7 @@ const hasMermaid = /```mermaid/.test(rawContent);
     /* 不设置 overflow，让子元素自己处理 */
     /* 使用 box-sizing 确保 padding 不会增加总宽度 */
     box-sizing: border-box;
+    touch-action: pan-y;
   }
 
   /* markdown 内容容器 */
@@ -196,10 +265,113 @@ const hasMermaid = /```mermaid/.test(rawContent);
     overflow-wrap: break-word;
   }
 
-  .post-date {
-    font-family: var(--font-sans);
+  .post-topbar {
+    margin-bottom: 0.4rem;
+    touch-action: pan-y;
+  }
+
+  .post-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.5rem 0.25rem 0.35rem;
+    border-radius: 6px;
+    text-decoration: none;
     color: var(--grey);
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    line-height: 1;
+    touch-action: pan-y;
+    transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  }
+
+  .post-back-link:hover {
+    color: var(--text);
+    background: rgba(162, 89, 236, 0.08);
+    transform: translateX(-1px);
+  }
+
+  .post-back-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    display: inline-flex;
+    color: currentColor;
+  }
+
+  .post-back-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
     margin-bottom: 2rem;
+    touch-action: pan-y;
+  }
+
+  .post-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid rgba(162, 89, 236, 0.2);
+    border-radius: 5px;
+    color: var(--purple);
+    background: rgba(162, 89, 236, 0.1);
+    font-family: var(--font-serif);
+    font-size: 0.82rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    touch-action: pan-y;
+  }
+
+  .post-meta-date .post-meta-text {
+    font-family: "Noto Serif SC", "Noto Serif", ui-serif, "Source Han Serif SC", "Songti SC", "STSong",
+      "Hiragino Mincho ProN", Georgia, "Times New Roman", Times, serif;
+    letter-spacing: 0.01em;
+  }
+
+  .post-meta-link {
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .post-meta-link:hover {
+    background: rgba(162, 89, 236, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .post-meta-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    display: inline-flex;
+    color: currentColor;
+    opacity: 0.9;
+  }
+
+  .post-meta-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  :global(html.dark) .post-meta-item {
+    color: #c6b7dc;
+    background: rgba(198, 183, 220, 0.12);
+    border-color: rgba(198, 183, 220, 0.26);
+  }
+
+  :global(html.dark) .post-meta-link:hover {
+    background: rgba(198, 183, 220, 0.2);
+    border-color: rgba(198, 183, 220, 0.36);
+  }
+
+  :global(html.dark) .post-back-link:hover {
+    color: #e4dcf2;
+    background: rgba(198, 183, 220, 0.16);
   }
 
   .fallback-tip {
@@ -295,9 +467,24 @@ const hasMermaid = /```mermaid/.test(rawContent);
       font-size: 2rem;
     }
 
+    .post-back-link {
+      font-size: 0.82rem;
+      padding: 0.22rem 0.42rem 0.22rem 0.3rem;
+    }
+
     .post-navigation {
       grid-template-columns: 1fr;
       gap: 1rem;
+    }
+
+    .post-meta {
+      gap: 0.5rem;
+      margin-bottom: 1.6rem;
+    }
+
+    .post-meta-item {
+      padding: 0.24rem 0.58rem;
+      font-size: 0.78rem;
     }
 
     .nav-item.next {

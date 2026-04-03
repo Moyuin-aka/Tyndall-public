@@ -2,10 +2,9 @@
 import { useTranslations } from '@utils/ui';
 import Layout from '@layouts/Layout.astro';
 import UserInfo from '@components/UserInfo.astro';
-
+import PersonalityTagsFlow from '@components/PersonalityTagsFlow.astro';
 import AutoMarquee from '@components/AutoMarquee.astro';
 import { favorites } from '@data/favorites';
-
 
 const t = useTranslations(Astro.currentLocale);
 ---
@@ -15,8 +14,17 @@ const t = useTranslations(Astro.currentLocale);
     <section class="screen hero">
       <UserInfo t={t} />
     </section>
-    <section class="screen marquee-screen">
-      <AutoMarquee title={t('album_desc')} items={favorites} />
+
+    <section class="home-extensions">
+      <div class="home-extensions-inner">
+        <section class="home-section traits-section">
+          <PersonalityTagsFlow />
+        </section>
+
+        <section class="home-section music-section">
+          <AutoMarquee title={t('album_desc')} items={favorites} />
+        </section>
+      </div>
     </section>
   </main>
 </Layout>
@@ -32,6 +40,42 @@ const t = useTranslations(Astro.currentLocale);
     place-items: center;
     padding: 2rem 0;
   }
-  .marquee-screen { min-height: auto; padding-top: 0; }
-  /* reserved hook if needed later */
+
+  .home-extensions {
+    padding: 2.5rem 0 6rem;
+  }
+
+  .home-extensions-inner {
+    width: min(100%, 1120px);
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .home-section + .home-section {
+    margin-top: 7rem;
+  }
+
+  .traits-section {
+    position: relative;
+  }
+
+  .music-section :global(.marquee) {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  @media (max-width: 768px) {
+    .home-extensions {
+      padding: 1.5rem 0 5rem;
+    }
+
+    .home-extensions-inner {
+      padding: 0 16px;
+    }
+
+    .home-section + .home-section {
+      margin-top: 5.25rem;
+    }
+  }
 </style>

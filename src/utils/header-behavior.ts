@@ -2,10 +2,12 @@
  * Header behavior module
  * Handles header scroll hide/show, mobile menu, and "More" dropdown
  */
+import { navigate } from "astro:transitions/client";
 
 // 全局状态
 let menuClickHandler: (() => void) | null = null;
 let outsideClickHandler: ((e: MouseEvent) => void) | null = null;
+let keyboardShortcutHandler: ((e: KeyboardEvent) => void) | null = null;
 let lastScrollY = 0;
 let ticking = false;
 const scrollThreshold = 100;
@@ -64,6 +66,167 @@ function updateActiveNavLink() {
       link.classList.remove("active");
     }
   });
+}
+
+function normalizePath(path: string) {
+  if (!path) return "/";
+  if (path === "/") return "/";
+
+  return path.replace(/\/+$/, "") || "/";
+}
+
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+
+  const tagName = target.tagName.toLowerCase();
+  if (tagName === "input" || tagName === "textarea" || tagName === "select") {
+    return true;
+  }
+
+  return Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
+}
+
+function collectHeaderNavTargets() {
+  const links = document.querySelectorAll<HTMLAnchorElement>(
+    ".nav-links .link[href], .more-menu .more-item[href]",
+  );
+  const targets: Array<{ href: string; normalizedPath: string }> = [];
+  const seen = new Set<string>();
+
+  links.forEach((link) => {
+    try {
+      const path = new URL(link.href, window.location.origin).pathname;
+      const normalizedPath = normalizePath(path);
+      if (seen.has(normalizedPath)) return;
+
+      seen.add(normalizedPath);
+      targets.push({ href: link.href, normalizedPath });
+    } catch (e) {
+      // 忽略无效 URL
+    }
+  });
+
+  return targets;
+}
+
+function resolveCurrentNavIndex(targets: Array<{ href: string; normalizedPath: string }>) {
+  const currentPath = normalizePath(window.location.pathname);
+  let bestIndex = -1;
+  let bestScore = -1;
+
+  targets.forEach((target, index) => {
+    const navPath = target.normalizedPath;
+    const isExactMatch = currentPath === navPath;
+    const isPrefixMatch =
+      navPath !== "/" &&
+      navPath !== "/en" &&
+      currentPath.startsWith(`${navPath}/`);
+
+    if (!isExactMatch && !isPrefixMatch) return;
+
+    if (navPath.length > bestScore) {
+      bestScore = navPath.length;
+      bestIndex = index;
+    }
+  });
+
+  return bestIndex;
+}
+
+function switchHeaderByDirection(direction: 1 | -1) {
+  const targets = collectHeaderNavTargets();
+  if (targets.length === 0) return;
+
+  const currentIndex = resolveCurrentNavIndex(targets);
+  const startIndex =
+    currentIndex === -1 ? (direction === 1 ? -1 : 0) : currentIndex;
+  const nextIndex = (startIndex + direction + targets.length) % targets.length;
+  const nextTarget = targets[nextIndex];
+  if (!nextTarget) return;
+
+  if (normalizePath(window.location.pathname) === nextTarget.normalizedPath) {
+    return;
+  }
+
+  navigateWithTransition(nextTarget.href);
+}
+
+function switchLanguageByShortcut() {
+  const target = document.querySelector<HTMLAnchorElement>(
+    ".lang-dropdown .dropdown-menu a.dropdown-item[href]",
+  );
+  if (!target) return;
+
+  navigateWithTransition(target.href);
+}
+
+function toggleThemeByShortcut() {
+  const btn = document.getElementById("themeToggleBtn");
+  if (!(btn instanceof HTMLButtonElement)) return;
+
+  btn.click();
+}
+
+function navigateWithTransition(href: string) {
+  try {
+    const result = navigate(href) as unknown;
+    if (
+      result &&
+      typeof (result as Promise<void>).catch === "function"
+    ) {
+      (result as Promise<void>).catch(() => {
+        window.location.assign(href);
+      });
+    }
+  } catch {
+    window.location.assign(href);
+  }
+}
+
+function initKeyboardShortcuts() {
+  if (keyboardShortcutHandler) {
+    document.removeEventListener("keydown", keyboardShortcutHandler);
+  }
+
+  keyboardShortcutHandler = (event: KeyboardEvent) => {
+    if (
+      event.defaultPrevented ||
+      event.repeat ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      isEditableTarget(event.target)
+    ) {
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      switchHeaderByDirection(-1);
+      return;
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      switchHeaderByDirection(1);
+      return;
+    }
+
+    const key = event.key.toLowerCase();
+    if (key === "l") {
+      event.preventDefault();
+      switchLanguageByShortcut();
+      return;
+    }
+
+    if (key === "t") {
+      event.preventDefault();
+      toggleThemeByShortcut();
+    }
+  };
+
+  document.addEventListener("keydown", keyboardShortcutHandler);
 }
 
 /**
@@ -283,6 +446,7 @@ function initializeHeader() {
   updateActiveNavLink();
   setupMoreDropdown();
   initMobileMenu();
+  initKeyboardShortcuts();
 }
 
 /**

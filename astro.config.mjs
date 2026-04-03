@@ -25,6 +25,9 @@ export default defineConfig({
     }
   },
   markdown: {
+    // Keep source punctuation intact. Astro's default smartypants turns straight
+    // quotes into typographic quotes, which breaks mixed CJK/English content.
+    smartypants: false,
     remarkPlugins: [remarkMath, remarkBreaks],
     rehypePlugins: [
       [rehypeKatex, {

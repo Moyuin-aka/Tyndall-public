@@ -2,16 +2,18 @@
 import { useTranslations } from '@utils/ui';
 import { getCollection } from 'astro:content';
 import Layout from '@layouts/Layout.astro';
+import { filterPostsBySection } from '@utils/posts';
 
 export async function getStaticPaths() {
   const all = await getCollection('blog', ({ data }) => {
     // 只包含已发布的文章
     return data.published !== false;
   });
+  const blogPosts = filterPostsBySection(all, 'blog');
   
   // 收集所有分类
   const categories = new Set<string>();
-  for (const post of all) {
+  for (const post of blogPosts) {
     const category = post.data.category || 'uncategorized';
     categories.add(category);
   }
@@ -29,9 +31,10 @@ const all = await getCollection('blog', ({ data }) => {
   // 只包含已发布的文章
   return data.published !== false;
 });
+const blogPosts = filterPostsBySection(all, 'blog');
 
 // 筛选当前分类的文章
-const allCategoryPosts = all
+const allCategoryPosts = blogPosts
   .filter(post => {
     const postCategory = post.data.category || 'uncategorized';
     return postCategory === category;
@@ -40,7 +43,6 @@ const allCategoryPosts = all
 
 // 按语言分组，优先显示当前语言的文章
 const currentLangPosts = allCategoryPosts.filter(post => post.data.lang === locale);
-const otherLangPosts = allCategoryPosts.filter(post => post.data.lang !== locale);
 
 // 如果有当前语言的文章就只显示当前语言，否则显示所有语言
 const categoryPosts = currentLangPosts.length > 0 ? currentLangPosts : allCategoryPosts;

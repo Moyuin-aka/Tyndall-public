@@ -18,11 +18,16 @@ interface TranslationSchema {
   nav_home: string;
   nav_home_url: string;
   nav_blog: string;
+  nav_notes_url: string;
   nav_about: string;
   nav_about_url: string;
   about_title: string;
   about_slogan: string;
   nav_notes: string;
+  notes_page_title: string;
+  notes_hero_slogan: string;
+  notes_intro: string;
+  notes_back_to_notes: string;
   nav_lab: string;
   nav_lab_url: string;
   nav_friends: string;
@@ -69,11 +74,16 @@ const translations = {
     "nav_home": "首页",
     "nav_home_url": "/",
     "nav_blog": "博客",
+    "nav_notes_url": "/notes",
     "nav_about": "关于",
     "nav_about_url": "/about",
     "about_title": "关于 · Moyuin",
     "about_slogan": "于此驻留",
     "nav_notes": "笔记",
+    "notes_page_title": "笔记 · Moyuin",
+    "notes_hero_slogan": "学习记录",
+    "notes_intro": "游荡者的思维锚点。",
+    "notes_back_to_notes": "返回笔记",
     "nav_lab": "实验室",
     "nav_memos": "碎碎念",
     "nav_memos_url": "/memos",
@@ -191,11 +201,16 @@ const translations = {
     "nav_home": "Home",
     "nav_home_url": "/en/",
     "nav_blog": "Blog",
+    "nav_notes_url": "/en/notes",
     "nav_about": "About",
     "nav_about_url": "/en/about",
     "about_title": "About · Moyuin",
     "about_slogan": "About This Wandering Space",
     "nav_notes": "Notes",
+    "notes_page_title": "Notes · Moyuin",
+    "notes_hero_slogan": "Learning Notes",
+    "notes_intro": "Anchors of a Wanderer's Mind.",
+    "notes_back_to_notes": "Back to Notes",
     "nav_lab": "Lab",
     "nav_memos": "Memos",
     "nav_memos_url": "/en/memos",

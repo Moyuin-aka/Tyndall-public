@@ -2,7 +2,7 @@
 import { useTranslations } from '@utils/ui';
 import { getCollection } from 'astro:content';
 import Layout from '@layouts/Layout.astro';
-import { localizePosts, sortByPubDateDesc } from '@utils/posts';
+import { filterPostsBySection, getSectionPostUrl, localizePosts, sortByPubDateDesc } from '@utils/posts';
 
 export async function getStaticPaths() {
   const all = await getCollection('blog', ({ data }) => {
@@ -10,7 +10,7 @@ export async function getStaticPaths() {
     return data.published !== false;
   });
 
-  const sortedPosts = sortByPubDateDesc(localizePosts(all, 'zh'));
+  const sortedPosts = sortByPubDateDesc(localizePosts(filterPostsBySection(all, 'blog'), 'zh'));
 
   const pageSize = 10;
   const totalPages = Math.ceil(sortedPosts.length / pageSize);
@@ -93,7 +93,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
         
         return (
           <article class="blog-post-item">
-            <a href={`/blog/${key}`} class="blog-post-title-link">
+            <a href={getSectionPostUrl(key, 'blog', locale)} class="blog-post-title-link">
               <h2 class="blog-post-title">{post.data.title}</h2>
             </a>
             {post.data.description && <p class="blog-post-summary">{post.data.description}</p>}

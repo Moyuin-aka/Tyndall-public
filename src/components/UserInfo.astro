@@ -26,65 +26,57 @@ const socialLinks = [
 ];
 ---
 
-<section class="manifesto-section" role="region" aria-label="intro">
-  <div class="ender-hero" data-particles="on">
-    <!-- Ender particles background (tsParticles) -->
-    <div id="ender-particles" class="ender-particles" aria-hidden="true"></div>
-    <canvas class="grain-canvas" aria-hidden="true"></canvas>
-    <!-- Floating dust/particles (optional) -->
-    <canvas class="particles-canvas" aria-hidden="true"></canvas>
-
-    <div class="center" style={centerStyle}>
-      <!-- 宣言居中容器 -->
-      <div class="manifesto-container">
-        <p class="manifesto">{t("Manifesto")}</p>
-      </div>
-      <!-- 社交信息区:现代化水平排列 -->
-      <div class="social-section">
-        <div class="social-info-horizontal">
-          <span class="author-name">Moyuin</span>
-          <span class="separator" aria-hidden="true">·</span>
-          <div class="social-icons">
-            {
-              socialLinks.map((link) => (
-                <a
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="social-icon-link"
-                  aria-label={link.name}
-                  title={link.name}
-                >
-                  <Fragment set:html={link.icon} />
-                </a>
-              ))
-            }
+<div class="home-ambient-shell">
+  <section class="manifesto-section" role="region" aria-label="intro">
+    <div class="ender-hero">
+      <div class="center" style={centerStyle}>
+        <!-- 宣言居中容器 -->
+        <div class="manifesto-container">
+          <p class="manifesto">{t("Manifesto")}</p>
+        </div>
+        <!-- 社交信息区:现代化水平排列 -->
+        <div class="social-section">
+          <div class="social-info-horizontal">
+            <span class="author-name">Moyuin</span>
+            <span class="separator" aria-hidden="true">·</span>
+            <div class="social-icons">
+              {
+                socialLinks.map((link) => (
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="social-icon-link"
+                    aria-label={link.name}
+                    title={link.name}
+                  >
+                    <Fragment set:html={link.icon} />
+                  </a>
+                ))
+              }
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="info-section" role="region" aria-label="profile">
-  <canvas class="particles-canvas" aria-hidden="true"></canvas>
-
-  <div class="center">
-    <p class="intro-line">{t("introduction")}</p>
-  </div>
-</section>
-
+  <section class="info-section" role="region" aria-label="profile">
+    <div class="center">
+      <p class="intro-line">{t("introduction")}</p>
+    </div>
+  </section>
+</div>
 <script>
-  window.__ENDER_IS_MOBILE =
-    window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+  function mountManifesto() {
+    // 首屏宣言入场：挂载后触发 .is-mounted
+    requestAnimationFrame(() => {
+      document.querySelector(".manifesto-section")?.classList.add("is-mounted");
+    });
+  }
 
-  import "@/utils/userinfo-effects.ts";
-</script>
-<script>
-  // 首屏宣言入场：挂载后触发 .is-mounted
-  requestAnimationFrame(() => {
-    document.querySelector(".manifesto-section")?.classList.add("is-mounted");
-  });
+  mountManifesto();
+  document.addEventListener("astro:page-load", mountManifesto);
 </script>
 <script>
   function initFloatingHeader() {
@@ -110,7 +102,7 @@ const socialLinks = [
     header.classList.remove("header-active"); // 清除可能的激活状态
     header.classList.add("header-floating"); // 设置为浮动状态
 
-    const activate = (on) => {
+    const activate = (on: boolean) => {
       header.classList.toggle("header-active", !!on);
     };
 
@@ -134,90 +126,18 @@ const socialLinks = [
   // 如果使用客户端路由，监听页面切换
   document.addEventListener("astro:page-load", initFloatingHeader);
 </script>
-<script>
-  // 移动端大幅降低粒子复杂度：将数量降至原来的 30%（≈减少 70%）
-  (function () {
-    if (!(window.matchMedia && window.matchMedia("(max-width: 768px)").matches))
-      return;
-
-    let tries = 0;
-    const MAX_TRIES = 60; // ~1秒重试（60fps）
-    function tweakParticles() {
-      tries++;
-      const ts = window.tsParticles || window?.window?.tsParticles;
-      const containers = typeof ts?.dom === "function" ? ts.dom() : ts?.dom;
-      const list = Array.isArray(containers) ? containers : [];
-      if (!ts || list.length === 0) {
-        if (tries < MAX_TRIES) requestAnimationFrame(tweakParticles);
-        return;
-      }
-      // 尝试定位 id="ender-particles" 的容器
-      const container =
-        list.find((c) => c?.id === "ender-particles") || list[0];
-      if (!container || !container.options) return;
-      try {
-        const opts = container.options;
-        const num = opts?.particles?.number;
-        if (num && typeof num.value === "number") {
-          const original = num.value;
-          const target = Math.max(5, Math.round(original * 0.3)); // 30%
-          if (original !== target) {
-            num.value = target;
-          }
-        }
-        // 降低每秒渲染压力：略降速度（非必须）
-        if (
-          opts?.particles?.move &&
-          typeof opts.particles.move.speed === "number"
-        ) {
-          opts.particles.move.speed = Math.max(
-            0.2,
-            opts.particles.move.speed * 0.8,
-          );
-        }
-        // 应用更改
-        if (typeof container.refresh === "function") container.refresh();
-      } catch (e) {
-        /* noop */
-      }
-    }
-    requestAnimationFrame(tweakParticles);
-  })();
-</script>
 
 <style>
   /* —— Global guards —— */
   :global(html, body) {
     height: 100%;
   }
-  :global(body) {
-    margin: 0;
-    background: transparent !important;
+
+  .home-ambient-shell {
     position: relative;
-  }
-
-  .manifesto-section,
-  .info-section {
-    min-height: 100vh;
-    display: grid;
-    place-items: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  /* intro 部分额外增加底部间距，与 album 部分拉开距离 */
-  .info-section {
-    padding-bottom: clamp(6rem, 12vh, 10rem);
-  }
-
-  /* —— 全局固定背景 —— */
-  :global(body)::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1; /* keep behind particle bg */
-    pointer-events: none;
-
+    isolation: isolate;
+    width: 100%;
+    justify-self: stretch;
     background: radial-gradient(
         1200px 800px at 20% 10%,
         var(--end-sky-deep, #2a0e3f) 0%,
@@ -234,11 +154,10 @@ const socialLinks = [
         rgba(242, 231, 185, 0) 65%
       ),
       var(--bg, linear-gradient(#faf7ff, #ffffff));
-    background-attachment: fixed, fixed, fixed, fixed;
   }
 
   /* 白天模式：纯白背景，去除淡黄色 */
-  :global(html:not(.dark)) :global(body)::before {
+  :global(html:not(.dark)) .home-ambient-shell {
     background: radial-gradient(
         1200px 800px at 20% 10%,
         rgba(162, 89, 236, 0.03) 0%,
@@ -250,7 +169,22 @@ const socialLinks = [
         transparent 55%
       ),
       linear-gradient(#ffffff, #ffffff);
-    background-attachment: fixed, fixed, fixed;
+  }
+
+  .manifesto-section,
+  .info-section {
+    width: 100%;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* intro 部分额外增加底部间距，与 album 部分拉开距离 */
+  .info-section {
+    background: var(--bg);
+    padding-bottom: clamp(6rem, 12vh, 10rem);
   }
 
   /* —— 组件：使用"可用高度"做居中 —— */
@@ -269,48 +203,6 @@ const socialLinks = [
 
     display: grid;
     place-items: center; /* 水平 + 垂直居中 */
-    --grain-opacity: 0.12;
-  }
-
-  /* Ender particles background container */
-  .manifesto-section .ender-particles {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0; /* bottom-most within hero, above body::before */
-  }
-
-  /* 画布固定到视口，保证顶端与全屏覆盖 */
-  .manifesto-section .grain-canvas,
-  .manifesto-section .particles-canvas,
-  .info-section .particles-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
-    pointer-events: none;
-  }
-
-  /* Desktop: ensure hero canvases span the full viewport (avoid section clipping) */
-  @media (min-width: 769px) {
-    .manifesto-section .grain-canvas,
-    .manifesto-section .particles-canvas,
-    .info-section .particles-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-    }
-  }
-  .manifesto-section .grain-canvas {
-    z-index: 1;
-  }
-  .manifesto-section .particles-canvas {
-    z-index: 2;
-  }
-  .info-section .particles-canvas {
-    z-index: 2;
   }
 
   .center {
@@ -358,10 +250,7 @@ const socialLinks = [
     line-height: 1.12;
     word-break: keep-all;
     overflow-wrap: break-word; /* Safari 兼容：允许必要时断行 */
-    max-inline-size: min(
-      43ch,
-      85vw
-    ); /* 与 intro-line 保持一致，限制在画面中央 1/3 */
+    max-inline-size: min(28ch, 92vw);
     color: color-mix(in oklab, #ffffff 92%, var(--end-ambient-pale, #f2e7b9));
     font-size: clamp(2rem, 9vw, 7rem);
     /* 确保文本块本身也居中 */
@@ -382,10 +271,18 @@ const socialLinks = [
     hanging-punctuation: allow-end;
   }
 
-  /* 中文版每行缩进优化 */
-  :global(html[lang^="zh"]) .manifesto,
-  :global(html[lang*="zh"]) .manifesto {
-    padding-left: 0.5em;
+  @supports (width: 1ic) {
+    .manifesto {
+      max-inline-size: min(28ic, 92vw);
+    }
+  }
+
+  /* 中文版每行缩进优化仅保留桌面端，避免移动端 UA 再次偏移 */
+  @media (min-width: 769px) {
+    :global(html[lang^="zh"]) .manifesto,
+    :global(html[lang*="zh"]) .manifesto {
+      padding-left: 0.5em;
+    }
   }
 
   /* 挂载后触发 reveal，不再使用漂浮动画 */
@@ -412,8 +309,8 @@ const socialLinks = [
   }
 
   .manifesto:lang(en) {
-    font-family: "Noto Serif", Georgia, serif;
-    font-weight: 500;
+    font-family: var(--font-serif);
+    font-weight: 400;
   }
   :global(html:not(.dark)) .manifesto {
     color: #261a3b;
@@ -431,7 +328,17 @@ const socialLinks = [
       font-weight: 500; /* 移动端更厚重一些 */
       line-height: 1.18; /* 更舒展的行高 */
       letter-spacing: 0.06em; /* 稍微收紧字距 */
-      max-inline-size: min(43ch, 85vw); /* 与 intro-line 保持一致 */
+      max-inline-size: min(24ch, 94vw);
+    }
+
+    @supports (width: 1ic) {
+      .manifesto {
+        max-inline-size: min(24ic, 94vw);
+      }
+    }
+
+    .manifesto:lang(en) {
+      font-weight: 400;
     }
     /* 移动端：提升到 1/3 处 */
     .manifesto-section .center {
@@ -498,8 +405,8 @@ const socialLinks = [
   }
 
   .author-name:lang(en) {
-    font-family: "Times New Roman", "Noto Serif", Georgia, serif;
-    font-weight: 500;
+    font-family: var(--font-serif);
+    font-weight: 400;
   }
 
   /* 分隔符 */
@@ -735,8 +642,7 @@ const socialLinks = [
 
   /* —— Mobile performance mode (<=768px) —— */
   @media (max-width: 768px) {
-    /* 移动端使用与桌面端和其他页面统一的背景 */
-    /* body::before 的背景由全局 Layout 控制，保持一致性 */
+    /* 移动端保持组件自有背景层，避免 Safari 在根层露底 */
 
     /* 字体渲染优化：宣言在移动端优先速度 */
     .manifesto {

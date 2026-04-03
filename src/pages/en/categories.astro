@@ -2,7 +2,8 @@
 import { useTranslations } from "@utils/ui";
 import { getCollection } from "astro:content";
 import Layout from "@layouts/Layout.astro";
-import { getTranslationKey, localizePosts } from "@utils/posts";
+import { filterPostsBySection, getTranslationKey, localizePosts } from "@utils/posts";
+import { CATEGORY_ICONS } from "@utils/icons";
 
 const t = useTranslations(Astro.currentLocale);
 const locale = Astro.currentLocale;
@@ -12,7 +13,7 @@ const all = await getCollection("blog", ({ data }) => {
   return data.published !== false;
 });
 
-const localized = localizePosts(all, locale);
+const localized = localizePosts(filterPostsBySection(all, "blog"), locale ?? "zh");
 
 // 统计每个分类的文章数量（按 translationKey 去重）
 const categoryCount = new Map<string, number>();
@@ -70,16 +71,10 @@ function getCategoryDisplayName(category: string) {
       {
         sortedCategories.map(([category, count]) => (
           <a href={`/en/category/${category}`} class="category-card">
-            <div class="category-icon">
-              {category === "ctf" && "🚩"}
-              {category === "notes" && "📝"}
-              {category === "record" && "📖"}
-              {category === "thoughts" && "💭"}
-              {category === "weekly" && "📅"}
-              {category === "tech" && "💻"}
-              {category === "life" && "🌱"}
-              {category === "uncategorized" && "📦"}
-            </div>
+            <div
+              class="category-icon"
+              set:html={CATEGORY_ICONS[category] || CATEGORY_ICONS.uncategorized}
+            />
             <h2 class="category-name">{getCategoryDisplayName(category)}</h2>
             <p class="category-count">
               {count} {t("category_posts_count")}
@@ -146,8 +141,24 @@ function getCategoryDisplayName(category: string) {
   }
 
   .category-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    transition: transform 0.3s ease, color 0.3s ease;
+  }
+
+  .category-card:hover .category-icon {
+    color: var(--purple);
+    transform: scale(1.06);
+  }
+
+  .category-icon :global(svg) {
+    width: 100%;
+    height: 100%;
   }
 
   .category-name {
@@ -178,7 +189,8 @@ function getCategoryDisplayName(category: string) {
     }
 
     .category-icon {
-      font-size: 2.5rem;
+      width: 2.5rem;
+      height: 2.5rem;
     }
 
     .category-name {

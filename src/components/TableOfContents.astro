@@ -231,6 +231,15 @@ if (tocHeadings.length === 0) {
     border-left-color: var(--purple);
   }
 
+  .toc-item a :global(.katex) {
+    font-size: 0.96em;
+  }
+
+  .toc-item a :global(.katex-display) {
+    display: inline-block;
+    margin: 0;
+  }
+
   /* 不同层级的缩进 */
   .toc-depth-2 {
     padding-left: 0;
@@ -426,6 +435,23 @@ if (tocHeadings.length === 0) {
       .filter(Boolean) as HTMLElement[];
 
     if (headings.length === 0) return;
+
+    // Astro's extracted heading text flattens inline math. Reuse the actual
+    // rendered heading HTML so TOC labels stay consistent with the article.
+    tocLinks.forEach(link => {
+      const targetId = link.getAttribute('data-heading-id');
+      if (!targetId) return;
+
+      const sourceHeading = document.getElementById(targetId);
+      if (!sourceHeading) return;
+
+      link.innerHTML = sourceHeading.innerHTML;
+
+      const plainText = sourceHeading.textContent?.replace(/\s+/g, ' ').trim();
+      if (plainText) {
+        link.setAttribute('aria-label', plainText);
+      }
+    });
 
     let currentActive: Element | null = null;
 

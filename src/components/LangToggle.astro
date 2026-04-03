@@ -21,7 +21,12 @@ if (basePath.startsWith(localePrefix + "/") || basePath === localePrefix) {
 }
 
 // 计算最终的 canonicalPath：blog 文章用 translationKey，其余用我们处理好的 basePath
-const canonicalPath = translationKey ? `/blog/${translationKey}` : basePath;
+const pathSegments = basePath.split("/").filter(Boolean);
+const contentSection =
+  pathSegments[0] === "notes" || pathSegments[0] === "blog"
+    ? pathSegments[0]
+    : "blog";
+const canonicalPath = translationKey ? `/${contentSection}/${translationKey}` : basePath;
 ---
 
 <div class="lang-dropdown">

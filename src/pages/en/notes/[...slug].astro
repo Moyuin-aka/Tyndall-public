@@ -1,0 +1,467 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@layouts/Layout.astro";
+import "@styles/markdown.css";
+import { useTranslations } from "@utils/ui";
+import SupabaseComments from "@components/SupabaseComments.astro";
+import TableOfContents from "@components/TableOfContents.astro";
+import {
+  filterPostsBySection,
+  getNoteTopicLabel,
+  getSectionBasePath,
+  getSectionPostUrl,
+  getTranslationKey,
+  localizePosts,
+  resolvePostForLocale,
+  sortByPubDateDesc,
+} from "@utils/posts";
+import { ICONS } from "@utils/icons";
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection("blog", ({ data }) => {
+    return data.published !== false;
+  });
+
+  return Array.from(new Set(filterPostsBySection(allPosts, "notes").map(getTranslationKey))).map((key) => ({
+    params: { slug: key },
+    props: { translationKey: key },
+  }));
+}
+
+const { translationKey } = Astro.props;
+const t = useTranslations(Astro.currentLocale);
+const locale = "en";
+
+const allPosts = await getCollection("blog", ({ data }) => {
+  return data.published !== false;
+});
+const notePosts = filterPostsBySection(allPosts, "notes");
+const { post, isFallback } = resolvePostForLocale(notePosts, translationKey, locale);
+
+if (!post) {
+  throw new Error(`Note not found: ${translationKey}`);
+}
+
+const localizedList = sortByPubDateDesc(localizePosts(notePosts, locale));
+const currentIndex = localizedList.findIndex((item) => item.key === translationKey);
+const prevPost = currentIndex < localizedList.length - 1 ? localizedList[currentIndex + 1].post : null;
+const nextPost = currentIndex > 0 ? localizedList[currentIndex - 1].post : null;
+
+function getPostUrl(entry: typeof post | null) {
+  if (!entry) return "#";
+  return getSectionPostUrl(getTranslationKey(entry), "notes", locale);
+}
+
+const { Content, headings } = await post.render();
+const topicLabel = getNoteTopicLabel(post);
+const notesIndexUrl = getSectionBasePath("notes", locale);
+const backToNotesLabel = t("notes_back_to_notes");
+const notesLabel = t("nav_notes");
+const languageDisplay = post.data.lang === "zh" ? "zh-CN" : "en-US";
+const postDateLabel = post.data.pubDate.toLocaleDateString("en", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+const rawContent = post.body;
+const hasLatex = /\$.*?\$|\$\$[\s\S]*?\$\$/.test(rawContent);
+const hasMermaid = /```mermaid/.test(rawContent);
+---
+
+<Layout title={post.data.title} translationKey={translationKey}>
+  {
+    hasLatex && (
+      <link
+        slot="head"
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+        integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV"
+        crossorigin="anonymous"
+      />
+    )
+  }
+
+  <main class="post-container">
+    <div class="post-topbar">
+      <a href={notesIndexUrl} class="post-back-link" aria-label={backToNotesLabel}>
+        <span class="post-back-icon" set:html={ICONS.arrowLeft} />
+        <span>{backToNotesLabel}</span>
+      </a>
+    </div>
+
+    <h1>{post.data.title}</h1>
+
+    {isFallback && <div class="fallback-tip">{t("post_not_translated")}</div>}
+
+    <div class="post-meta">
+      <time datetime={post.data.pubDate.toISOString()} class="post-meta-item post-meta-date">
+        <span class="post-meta-icon" set:html={ICONS.calendar} />
+        <span class="post-meta-text">{postDateLabel}</span>
+      </time>
+      <a href={notesIndexUrl} class="post-meta-item post-meta-link">
+        <span class="post-meta-icon" set:html={ICONS.category} />
+        <span class="post-meta-text">{notesLabel}</span>
+      </a>
+      {topicLabel && (
+        <span class="post-meta-item">
+          <span class="post-meta-icon" set:html={ICONS.category} />
+          <span class="post-meta-text">{topicLabel}</span>
+        </span>
+      )}
+      <span class="post-meta-item">
+        <span class="post-meta-icon" set:html={ICONS.language} />
+        <span class="post-meta-text">{languageDisplay}</span>
+      </span>
+    </div>
+
+    <TableOfContents headings={headings} />
+
+    <div class="markdown-content">
+      <Content />
+    </div>
+
+    <hr class="comment-divider" />
+
+    <div class="post-navigation">
+      {
+        prevPost ? (
+          <a href={getPostUrl(prevPost)} class="nav-item prev">
+            <span class="nav-label">
+              <span class="icon" set:html={ICONS.arrowLeft} />
+              {t("post_prev")}
+            </span>
+            <span class="nav-title">{prevPost.data.title}</span>
+          </a>
+        ) : (
+          <div class="nav-item empty" />
+        )
+      }
+
+      {
+        nextPost ? (
+          <a href={getPostUrl(nextPost)} class="nav-item next">
+            <span class="nav-label">
+              {t("post_next")}
+              <span class="icon" set:html={ICONS.arrowRight} />
+            </span>
+            <span class="nav-title">{nextPost.data.title}</span>
+          </a>
+        ) : (
+          <div class="nav-item empty" />
+        )
+      }
+    </div>
+
+    <hr class="comment-divider" />
+
+    <SupabaseComments
+      translationKey={translationKey}
+      postTitle={post.data.title}
+      postUrl={`${Astro.site?.origin || ""}${Astro.url.pathname}`}
+    />
+  </main>
+</Layout>
+
+<script>
+  import { initializeAll } from "@utils/blog-enhancements";
+  import { applyAutoSpaceToTextNodes } from "@utils/auto-space";
+
+  const runPageEnhancements = () => {
+    initializeAll();
+    const markdown = document.querySelector(".post-container .markdown-content");
+    if (markdown) {
+      applyAutoSpaceToTextNodes(markdown);
+    }
+
+    const backLink = document.querySelector<HTMLAnchorElement>(".post-back-link");
+    if (backLink && backLink.dataset.smartBackBound !== "true") {
+      backLink.dataset.smartBackBound = "true";
+      backLink.addEventListener("click", (event) => {
+        const hasHistory = window.history.length > 1;
+        if (!hasHistory || !document.referrer) return;
+
+        let sameOriginReferrer = false;
+        try {
+          sameOriginReferrer =
+            new URL(document.referrer).origin === window.location.origin;
+        } catch {
+          sameOriginReferrer = false;
+        }
+
+        if (sameOriginReferrer) {
+          event.preventDefault();
+          window.history.back();
+        }
+      });
+    }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      runPageEnhancements();
+    });
+  } else {
+    runPageEnhancements();
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    runPageEnhancements();
+  });
+</script>
+
+<script define:vars={{ hasMermaid, hasLatex }}>
+  if (typeof window !== "undefined") {
+    window.__pageFeatures = { hasMermaid, hasLatex };
+  }
+</script>
+
+<style>
+  .post-container {
+    max-width: 800px;
+    margin: 5rem auto 2rem;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .markdown-content {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    text-autospace: ideograph-alpha ideograph-numeric;
+  }
+
+  .post-container h1 {
+    font-family: var(--font-serif);
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .post-topbar {
+    margin-bottom: 0.4rem;
+  }
+
+  .post-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.5rem 0.25rem 0.35rem;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--grey);
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    line-height: 1;
+    transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  }
+
+  .post-back-link:hover {
+    color: var(--text);
+    background: rgba(162, 89, 236, 0.08);
+    transform: translateX(-1px);
+  }
+
+  .post-back-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    display: inline-flex;
+    color: currentColor;
+  }
+
+  .post-back-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-bottom: 2rem;
+  }
+
+  .post-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid rgba(162, 89, 236, 0.2);
+    border-radius: 5px;
+    color: var(--purple);
+    background: rgba(162, 89, 236, 0.1);
+    font-family: var(--font-serif);
+    font-size: 0.82rem;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .post-meta-date .post-meta-text {
+    font-family: "Noto Serif", Georgia, "Times New Roman", Times, serif;
+    letter-spacing: 0.01em;
+  }
+
+  .post-meta-link {
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .post-meta-link:hover {
+    background: rgba(162, 89, 236, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .post-meta-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    display: inline-flex;
+    color: currentColor;
+    opacity: 0.9;
+  }
+
+  .post-meta-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  :global(html.dark) .post-meta-item {
+    color: #c6b7dc;
+    background: rgba(198, 183, 220, 0.12);
+    border-color: rgba(198, 183, 220, 0.26);
+  }
+
+  :global(html.dark) .post-meta-link:hover {
+    background: rgba(198, 183, 220, 0.2);
+    border-color: rgba(198, 183, 220, 0.36);
+  }
+
+  :global(html.dark) .post-back-link:hover {
+    color: #e4dcf2;
+    background: rgba(198, 183, 220, 0.16);
+  }
+
+  .fallback-tip {
+    font-family: var(--font-sans);
+    color: var(--grey);
+    background: rgba(162, 89, 236, 0.1);
+    border: 1px solid rgba(162, 89, 236, 0.25);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+
+  .post-navigation {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-decoration: none;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .nav-item:not(.empty):hover {
+    background: rgba(136, 136, 136, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .nav-item.next {
+    text-align: right;
+    align-items: flex-end;
+  }
+
+  .nav-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--grey);
+  }
+
+  .nav-title {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    color: var(--text);
+    font-weight: 500;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .nav-item .icon {
+    width: 1.2em;
+    height: 1.2em;
+    transition: transform 0.2s ease;
+  }
+
+  .nav-item.prev:hover .icon {
+    transform: translateX(-4px);
+  }
+
+  .nav-item.next:hover .icon {
+    transform: translateX(4px);
+  }
+
+  .comment-divider {
+    margin: 3rem 0 2.5rem;
+    border: none;
+    border-top: 1px solid var(--grey);
+    opacity: 0.3;
+  }
+
+  @media (max-width: 768px) {
+    .post-container {
+      padding: 15px;
+      margin: 4rem auto 1.5rem;
+    }
+
+    .post-container h1 {
+      font-size: 2rem;
+    }
+
+    .post-back-link {
+      font-size: 0.82rem;
+      padding: 0.22rem 0.42rem 0.22rem 0.3rem;
+    }
+
+    .post-navigation {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .post-meta {
+      gap: 0.5rem;
+      margin-bottom: 1.6rem;
+    }
+
+    .post-meta-item {
+      padding: 0.24rem 0.58rem;
+      font-size: 0.78rem;
+    }
+
+    .nav-item.next {
+      text-align: left;
+      align-items: flex-start;
+    }
+
+    .nav-item.next .nav-label {
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+    }
+  }
+</style>

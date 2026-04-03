@@ -666,12 +666,9 @@ html.dark .markdown-content .katex .mord {
 .markdown-content .mermaid-diagram {
   background: transparent;
   padding: 1em 0;
-  /* 减少左右内边距，避免图表贴边 */
   text-align: center;
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: clip;
   margin: 2em auto;
-  /* 居中显示 */
   max-width: 100%;
 }
 
@@ -681,6 +678,13 @@ html.dark .markdown-content .katex .mord {
   align-items: center;
   min-height: 100px;
   width: 100%;
+  cursor: zoom-in;
+}
+
+.markdown-content .mermaid-diagram:focus-visible {
+  outline: none;
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px rgba(162, 89, 236, 0.18);
 }
 
 .markdown-content .mermaid-diagram svg {
@@ -689,6 +693,130 @@ html.dark .markdown-content .katex .mord {
   height: auto;
   display: block;
   margin: 0 auto;
+  flex: 0 0 auto;
+}
+
+body.mermaid-preview-open {
+  overflow: hidden;
+}
+
+body.mermaid-preview-open > header,
+body.mermaid-preview-open > .mobile-dropdown {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.mermaid-preview-open > header {
+  transform: translateY(-100%);
+}
+
+.mermaid-preview {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 120;
+}
+
+.mermaid-preview[hidden] {
+  display: none;
+}
+
+.mermaid-preview__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(248, 246, 252, 0.82);
+  backdrop-filter: blur(10px);
+}
+
+.mermaid-preview__viewport {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.mermaid-preview__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--text);
+  padding: 0;
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(34, 34, 34, 0.08);
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.mermaid-preview__close:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.mermaid-preview__close:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(162, 89, 236, 0.18),
+    0 10px 30px rgba(34, 34, 34, 0.08);
+}
+
+.mermaid-preview__close span {
+  transform: translateY(-1px);
+}
+
+.mermaid-preview__viewport.is-zoomed {
+  cursor: grab;
+}
+
+.mermaid-preview__viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.mermaid-preview__stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.mermaid-preview__content {
+  transform-origin: center center;
+  will-change: transform;
+  user-select: none;
+}
+
+.mermaid-preview__content svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  pointer-events: none;
+}
+
+html.dark .mermaid-preview__backdrop {
+  background: rgba(6, 5, 18, 0.82);
+}
+
+html.dark .mermaid-preview__close {
+  background: rgba(17, 14, 31, 0.76);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+}
+
+html.dark .mermaid-preview__close:hover {
+  background: rgba(24, 20, 42, 0.92);
 }
 
 /* ========== 移动端优化 ========== */
@@ -696,12 +824,20 @@ html.dark .markdown-content .katex .mord {
 
   /* Mermaid 图表移动端优化 */
   .markdown-content .mermaid-diagram {
-    padding: 0.5em 0;
+    padding: 1rem 0.75rem;
   }
 
   .markdown-content .mermaid-diagram svg {
     max-width: 100%;
     /* 移动端可以用满宽度 */
+  }
+
+  .mermaid-preview__close {
+    top: 0.8rem;
+    right: 0.8rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.85rem;
   }
 
   /* 移动端表格优化 */

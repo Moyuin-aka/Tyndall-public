@@ -1,11 +1,38 @@
 <style is:global>
     :root {
-        --font-serif: "Noto Serif SC", "Noto Serif", ui-serif,
+        --font-serif-zh: "Noto Serif SC", "Noto Serif", ui-serif,
             "Source Han Serif SC", "Songti SC", "STSong", "Hiragino Mincho ProN",
             Georgia, "Times New Roman", Times, serif;
-        --font-sans: "Noto Sans SC", "Noto Sans", ui-sans-serif, "PingFang SC",
+        --font-serif-en: "Noto Serif SC", "Noto Serif", ui-serif,
+            "Source Han Serif SC", "Songti SC", "STSong",
+            "Hiragino Mincho ProN", Georgia, "Times New Roman", Times, serif;
+        --font-sans-zh: "Noto Sans SC", "Noto Sans", ui-sans-serif, "PingFang SC",
             "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC",
             "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+        --font-sans-en: "Noto Sans", ui-sans-serif, -apple-system,
+            BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial,
+            "Noto Sans SC", "PingFang SC", "Hiragino Sans GB",
+            "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+        --font-serif: var(--font-serif-zh);
+        --font-sans: var(--font-sans-zh);
+    }
+
+    html[lang="en"] {
+        --font-serif: var(--font-serif-en);
+        --font-sans: var(--font-sans-en);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    html[lang="zh"] {
+        --font-serif: var(--font-serif-zh);
+        --font-sans: var(--font-sans-zh);
+    }
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
     }
 
     /* 全站默认使用更纤细的无衬线字体 */
@@ -39,6 +66,7 @@
         min-height: 100%;
         margin: 0;
         padding: 0;
+        overflow-x: hidden;
         background: var(--bg);
         color: var(--text);
         font-family: var(--font-serif);
@@ -46,6 +74,18 @@
         transition:
             background 0.3s,
             color 0.3s;
+    }
+
+    /* Safari scrollbar track: match page background to prevent gradient bleed */
+    html.is-safari::-webkit-scrollbar {
+        width: 8px;
+    }
+    html.is-safari::-webkit-scrollbar-track {
+        background: var(--bg);
+    }
+    html.is-safari::-webkit-scrollbar-thumb {
+        background: rgba(162, 89, 236, 0.3);
+        border-radius: 4px;
     }
 
     body {
@@ -164,8 +204,31 @@
     html[lang="en"] .memos-hero-slogan,
     html[lang="en"] .friends-hero-title,
     html[lang="en"] .hero-slogan,
+    html[lang="en"] .manifesto,
     html[lang="en"] .title-zh {
         line-height: 1.28;
         padding-bottom: 0.08em;
+    }
+
+    .notes-intro {
+        font-family: var(--font-serif);
+        width: min(38rem, calc(100vw - 40px));
+        margin: 0.95rem auto 0;
+        padding: 0.25rem 0;
+        text-align: center;
+        font-size: 1rem;
+        color: var(--grey);
+        line-height: 1.9;
+        letter-spacing: 0.01em;
+        opacity: 0.9;
+    }
+
+    @media (max-width: 768px) {
+        .notes-intro {
+            width: min(34rem, calc(100vw - 40px));
+            margin-top: 0.8rem;
+            font-size: 0.96rem;
+            line-height: 1.8;
+        }
     }
 </style>

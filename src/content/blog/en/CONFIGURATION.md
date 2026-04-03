@@ -1,15 +1,15 @@
 ---
 title: Tyndall Configuration Guide
-description: Tyndall v1.1.0 configuration guide to help you build your own blog
+description: Tyndall v1.2.0 configuration guide to help you build your own blog
 pubDate: 2025-01-15
-updatedDate: 2026-02-06
+updatedDate: 2026-04-03
 translationKey: config
 lang: en
 ---
 
 # Tyndall Configuration Guide
 
-> **Version: v1.1.0**  
+> **Version: v1.2.0**  
 > This guide will help you configure the Tyndall theme from scratch and build your own blog.
 
 ---
@@ -55,8 +55,16 @@ pnpm build
 export default defineConfig({
   site: 'https://yourdomain.com',  // ⚠️ Replace with your domain
   // ...
+  markdown: {
+    // Disable smartypants to prevent straight quotes from being converted
+    // to typographic quotes, which breaks mixed CJK/English content.
+    smartypants: false,
+    // ...
+  },
 });
 ```
+
+> **About `smartypants: false`:** Astro converts straight quotes (`"`/`'`) to typographic quotes (`""`/`''`) by default, which can corrupt mixed Chinese/English content. This option is disabled in the theme by default — just leave it as-is.
 
 ### 2. Personal Information
 
@@ -387,6 +395,30 @@ Post content...
 
 **English version:** Create in `src/content/blog/en/` with the same `translationKey`.
 
+### Notes
+
+Notes are a dedicated content section that shares the `blog` collection, distinguished by `category: 'notes'`. They have their own listing page (`/notes`), detail page (`/notes/[slug]`), pagination, and i18n support.
+
+Create `.md` files in `src/content/blog/` with `category` set to `notes`:
+
+```markdown
+---
+title: Note Title
+description: Brief description (optional)
+pubDate: 2025-06-01
+lang: en
+translationKey: my-note
+category: notes          # ⚠️ Must be 'notes' to appear on the Notes page
+published: true
+---
+
+Note content...
+```
+
+**Sub-directory grouping:** Place note files in subdirectories (e.g. `src/content/blog/reading/my-note.md`) and the notes listing page will automatically display the directory path as a topic badge (e.g. `reading`).
+
+**English version:** Use `category: 'notes'` and the same `translationKey` in `src/content/blog/en/`.
+
 ### Supported Markdown Features
 
 - **Math formulas** (KaTeX): `$E=mc^2$` or `$$...$$`
@@ -394,6 +426,32 @@ Post content...
 - **Auto heading anchors**
 - **Image lazy loading optimization**
 - **Soft line break support** (remark-breaks)
+
+---
+
+## ⚡ Service Worker
+
+The theme includes `public/sw.js`, which is automatically registered in production to cache static assets, fonts, and images:
+
+| Strategy | Resources | TTL |
+|----------|-----------|-----|
+| Cache-First | Font files | 30 days |
+| Cache-First | CDN scripts | 7 days |
+| Cache-First | Images | 7 days |
+| Network-First | Page HTML | 1 day |
+
+**In development mode** the Service Worker is automatically unregistered to prevent Vite HMR cache conflicts.
+
+### Disable Service Worker
+
+If you don't need offline caching, delete `public/sw.js` and remove the following script block from `src/layouts/Layout.astro`:
+
+```javascript
+// Service Worker lifecycle
+if (!isDev && "serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js");
+}
+```
 
 ---
 
@@ -438,7 +496,21 @@ export default defineConfig({
 |------|---------|
 | `src/components/GlobalStyles.astro` | Global CSS variables, colors |
 | `src/styles/markdown.css` | Article content styles |
-| `src/styles/fonts.css` | Font configuration |
+| `src/styles/fonts.css` | Font configuration (font-family variables) |
+| `public/fonts/google-fonts.css` | Local Google Fonts declarations |
+| `public/fonts/google/` | Self-hosted woff2 font files |
+
+### Local Font Hosting
+
+The theme uses **locally mirrored Google Fonts** instead of external CDN requests. Font files live in `public/fonts/google/` and are declared in `public/fonts/google-fonts.css`. `Layout.astro` loads this stylesheet asynchronously to avoid render-blocking:
+
+```html
+<link rel="stylesheet" href="/fonts/google-fonts.css"
+      media="print" onload="this.media='all'; this.onload=null;" />
+<noscript><link rel="stylesheet" href="/fonts/google-fonts.css" /></noscript>
+```
+
+To swap fonts, replace the woff2 files and CSS declarations in `public/fonts/`, then update the `font-family` variables in `src/styles/fonts.css` to match.
 
 ### Modify Colors
 

@@ -60,6 +60,20 @@ export const ICONS = {
     <circle cx="18" cy="16" r="3"></circle>
   </svg>`,
 
+  calendar: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+    <path d="M16 2v4M8 2v4M3 10h18"></path>
+  </svg>`,
+
+  category: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+  </svg>`,
+
+  language: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9"></circle>
+    <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path>
+  </svg>`,
+
   arrowLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M19 12H5M12 19l-7-7 7-7"/>
   </svg>`,
@@ -67,4 +81,51 @@ export const ICONS = {
   arrowRight: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M5 12h14M12 5l7 7-7 7"/>
   </svg>`
+};
+
+export const CATEGORY_ICONS: Record<string, string> = {
+  ctf: `<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 21V5a2 2 0 0 1 2-2h11l-2.5 4L18 11H7a2 2 0 0 0-2 2"></path>
+  </svg>`,
+
+  notes: `<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+    <path d="M8 7h8M8 11h8M8 15h5"></path>
+  </svg>`,
+
+  record: `<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path>
+    <path d="M14 3v5h5"></path>
+    <path d="M10 13l-2 2 2 2"></path>
+    <path d="M14 13l2 2-2 2"></path>
+  </svg>`,
+
+  thoughts: `<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 18h7a5 5 0 0 0 0-10h-1a6 6 0 0 0-11.5 2A4 4 0 0 0 6 18h1"></path>
+    <circle cx="10.5" cy="11.5" r="0.8" fill="currentColor" stroke="none"></circle>
+    <circle cx="13.5" cy="11.5" r="0.8" fill="currentColor" stroke="none"></circle>
+  </svg>`,
+
+  weekly: `<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+    <path d="M8 3v4M16 3v4M3 10h18M8 14h3"></path>
+  </svg>`,
+
+  tech: `<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="5" width="16" height="12" rx="2"></rect>
+    <path d="M9 20h6M12 17v3"></path>
+    <path d="M10 9l-2 2 2 2M14 9l2 2-2 2"></path>
+  </svg>`,
+
+  life: `<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 21c0-6.5 3.5-12 11-15 1.2 7.5-2.2 12.8-9.5 15"></path>
+    <path d="M5 21c2.5-4 5.5-7 9.5-9"></path>
+  </svg>`,
+
+  uncategorized: `<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 8.5L12 3l9 5.5"></path>
+    <path d="M3 8.5V18l9 5 9-5V8.5"></path>
+    <path d="M12 13V23"></path>
+    <path d="M21 8.5l-9 4.5-9-4.5"></path>
+  </svg>`,
 };

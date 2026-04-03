@@ -48,14 +48,6 @@ const currentLocaleForUrls = Astro.currentLocale || defaultLocale;
             >{t("nav_friends")}</a
           >
         </li>
-        <li>
-          <a
-            href={getRelativeLocaleUrl(currentLocaleForUrls, "about")}
-            class={`link ${Astro.url.pathname.startsWith(getRelativeLocaleUrl(currentLocaleForUrls, "about")) ? "active" : ""}`}
-            >{t("nav_about")}</a
-          >
-        </li>
-
         <li class="nav-separator" aria-hidden="true">|</li>
 
         <li class="nav-more-dropdown">
@@ -83,6 +75,15 @@ const currentLocaleForUrls = Astro.currentLocale || defaultLocale;
             </svg>
           </button>
           <ul class="more-menu">
+            <li>
+              <a
+                href={getRelativeLocaleUrl(currentLocaleForUrls, "notes")}
+                class={`more-item ${Astro.url.pathname.startsWith(getRelativeLocaleUrl(currentLocaleForUrls, "notes")) ? "is-active" : ""}`}
+              >
+                <span class="active-indicator"></span>
+                {t("nav_notes")}
+              </a>
+            </li>
             <li>
               <a
                 href={getRelativeLocaleUrl(currentLocaleForUrls, "memos")}
@@ -169,6 +170,10 @@ const currentLocaleForUrls = Astro.currentLocale || defaultLocale;
     backdrop-filter: var(--header-backdrop-filter);
     -webkit-backdrop-filter: var(--header-backdrop-filter);
     border-bottom: 1px solid var(--header-border-color);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout style;
 
     /* 增强过渡动画：更丝滑的进出效果 */
     transition:
@@ -177,12 +182,13 @@ const currentLocaleForUrls = Astro.currentLocale || defaultLocale;
       background-color 0.4s ease,
       backdrop-filter 0.4s ease,
       border-color 0.4s ease;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
     opacity: 1;
   }
 
   header.header-hidden {
-    transform: translateY(-100%);
+    transform: translate3d(0, -100%, 0);
+    pointer-events: none;
   }
 
   /* 首页浮动状态：初始透明隐藏 */
@@ -556,6 +562,22 @@ const currentLocaleForUrls = Astro.currentLocale || defaultLocale;
   }
 
   @media (max-width: 768px) {
+    header {
+      /* 移动端优先使用更轻的合成层动画，避免首次显隐时的掉帧 */
+      transition:
+        transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+        background-color 0.24s ease,
+        border-color 0.24s ease;
+      backdrop-filter: saturate(160%) blur(14px);
+      -webkit-backdrop-filter: saturate(160%) blur(14px);
+      touch-action: pan-y;
+    }
+
+    header :is(nav, .nav-content, a, button) {
+      touch-action: pan-y;
+    }
+
     .brand {
       display: none;
     }

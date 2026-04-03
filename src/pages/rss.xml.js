@@ -2,6 +2,7 @@ import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
 import { marked } from 'marked';
 import sanitizeHtml from 'sanitize-html';
+import { filterPostsBySection } from '@utils/posts';
 
 // 配置 marked 选项
 marked.setOptions({
@@ -49,9 +50,10 @@ export async function GET(context) {
     // 只包含已发布的文章
     return data.published !== false;
   });
+  const blogPosts = filterPostsBySection(blog, 'blog');
   
   // 过滤出中文文章(lang === 'zh')
-  const zhPosts = blog
+  const zhPosts = blogPosts
     .filter(post => post.data.lang === 'zh')
     // 按发布日期降序排序(最新的在前)
     .sort((a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate));

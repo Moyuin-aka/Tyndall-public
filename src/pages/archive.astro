@@ -2,6 +2,7 @@
 import { useTranslations } from "@utils/ui";
 import { getCollection } from "astro:content";
 import Layout from "@layouts/Layout.astro";
+import { filterPostsBySection } from "@utils/posts";
 
 const t = useTranslations(Astro.currentLocale);
 const locale = Astro.currentLocale;
@@ -11,6 +12,7 @@ const allPosts = await getCollection("blog", ({ data }) => {
   // 只包含已发布的文章
   return data.published !== false;
 });
+const blogPosts = filterPostsBySection(allPosts, "blog");
 
 // 按 translationKey 分组，获取每篇文章的所有语言版本
 function stripLangPrefix(slug: string) {
@@ -18,7 +20,7 @@ function stripLangPrefix(slug: string) {
 }
 const byKey = new Map<string, any[]>();
 
-for (const p of allPosts) {
+for (const p of blogPosts) {
   const key = p.data.translationKey ?? stripLangPrefix(p.slug);
   if (!byKey.has(key)) {
     byKey.set(key, []);

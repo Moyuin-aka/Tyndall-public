@@ -1,11 +1,43 @@
 import type { CollectionEntry } from 'astro:content';
 
 const DEFAULT_LOCALE = 'zh';
+export const NOTES_CATEGORY = 'notes';
+export type ContentSection = 'blog' | 'notes';
 
-const stripLangPrefix = (slug: string) => slug.replace(/^en\//, '');
+export const stripLangPrefix = (slug: string) => slug.replace(/^en\//, '');
 
 export const getTranslationKey = (post: CollectionEntry<'blog'>) =>
   post.data.translationKey ?? stripLangPrefix(post.slug);
+
+export const getPostCategory = (post: CollectionEntry<'blog'>) =>
+  post.data.category ?? 'uncategorized';
+
+export const isNotesPost = (post: CollectionEntry<'blog'>) =>
+  getPostCategory(post) === NOTES_CATEGORY;
+
+export const isBlogPost = (post: CollectionEntry<'blog'>) =>
+  !isNotesPost(post);
+
+export const filterPostsBySection = (
+  posts: CollectionEntry<'blog'>[],
+  section: ContentSection
+) => posts.filter((post) => (section === 'notes' ? isNotesPost(post) : isBlogPost(post)));
+
+export const getSectionBasePath = (
+  section: ContentSection,
+  locale: string | undefined
+) => (locale === 'en' ? `/en/${section}` : `/${section}`);
+
+export const getSectionPostUrl = (
+  key: string,
+  section: ContentSection,
+  locale: string | undefined
+) => `${getSectionBasePath(section, locale)}/${key}`;
+
+export const getNoteTopicLabel = (post: CollectionEntry<'blog'>) => {
+  const segments = stripLangPrefix(post.slug).split('/').slice(0, -1);
+  return segments.length > 0 ? segments.join(' / ') : null;
+};
 
 type Bucket = {
   first?: CollectionEntry<'blog'>;
@@ -58,6 +90,6 @@ export const localizePosts = (
     .filter(Boolean) as { key: string; post: CollectionEntry<'blog'>; isFallback: boolean }[];
 };
 
-export const sortByPubDateDesc = (
-  items: { post: CollectionEntry<'blog'> }[]
+export const sortByPubDateDesc = <T extends { post: CollectionEntry<'blog'> }>(
+  items: T[]
 ) => items.sort((a, b) => b.post.data.pubDate.valueOf() - a.post.data.pubDate.valueOf());

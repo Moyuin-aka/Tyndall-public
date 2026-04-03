@@ -1,15 +1,15 @@
 ---
 title: Tyndall 配置指南
-description: Tyndall v1.1.0 配置指南，帮助你快速搭建属于自己的博客
+description: Tyndall v1.2.0 配置指南，帮助你快速搭建属于自己的博客
 pubDate: 2025-01-15
-updatedDate: 2026-02-06
+updatedDate: 2026-04-03
 translationKey: config
 lang: zh
 ---
 
 # Tyndall 配置指南
 
-> **版本：v1.1.0**  
+> **版本：v1.2.0**  
 > 本指南将帮助你从零开始配置 Tyndall 主题，打造属于自己的博客。
 
 ---
@@ -55,8 +55,15 @@ pnpm build
 export default defineConfig({
   site: 'https://yourdomain.com',  // ⚠️ 替换为你的域名
   // ...
+  markdown: {
+    // 禁用 smartypants，防止中英混排时直引号被转换为弯引号
+    smartypants: false,
+    // ...
+  },
 });
 ```
+
+> **关于 `smartypants: false`：** Astro 默认会将直引号（`"`/`'`）转换为排版引号（`""`/`''`），在中英混排时会破坏内容。此选项已在主题中默认关闭，无需额外修改，但保持原样即可。
 
 ### 2. 个人信息配置
 
@@ -387,6 +394,30 @@ published: true                 # 可选，默认 true
 
 **英文版本：** 在 `src/content/blog/en/` 创建同名文件，使用相同的 `translationKey`。
 
+### Notes 笔记
+
+Notes 是与博客文章共用 `blog` 集合的独立内容区，通过 `category: 'notes'` 字段区分，有独立的列表页（`/notes`）和详情页（`/notes/[slug]`），支持分页和多语言。
+
+在 `src/content/blog/` 创建 `.md` 文件，`category` 设为 `notes`：
+
+```markdown
+---
+title: 笔记标题
+description: 简短描述（可选）
+pubDate: 2025-06-01
+lang: zh
+translationKey: my-note
+category: notes          # ⚠️ 必须为 'notes' 才会出现在 Notes 页面
+published: true
+---
+
+笔记正文...
+```
+
+**子目录分组：** 将笔记文件放入子目录（如 `src/content/blog/reading/my-note.md`），笔记列表页会自动将目录路径显示为话题标签（如 `reading`）。
+
+**英文版本：** 在 `src/content/blog/en/` 下同样使用 `category: 'notes'`，保持相同的 `translationKey`。
+
 ### 支持的 Markdown 功能
 
 - **数学公式**（KaTeX）：`$E=mc^2$` 或 `$$...$$`
@@ -394,6 +425,32 @@ published: true                 # 可选，默认 true
 - **自动标题锚点**
 - **图片懒加载优化**
 - **软换行支持**（remark-breaks）
+
+---
+
+## ⚡ Service Worker
+
+主题内置了 `public/sw.js`，在生产环境中自动注册，为静态资源、字体和图片提供缓存加速：
+
+| 缓存策略 | 适用资源 | 有效期 |
+|----------|----------|--------|
+| Cache-First | 字体文件 | 30 天 |
+| Cache-First | CDN 脚本 | 7 天 |
+| Cache-First | 图片 | 7 天 |
+| Network-First | 页面 HTML | 1 天 |
+
+**开发模式下** Service Worker 会被自动注销，避免 Vite HMR 缓存冲突。
+
+### 禁用 Service Worker
+
+若不需要离线缓存，删除 `public/sw.js`，并在 `src/layouts/Layout.astro` 中移除以下脚本块：
+
+```javascript
+// Service Worker lifecycle
+if (!isDev && "serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js");
+}
+```
 
 ---
 
@@ -438,7 +495,21 @@ export default defineConfig({
 |------|------|
 | `src/components/GlobalStyles.astro` | 全局 CSS 变量、颜色 |
 | `src/styles/markdown.css` | 文章内容样式 |
-| `src/styles/fonts.css` | 字体配置 |
+| `src/styles/fonts.css` | 字体配置（font-family 变量） |
+| `public/fonts/google-fonts.css` | 本地 Google Fonts 字体声明 |
+| `public/fonts/google/` | 本地化 woff2 字体文件目录 |
+
+### 本地字体方案
+
+主题使用**本地镜像 Google Fonts** 替代 CDN 请求，字体文件存放在 `public/fonts/google/` 目录，由 `public/fonts/google-fonts.css` 统一声明。`Layout.astro` 通过异步非阻塞方式加载该样式表：
+
+```html
+<link rel="stylesheet" href="/fonts/google-fonts.css"
+      media="print" onload="this.media='all'; this.onload=null;" />
+<noscript><link rel="stylesheet" href="/fonts/google-fonts.css" /></noscript>
+```
+
+如需更换字体，替换 `public/fonts/` 下的 woff2 文件和 CSS 声明，并同步修改 `src/styles/fonts.css` 中的 `font-family` 变量即可。
 
 ### 修改配色
 
