@@ -23,7 +23,7 @@ const sortedPosts = sortByPubDateDesc(
 
 const pageSize = 10;
 const totalPages = Math.ceil(sortedPosts.length / pageSize);
-const posts = sortedPosts.slice(0, pageSize);
+const posts = sortedPosts;
 const currentPage = 1;
 const totalPosts = sortedPosts.length;
 
@@ -53,12 +53,26 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
       <p class="notes-intro">{t('notes_intro')}</p>
     </header>
 
+    <div class="search-container">
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <input type="text" class="search-input" placeholder="搜索笔记..." id="notes-search" />
+      <span class="search-results-count" id="notes-search-count"></span>
+    </div>
+
     <section class="blog-posts-section" id="notes-posts-section">
-      {posts.map(({ key, post, isFallback }) => {
+      {posts.map(({ key, post, isFallback }, index) => {
         const topicLabel = getNoteTopicLabel(post);
+        const beyondPage = index >= pageSize;
 
         return (
-          <article class="blog-post-item">
+          <article
+            class:list={['blog-post-item', { 'beyond-page-one': beyondPage }]}
+            data-title={post.data.title.toLowerCase()}
+            data-description={(post.data.description || '').toLowerCase()}
+            data-body={(post.body || '').toLowerCase()}
+          >
             <a href={getSectionPostUrl(key, 'notes', locale)} class="blog-post-title-link">
               <h2 class="blog-post-title">{post.data.title}</h2>
             </a>
@@ -88,7 +102,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
     )}
 
     {totalPages > 1 && (
-      <nav class="pagination" aria-label="分页导航">
+      <nav class="pagination" id="notes-pagination" aria-label="分页导航">
         <div class="pagination-info">
           第 {currentPage} / {totalPages} 页 · 共 {totalPosts} 篇笔记
         </div>
@@ -124,6 +138,48 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
   </main>
 </Layout>
 
+<script>
+  function initNotesSearch() {
+    const searchInput = document.getElementById('notes-search') as HTMLInputElement;
+    const searchCount = document.getElementById('notes-search-count');
+    const pagination = document.getElementById('notes-pagination');
+    const postItems = document.querySelectorAll<HTMLElement>('#notes-posts-section .blog-post-item');
+
+    if (!searchInput) return;
+
+    function performSearch() {
+      const query = searchInput.value.toLowerCase().trim();
+
+      if (query === '') {
+        postItems.forEach((item) => {
+          item.style.display = item.classList.contains('beyond-page-one') ? 'none' : '';
+        });
+        if (pagination) pagination.style.display = '';
+        if (searchCount) searchCount.textContent = '';
+        return;
+      }
+
+      if (pagination) pagination.style.display = 'none';
+
+      let count = 0;
+      postItems.forEach((item) => {
+        const title = item.dataset.title || '';
+        const desc = item.dataset.description || '';
+        const body = item.dataset.body || '';
+        const matches = title.includes(query) || desc.includes(query) || body.includes(query);
+        item.style.display = matches ? 'block' : 'none';
+        if (matches) count++;
+      });
+
+      if (searchCount) searchCount.textContent = count === 0 ? '无结果' : `${count} 篇`;
+    }
+
+    searchInput.addEventListener('input', performSearch);
+  }
+
+  document.addEventListener('astro:page-load', initNotesSearch);
+</script>
+
 <style>
   .blog-list-container {
     font-family: var(--font-sans);
@@ -139,6 +195,60 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
 
   .notes-hero {
     margin-bottom: 1.7rem;
+  }
+
+  .beyond-page-one {
+    display: none;
+  }
+
+  .search-container {
+    position: relative;
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    background: rgba(162, 89, 236, 0.05);
+    border: 1px solid rgba(162, 89, 236, 0.15);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+
+  .search-container:focus-within {
+    background: rgba(162, 89, 236, 0.08);
+    border-color: rgba(162, 89, 236, 0.3);
+    box-shadow: 0 0 0 3px rgba(162, 89, 236, 0.1);
+  }
+
+  .search-icon {
+    color: var(--purple);
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    color: var(--text);
+    outline: none;
+  }
+
+  .search-input::placeholder {
+    color: var(--grey);
+    opacity: 0.5;
+  }
+
+  .search-results-count {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--purple);
+    opacity: 0.7;
+    flex-shrink: 0;
+    min-width: 3rem;
+    text-align: right;
   }
 
   .blog-hero-subtitle {

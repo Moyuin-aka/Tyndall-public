@@ -62,7 +62,28 @@ const recentlyReadingLabel = locale === 'en' ? 'Currently Reading' : '最近在�
     }
   }
 
-  document.addEventListener('astro:page-load', fetchRecentlyRead);
+  function initRecentlyRead() {
+    const container = document.querySelector('.recently-read-container');
+    if (!container) return;
+
+    if (!('IntersectionObserver' in window)) {
+      fetchRecentlyRead();
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      (entries, observer) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          observer.disconnect();
+          fetchRecentlyRead();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    io.observe(container);
+  }
+
+  document.addEventListener('astro:page-load', initRecentlyRead);
 </script>
 
 <style is:global>

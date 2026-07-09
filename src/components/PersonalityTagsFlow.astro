@@ -1,5 +1,6 @@
 ---
 import RecentlyRead from "./RecentlyRead.astro";
+import { techStackItems } from "@data/tech-stack";
 
 const locale = Astro.currentLocale || "zh";
 const labels = {
@@ -74,103 +75,6 @@ const labels = {
 };
 
 const t = labels[locale as keyof typeof labels] || labels.zh;
-
-const stackIcons = [
-  { name: "C++", slug: "cplusplus", href: "https://isocpp.org/" },
-  { name: "Python", slug: "python", href: "https://www.python.org/" },
-  { name: "PHP", slug: "php", href: "https://www.php.net/" },
-  { name: "Rust", slug: "rust", href: "https://www.rust-lang.org/" },
-  {
-    name: "HTML5",
-    slug: "html5",
-    href: "https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5",
-  },
-  {
-    name: "CSS3",
-    slug: "css",
-    href: "https://developer.mozilla.org/en-US/docs/Web/CSS",
-  },
-  {
-    name: "JavaScript",
-    slug: "javascript",
-    href: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
-  },
-  {
-    name: "TypeScript",
-    slug: "typescript",
-    href: "https://developer.mozilla.org/en-US/docs/Glossary/TypeScript",
-  },
-  { name: "Astro", slug: "astro", href: "https://astro.build/" },
-  { name: "Swift", slug: "swift", href: "https://swift.org/" },
-  { name: "Docker", slug: "docker", href: "https://www.docker.com/" },
-  { name: "Caddy", slug: "caddy", href: "https://caddyserver.com/" },
-  { name: "Supabase", slug: "supabase", href: "https://supabase.com/" },
-  {
-    name: "GitHub Actions",
-    slug: "githubactions",
-    href: "https://github.com/features/actions",
-  },
-  { name: "Vercel", slug: "vercel", href: "https://vercel.com/" },
-  {
-    name: "Cloudflare Tunnel",
-    slug: "cloudflare",
-    href: "https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/",
-  },
-  { name: "MySQL", slug: "mysql", href: "https://www.mysql.com/" },
-  { name: "SQLite", slug: "sqlite", href: "https://www.sqlite.org/" },
-  { name: "MongoDB", slug: "mongodb", href: "https://www.mongodb.com/" },
-  {
-    name: "PostgreSQL",
-    slug: "postgresql",
-    href: "https://www.postgresql.org/",
-  },
-  { name: "Redis", slug: "redis", href: "https://redis.io/" },
-  {
-    name: "Xray",
-    src: "https://api.iconify.design/mdi/star-four-points.svg?color=%23000",
-    href: "https://github.com/XTLS/Xray-core",
-  },
-  {
-    name: "Sing-box",
-    src: "https://upload.wikimedia.org/wikipedia/commons/1/11/Sing-box.svg",
-    href: "https://sing-box.sagernet.org/",
-  },
-  {
-    name: "Hysteria 2",
-    src: "https://upload.wikimedia.org/wikipedia/commons/b/b4/Hysteria_2_Logo.svg",
-    href: "https://v2.hysteria.network/zh/",
-  },
-  {
-    name: "IPv6",
-    src: "https://api.iconify.design/mdi/ip-network-outline.svg?color=%23000",
-    href: "https://ipv6.com/",
-  },
-  {
-    name: "WireGuard",
-    slug: "wireguard",
-    href: "https://www.wireguard.com/",
-  },
-  {
-    name: "Tailscale",
-    slug: "tailscale",
-    href: "https://tailscale.com/",
-  },
-  {
-    name: "OpenWrt",
-    slug: "openwrt",
-    href: "https://openwrt.org/",
-  },
-  {
-    name: "Padavan",
-    src: "https://api.iconify.design/ic/outline-router.svg?color=%23000",
-    href: "https://bitbucket.org/padavan/rt-n56u/",
-  },
-  {
-    name: "Wireshark",
-    slug: "wireshark",
-    href: "https://wireshark.com/",
-  },
-];
 
 const cardLinks = {
   zh: {
@@ -545,15 +449,15 @@ const site = sitePages[locale as keyof typeof sitePages] || sitePages.zh;
           <p class="detail">{t.currentDesc}</p>
         </div>
         <ul class="stack-cloud" role="list" aria-label={t.currentText}>
-          {stackIcons.map((item) => (
+          {techStackItems.map((item) => (
             <li>
               <span class="stack-link" aria-label={item.name} title={item.name}>
                 <img
-                  src={item.src ?? `https://cdn.simpleicons.org/${item.slug}/000?viewbox=auto`}
+                  src={item.src}
                   alt=""
                   loading="lazy"
                   decoding="async"
-                  class:list={["stack-icon", item.src && "stack-icon--external"]}
+                  class:list={["stack-icon", item.external && "stack-icon--external"]}
                 />
               </span>
             </li>

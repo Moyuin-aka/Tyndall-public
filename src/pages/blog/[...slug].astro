@@ -7,6 +7,8 @@ import SupabaseComments from "@components/SupabaseComments.astro";
 import TableOfContents from "@components/TableOfContents.astro";
 import {
   filterPostsBySection,
+  getCategoryDisplayName,
+  getOgImagePath,
   getSectionBasePath,
   getSectionPostUrl,
   getTranslationKey,
@@ -51,26 +53,11 @@ function getPostUrl(p: typeof post | null) {
   return getSectionPostUrl(key, "blog", locale);
 }
 
-const categoryNames: Record<string, { zh: string; en: string }> = {
-  ctf: { zh: "CTF", en: "CTF" },
-  notes: { zh: "笔记", en: "Notes" },
-  record: { zh: "记录", en: "Records" },
-  thoughts: { zh: "随笔", en: "Thoughts" },
-  weekly: { zh: "周记", en: "Weekly" },
-  tech: { zh: "技术", en: "Tech" },
-  life: { zh: "生活", en: "Life" },
-  uncategorized: { zh: "未分类", en: "Uncategorized" },
-};
-
-function getCategoryDisplayName(category: string) {
-  return categoryNames[category]?.[locale === "en" ? "en" : "zh"] || category;
-}
-
 import { ICONS } from "@utils/icons";
 
 const { Content, headings } = await post.render();
 const category = post.data.category || "uncategorized";
-const categoryDisplay = getCategoryDisplayName(category);
+const categoryDisplay = getCategoryDisplayName(category, locale);
 const categoryUrl = locale === "en" ? `/en/category/${category}` : `/category/${category}`;
 const blogIndexUrl = getSectionBasePath("blog", locale);
 const backToBlogLabel = locale === "en" ? "Back to Blog" : "返回博客";
@@ -80,6 +67,7 @@ const postDateLabel = post.data.pubDate.toLocaleDateString(locale, {
   month: "long",
   day: "numeric",
 });
+const ogImageUrl = new URL(getOgImagePath(translationKey, locale), Astro.site).toString();
 
 // 检测内容中是否包含数学公式或 Mermaid 图表
 const rawContent = post.body;
@@ -87,7 +75,13 @@ const hasLatex = /\$.*?\$|\$\$[\s\S]*?\$\$/.test(rawContent);
 const hasMermaid = /```mermaid/.test(rawContent);
 ---
 
-<Layout title={post.data.title} translationKey={translationKey}>
+<Layout
+  title={post.data.title}
+  desc={post.data.description}
+  translationKey={translationKey}
+  ogImage={ogImageUrl}
+  ogType="article"
+>
   <!-- 按需加载 KaTeX CSS -->
   {
     hasLatex && (

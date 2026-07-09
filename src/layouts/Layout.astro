@@ -5,13 +5,17 @@ import "@styles/fonts.css";
 
 interface Props {
   title: string;
+  desc?: string;
   translationKey?: string;
+  ogImage?: string;
+  ogType?: "website" | "article";
 }
 
 import Header from "@components/Header.astro";
 import Footer from "@components/Footer.astro";
 
-const { title, translationKey } = Astro.props;
+const { title, desc, translationKey, ogImage, ogType = "website" } = Astro.props;
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
 const isDev = import.meta.env.DEV;
 
 // 检测是否为 Safari（服务端无法判断，需要客户端处理）
@@ -23,7 +27,23 @@ const isDev = import.meta.env.DEV;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta name="theme-color" content="#070615" />
     <title>{title}</title>
+    {desc && <meta name="description" content={desc} />}
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content="Moyuin's Blog" />
+    {desc && <meta property="og:description" content={desc} />}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    {ogImage && <meta property="og:image:width" content="1200" />}
+    {ogImage && <meta property="og:image:height" content="630" />}
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    {desc && <meta name="twitter:description" content={desc} />}
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
 
     <!-- Critical: Inline minimal theme script to prevent FOUC -->
     <script is:inline>
@@ -54,6 +74,11 @@ const isDev = import.meta.env.DEV;
           root.classList.toggle("light-forced", themeState.isUserSelectedLight);
           root.setAttribute("data-theme", isDark ? "dark" : "light");
           root.style.colorScheme = isDark ? "dark" : "light";
+
+          var themeMeta = document.querySelector('meta[name="theme-color"]');
+          if (themeMeta) {
+            themeMeta.setAttribute("content", isDark ? "#070615" : "#ffffff");
+          }
         }
 
         applyThemeState(document.documentElement, resolveThemeState());
@@ -231,6 +256,12 @@ const isDev = import.meta.env.DEV;
         root.classList.toggle("light-forced", themeState.isUserSelectedLight);
         root.setAttribute("data-theme", isDark ? "dark" : "light");
         root.style.colorScheme = isDark ? "dark" : "light";
+
+        var ownerDoc = root.ownerDocument || document;
+        var themeMeta = ownerDoc.querySelector('meta[name="theme-color"]');
+        if (themeMeta) {
+          themeMeta.setAttribute("content", isDark ? "#070615" : "#ffffff");
+        }
       }
 
       function readThemeStateFromRoot(root) {

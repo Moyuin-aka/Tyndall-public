@@ -34,6 +34,25 @@ export const getSectionPostUrl = (
   locale: string | undefined
 ) => `${getSectionBasePath(section, locale)}/${key}`;
 
+// Mirrors getSectionPostUrl's locale-prefix convention so an OG image path can always
+// be derived from a post's own URL: swap the section for "og" and append ".png".
+export const getOgImagePath = (key: string, locale: string | undefined) =>
+  `${locale === 'en' ? '/en' : ''}/og/${key}.png`;
+
+export const CATEGORY_DISPLAY_NAMES: Record<string, { zh: string; en: string }> = {
+  ctf: { zh: 'CTF', en: 'CTF' },
+  notes: { zh: '笔记', en: 'Notes' },
+  record: { zh: '记录', en: 'Records' },
+  thoughts: { zh: '随笔', en: 'Thoughts' },
+  weekly: { zh: '周记', en: 'Weekly' },
+  tech: { zh: '技术', en: 'Tech' },
+  life: { zh: '生活', en: 'Life' },
+  uncategorized: { zh: '未分类', en: 'Uncategorized' },
+};
+
+export const getCategoryDisplayName = (category: string, locale: string | undefined) =>
+  CATEGORY_DISPLAY_NAMES[category]?.[locale === 'en' ? 'en' : 'zh'] ?? category;
+
 export const getNoteTopicLabel = (post: CollectionEntry<'blog'>) => {
   const segments = stripLangPrefix(post.slug).split('/').slice(0, -1);
   return segments.length > 0 ? segments.join(' / ') : null;

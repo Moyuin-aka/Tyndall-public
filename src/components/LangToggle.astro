@@ -183,31 +183,37 @@ const canonicalPath = translationKey ? `/${contentSection}/${translationKey}` : 
 
 <script>
   // 下拉开合逻辑 ----------------------------------------------
-  function setupLangDropdown(root) {
-    const dropdown = root.querySelector(".lang-dropdown");
+  let _controller: AbortController | null = null;
+
+  function setupLangDropdown(root: ParentNode) {
+    const dropdown = root.querySelector<HTMLElement>(".lang-dropdown");
     if (!dropdown) return;
 
     // 只初始化一次事件监听器
     if (!dropdown.dataset.initialized) {
       dropdown.dataset.initialized = "true";
-      const toggle = dropdown.querySelector(".dropdown-toggle");
+      const toggle = dropdown.querySelector<HTMLElement>(".dropdown-toggle");
+      if (!toggle) return;
 
-      const open = () => dropdown.classList.add("is-open");
+      _controller?.abort();
+      _controller = new AbortController();
+      const { signal } = _controller;
+
       const close = () => dropdown.classList.remove("is-open");
 
-      toggle.addEventListener("click", (e: { stopPropagation: () => void }) => {
+      toggle.addEventListener("click", (e: MouseEvent) => {
         e.stopPropagation();
         dropdown.classList.toggle("is-open");
       });
-      document.addEventListener("click", (e) => {
-        if (!dropdown.contains(e.target)) close();
-      });
-      document.addEventListener("keydown", (e) => {
+      document.addEventListener("click", (e: MouseEvent) => {
+        if (!dropdown.contains(e.target as Node | null)) close();
+      }, { signal });
+      document.addEventListener("keydown", (e: KeyboardEvent) => {
         if (e.key === "Escape" && dropdown.classList.contains("is-open")) {
           close();
           toggle.focus();
         }
-      });
+      }, { signal });
     }
   }
 

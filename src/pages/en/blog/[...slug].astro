@@ -7,6 +7,7 @@ import SupabaseComments from '@components/SupabaseComments.astro';
 import TableOfContents from '@components/TableOfContents.astro';
 import {
   filterPostsBySection,
+  getOgImagePath,
   getSectionBasePath,
   getSectionPostUrl,
   getTranslationKey,
@@ -84,13 +85,20 @@ const postDateLabel = post.data.pubDate.toLocaleDateString(locale, {
   month: 'long',
   day: 'numeric',
 });
+const ogImageUrl = new URL(getOgImagePath(translationKey, locale), Astro.site).toString();
 
 // 检测内容中是否包含数学公式或 Mermaid 图表
 const rawContent = post.body;
 const hasLatex = /\$.*?\$|\$\$[\s\S]*?\$\$/.test(rawContent);
 const hasMermaid = /```mermaid/.test(rawContent);
 ---
-<Layout title={post.data.title} translationKey={translationKey}>
+<Layout
+  title={post.data.title}
+  desc={post.data.description}
+  translationKey={translationKey}
+  ogImage={ogImageUrl}
+  ogType="article"
+>
   <!-- 按需加载 KaTeX CSS -->
   {hasLatex && (
     <link

@@ -75,6 +75,11 @@ const { title } = Astro.props;
             html.classList.toggle("light-forced", !isDark && isUserSelectedLight);
             html.setAttribute("data-theme", isDark ? "dark" : "light");
             html.style.colorScheme = isDark ? "dark" : "light";
+
+            const themeMeta = document.querySelector('meta[name="theme-color"]');
+            if (themeMeta) {
+                themeMeta.setAttribute("content", isDark ? "#070615" : "#ffffff");
+            }
         }
 
         // 先移除旧事件监听器，再添加新的（防止重复绑定）

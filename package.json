@@ -1,7 +1,7 @@
 {
   "name": "tyndall",
   "type": "module",
-  "version": "1.1.1",
+  "version": "1.3.0",
   "description": "A modern Astro blog theme focused on details and visual experience",
   "author": "Moyuin",
   "license": "GPL-3.0-or-later",
@@ -27,6 +27,7 @@
     "@astrojs/rss": "^4.0.13",
     "@astrojs/sitemap": "^3.6.0",
     "@astrojs/vercel": "^8.2.11",
+    "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.93.3",
     "@vercel/speed-insights": "^1.2.0",
     "marked": "^16.4.1",
@@ -34,6 +35,7 @@
     "remark-breaks": "^4.0.0",
     "remark-math": "^6.0.0",
     "sanitize-html": "^2.17.0",
+    "satori": "^0.26.0",
     "tsparticles-engine": "^2.12.0",
     "tsparticles-slim": "^2.12.0",
     "typescript": "^5.9.3"

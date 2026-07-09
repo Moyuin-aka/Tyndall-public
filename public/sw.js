@@ -1,37 +1,26 @@
-// Service Worker for caching static assets and improving performance
-// This implements a Cache-First strategy for static assets and
-// Network-First strategy for API/dynamic content
+// Service Worker for caching static, long-lived assets.
+//
+// Scope is intentionally narrow: fonts, images, and pinned CDN libs (KaTeX,
+// Mermaid) get a Cache-First strategy since they're immutable or slow-
+// changing. Documents/scripts/styles are left to the network + Vercel's CDN,
+// which already serves hashed `_astro/*` assets as immutable and revalidates
+// HTML on every request — a Network-First SW layer on top only added latency
+// and a second, harder-to-invalidate place for stale content to hide.
 
-const CACHE_VERSION = 'tyndall-v2';
-const STATIC_CACHE = `${CACHE_VERSION}-static`;
+const CACHE_VERSION = 'tyndall-v3';
 const FONT_CACHE = `${CACHE_VERSION}-fonts`;
 const CDN_CACHE = `${CACHE_VERSION}-cdn`;
 const IMAGE_CACHE = `${CACHE_VERSION}-images`;
 
-// Static assets to cache on install
-const STATIC_ASSETS = [
-    '/',
-    '/en/',
-    '/manifest.json',
-];
-
 // Cache duration (in seconds)
 const CACHE_DURATION = {
     fonts: 30 * 24 * 60 * 60, // 30 days
-    cdn: 7 * 24 * 60 * 60,     // 7 days  
+    cdn: 7 * 24 * 60 * 60,     // 7 days
     images: 7 * 24 * 60 * 60,  // 7 days
-    static: 24 * 60 * 60,      // 1 day
 };
 
-// Install event - cache static assets
-self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(STATIC_CACHE)
-            .then((cache) => {
-                return cache.addAll(STATIC_ASSETS);
-            })
-            .then(() => self.skipWaiting()) // Activate immediately
-    );
+self.addEventListener('install', () => {
+    self.skipWaiting(); // Activate immediately
 });
 
 // Activate event - clean up old caches
@@ -76,13 +65,10 @@ self.addEventListener('fetch', (event) => {
     } else if (request.destination === 'image') {
         // Images - Cache First
         event.respondWith(cacheFirst(request, IMAGE_CACHE, CACHE_DURATION.images));
-    } else if (request.destination === 'document' || request.destination === 'script' || request.destination === 'style') {
-        // HTML/CSS/JS - Network First with cache fallback
-        event.respondWith(networkFirst(request, STATIC_CACHE));
-    } else {
-        // Everything else - Network First
-        event.respondWith(networkFirst(request, STATIC_CACHE));
     }
+    // Documents/scripts/styles/API calls: don't intercept. Vercel's CDN
+    // already serves hashed _astro/* assets as immutable and revalidates
+    // HTML per-request, so a SW cache layer here only risks staleness.
 });
 
 /**
@@ -130,35 +116,6 @@ async function cacheFirst(request, cacheName, maxAge) {
         if (cached) {
             return cached;
         }
-        throw error;
-    }
-}
-
-/**
- * Network First strategy: Try network first, fall back to cache
- */
-async function networkFirst(request, cacheName) {
-    try {
-        // Try network first
-        const response = await fetch(request);
-
-        // Cache successful responses
-        if (response.ok && request.method === 'GET') {
-            const cache = await caches.open(cacheName);
-            cache.put(request, response.clone());
-        }
-
-        return response;
-    } catch (error) {
-        // Fall back to cache
-        const cache = await caches.open(cacheName);
-        const cached = await cache.match(request);
-
-        if (cached) {
-            return cached;
-        }
-
-        // If no cache, return offline page or error
         throw error;
     }
 }
