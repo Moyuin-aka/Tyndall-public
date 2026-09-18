@@ -1,6 +1,6 @@
 # Tyndall
 
-September 2026 sync preserves Tyndall's page designs and features, replacing only personal data and deployment settings. See [public sync and configuration notes](./PUBLIC-SYNC.md) and `.env.example`. Use Node.js 22+; runtime APIs use the Vercel adapter. No private backend is configured by default.
+September 2026 sync preserves Tyndall's page designs and features, replacing only personal data and deployment settings. See the [configuration guide](../src/content/blog/en/CONFIGURATION.md) and `.env.example`. Use Node.js 22+; runtime APIs use the Vercel adapter. No private backend is configured by default.
 
 > **Floating or Hovering.**  
 

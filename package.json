@@ -14,12 +14,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "routes:build": "node scripts/build-travel-routes.mjs",
-    "sync:plan": "node scripts/sync-public.mjs",
-    "sync:apply": "node scripts/sync-public.mjs --apply",
-    "sync:check": "node scripts/sync-public.mjs --check",
-    "check:public": "node scripts/check-public.mjs",
-    "test": "node --test scripts/public-safety.test.mjs scripts/memos-auth.test.mjs workers/telegram-memos-bot/worker.test.mjs && node --experimental-strip-types scripts/check-presence.mjs"
+    "routes:build": "node scripts/build-travel-routes.mjs"
   },
   "devDependencies": {
     "@mapbox/polyline": "^1.2.1",
