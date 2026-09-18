@@ -1,0 +1,152 @@
+---
+import bookmarksData from '@data/bookmarks.json';
+
+const { t } = Astro.props;
+
+interface Bookmark {
+  id: string;
+  title: string;
+  url: string;
+  favicon: string | null;
+  tags: string[];
+  note: string | null;
+  createdAt: string;
+}
+
+const bookmarks: Bookmark[] = bookmarksData.bookmarks || [];
+
+function hostname(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
+---
+
+<div class="bookmark-wall">
+  <div class="wall-header">
+    <h3 class="wall-title">{t('lab_bookmarks_title')}</h3>
+  </div>
+  {bookmarks.length === 0 && <p class="wall-empty">{t('lab_bookmarks_empty')}</p>}
+  <div class="bookmark-grid">
+    {bookmarks.map((b) => (
+      <a class="bookmark-card" href={b.url} target="_blank" rel="noopener noreferrer">
+        <div class="bookmark-favicon">
+          {b.favicon
+            ? <img src={b.favicon} alt="" loading="lazy" />
+            : <span class="favicon-fallback">{hostname(b.url).charAt(0).toUpperCase()}</span>}
+        </div>
+        <div class="bookmark-body">
+          <p class="bookmark-title">{b.title}</p>
+          <p class="bookmark-host">{hostname(b.url)}</p>
+        </div>
+      </a>
+    ))}
+  </div>
+</div>
+
+<style>
+  .bookmark-wall {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 20px;
+    padding: 1.5rem 1.75rem;
+    backdrop-filter: blur(10px);
+  }
+
+  :global(.dark) .bookmark-wall {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .wall-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .wall-title {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .wall-empty {
+    color: var(--grey);
+    font-size: 0.9rem;
+  }
+
+  .bookmark-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .bookmark-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.02);
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.25s ease;
+    min-width: 0;
+  }
+
+  :global(.dark) .bookmark-card {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .bookmark-card:hover {
+    background: rgba(162, 89, 236, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .bookmark-favicon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(162, 89, 236, 0.12);
+  }
+
+  .bookmark-favicon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .favicon-fallback {
+    font-family: var(--font-serif);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--purple);
+  }
+
+  .bookmark-body {
+    min-width: 0;
+  }
+
+  .bookmark-title {
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin: 0 0 0.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bookmark-host {
+    font-size: 0.75rem;
+    color: var(--grey);
+    margin: 0;
+    font-family: var(--font-mono);
+  }
+</style>

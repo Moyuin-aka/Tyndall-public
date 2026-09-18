@@ -1,93 +1,38 @@
 ---
 import RecentlyRead from "./RecentlyRead.astro";
+import NowStatus from "./NowStatus.astro";
+import "@styles/personality-tags-flow.css";
+import { equipmentItems } from "@data/equipment";
 import { techStackItems } from "@data/tech-stack";
 
+import { profileLabels, hobbyContent } from "@data/profile";
+
 const locale = Astro.currentLocale || "zh";
-const labels = {
-  zh: {
-    title: "关于我的特质",
-    lead: "",
-    mbti: "MBTI",
-    mbtiDesc: "理性思考者，独立探索",
-    mbtiDescLines: ["理性思考者", "独立探索"],
-    motto: "底色",
-    mottoText: "缥缈，游荡，\n没有来路与归处。",
-    mottoFoot: "心之安处是吾乡。",
-    diaryLines: [
-      "今日虽然严寒，但看见窗外银杏的新芽长出来了，不由得十分欢喜。我看雪与冰渣在风雨的起伏中吹动，陨落于大地，再也回不到不属于它们的天空与枝头。",
-      "可它们在新年的太阳下慢慢化为水，回到了树木的茎脉中，重新作用，或蒸腾为水，或光合生氧，滋润回银杏树的初芽中。",
-      "也许我也会这样吧。不敢说自己是滋润万物的水，补益生态的氧气，只是觉得自己飘零无归处，但世界总会有一天需要我的。",
-      "当然，做普照万世的太阳也挺好。这样，心之安处是吾乡，成为自己内心的太阳，我又靠着自己的一双胳膊向前走去了。",
-    ],
-    reading: "最近在读",
-    readingDesc: "最近翻来覆去的一本。",
-    interests: "职业兴趣",
-    interestsText: "网络工程",
-    interestsDesc: "实现网络功能与协议",
-    major: "所学专业",
-    majorText: "信息安全",
-    majorDesc: "网络安全与密码学",
-    social: "社交",
-    socialText: "HFA 倾向",
-    socialDesc: "社交能量有限，但仍然认真相待。",
-    socialTraits: ["慢热", "真诚", "低社交电量"],
-    current: "最近学过",
-    currentText: "技术栈",
-    currentDesc: "平时的折腾。",
-    currentChart: "GitHub 活动",
-    viewerOpen: "打开原页",
-    viewerClose: "收起",
-  },
-  en: {
-    title: "About My Traits",
-    lead: "",
-    mbti: "MBTI",
-    mbtiDesc: "Rational thinker, independent explorer",
-    mbtiDescLines: ["Rational thinker", "independent explorer"],
-    motto: "Core Tone",
-    mottoText: "Floating or hovering,\nno origin and no destination.",
-    mottoFoot: "Home is where the heart settles.",
-    diaryLines: [
-      "Though bitterly cold today, I spotted new buds on the ginkgo outside the window, and felt a quiet joy. I watched snow and sleet tossed by the wind, falling to the ground, never to return to the sky or branches that were never really theirs.",
-      "Yet beneath the new year's sun they slowly melted into water, finding their way back into the tree's veins — becoming vapour, becoming oxygen, returning to the boundless world, nourishing the ginkgo's first buds.",
-      "Perhaps I am like that too. I wouldn't dare call myself life-giving water or vital oxygen — only that I feel untethered, drifting without destination. But I believe the world will one day need even me.",
-      "Then again, to be the sun that warms all ages would also be fine. So: home is where the heart settles, become the sun of your own inner world — and I set off again, on my own two arms.",
-    ],
-    reading: "Currently Reading",
-    readingDesc: "On repeat lately.",
-    interests: "Interests",
-    interestsText: "Network Engineering",
-    interestsDesc: "Implementing network functions",
-    major: "Major",
-    majorText: "Information Security",
-    majorDesc: "Cybersecurity and cryptography",
-    social: "Social",
-    socialText: "HFA-inclined",
-    socialDesc: "Limited social energy, but earnest in how I show up.",
-    socialTraits: ["quiet", "sincere", "low battery"],
-    current: "Currently",
-    currentText: "Tech Stack",
-    currentDesc: "Things I write, break, and keep tinkering with.",
-    currentChart: "GitHub Activity",
-    viewerOpen: "Open Page",
-    viewerClose: "Hide",
-  },
-};
+const labels = profileLabels;
 
 const t = labels[locale as keyof typeof labels] || labels.zh;
+
+const hobbyIcons = {
+  feather: "/svg/misc/feather.svg",
+  palette: "/svg/misc/palette.svg",
+  bird: "/svg/misc/canary.svg",
+  paw: "/svg/misc/paw.svg",
+};
+
+const hobby = hobbyContent[locale as keyof typeof hobbyContent] || hobbyContent.zh;
 
 const cardLinks = {
   zh: {
     istp: "https://zh.wikipedia.org/wiki/ISTP",
     networking: "https://zh.wikipedia.org/wiki/计算机网络",
     infosec: "https://zh.wikipedia.org/wiki/信息安全",
-    hfa: "https://zh.wikipedia.org/wiki/高功能自閉症",
+    hfa: "https://zh.wikipedia.org/wiki/人际关系",
   },
   en: {
     istp: "https://en.wikipedia.org/wiki/ISTP",
     networking: "https://en.wikipedia.org/wiki/Computer_network_engineering",
     infosec: "https://en.wikipedia.org/wiki/Information_security",
-    hfa: "https://en.wikipedia.org/wiki/High-functioning_autism",
+    hfa: "https://en.wikipedia.org/wiki/Interpersonal_relationship",
   },
 };
 
@@ -111,7 +56,7 @@ const sitePages = {
       url: links.infosec,
     },
     hfa: {
-      title: "高功能自閉症 - 维基百科，自由的百科全书",
+      title: "人际关系 - 维基百科，自由的百科全书",
       host: "zh.wikipedia.org",
       url: links.hfa,
     },
@@ -133,7 +78,7 @@ const sitePages = {
       url: links.infosec,
     },
     hfa: {
-      title: "High-functioning autism - Wikipedia",
+      title: "Interpersonal relationship - Wikipedia",
       host: "en.wikipedia.org",
       url: links.hfa,
     },
@@ -150,86 +95,8 @@ const site = sitePages[locale as keyof typeof sitePages] || sitePages.zh;
   </div>
 
   <div class="bento-grid">
-    <!-- MBTI Card -->
-    <article class="card card--mbti card--link card--site" id="mbti-site-card">
-      <div class="site-card-face site-card-face--front" data-card-front>
-        <div class="mbti-top">
-          <p class="kicker">{t.mbti}</p>
-          <h3 class="mbti-title">ISTP</h3>
-          <p class="detail mbti-detail">
-            {t.mbtiDescLines.map((line, index) => (
-              <>
-                {index > 0 && (
-                  <span class="mbti-separator" aria-hidden="true">
-                    {locale === "zh" ? "，" : ","}
-                  </span>
-                )}
-                <span class="mbti-detail-line">{line}</span>
-              </>
-            ))}
-          </p>
-        </div>
-        <img src="/svg/istp.svg" alt="ISTP" class="mbti-img" />
-        <button
-          class="site-open-button"
-          type="button"
-          data-card-open
-          aria-expanded="false"
-          aria-label={`${t.viewerOpen}: ${site.istp.title}`}
-        >
-          <span class="viewer-corner" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <rect x="4" y="5" width="16" height="14" rx="3"></rect>
-              <path d="M4 9h16"></path>
-              <path d="M8 7h.01"></path>
-              <path d="M11 7h.01"></path>
-            </svg>
-          </span>
-        </button>
-      </div>
-
-      <div class="site-card-face site-card-face--back" data-card-back aria-hidden="true">
-        <div class="site-window-chrome">
-          <span class="site-window-dots" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </span>
-          <div class="site-window-bar">
-            <span class="site-window-host">{site.istp.host}</span>
-            <p class="site-window-title">{site.istp.title}</p>
-          </div>
-          <div class="site-window-actions">
-            <a
-              href={site.istp.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="site-window-link"
-              aria-label={`${t.viewerOpen}: ${site.istp.title}`}
-            >
-              ↗
-            </a>
-            <button
-              class="site-window-close"
-              type="button"
-              data-card-close
-              aria-label={`${t.viewerClose}: ${site.istp.title}`}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-        <div class="site-window-frame">
-          <iframe
-            class="site-window-iframe"
-            data-site-frame
-            data-site-src={site.istp.url}
-            title={site.istp.title}
-            loading="lazy"
-          ></iframe>
-        </div>
-      </div>
-    </article>
+    <!-- Now Card: what I'm currently doing (replaces the old MBTI card) -->
+    <NowStatus />
 
     <!-- Motto Card: click to toggle between motto and diary -->
     <button class="card card--motto" id="motto-card" type="button" aria-expanded="false">
@@ -354,92 +221,68 @@ const site = sitePages[locale as keyof typeof sitePages] || sitePages.zh;
       </div>
     </article>
 
-    <!-- Interest Card -->
-    <article class="card card--interest card--link card--site" id="interest-site-card">
-      <div class="site-card-face site-card-face--front" data-card-front>
-        <div class="trait-copy">
+    <!-- Hobby Card -->
+    <button
+      class="card card--interest card--hobby"
+      id="hobby-card"
+      type="button"
+      data-state="front"
+      aria-expanded="false"
+      aria-label={`${t.interests}: ${hobby.title}`}
+    >
+      <!-- Face 1: front overview -->
+      <div class="hobby-face hobby-face--front">
+        <div class="trait-copy hobby-copy">
           <p class="kicker">{t.interests}</p>
-          <h3>{t.interestsText}</h3>
-          <p class="detail">{t.interestsDesc}</p>
+          <h3>{hobby.title}</h3>
         </div>
-        <span class="trait-illustration" aria-hidden="true">
-          <svg
-            class="trait-bg-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-            <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
-            <path d="M3.6 9h16.8"></path>
-            <path d="M3.6 15h16.8"></path>
-            <path d="M11.5 3a17 17 0 0 0 0 18"></path>
-            <path d="M12.5 3a17 17 0 0 1 0 18"></path>
-          </svg>
-        </span>
-        <button
-          class="site-open-button"
-          type="button"
-          data-card-open
-          aria-expanded="false"
-          aria-label={`${t.viewerOpen}: ${site.networking.title}`}
-        >
-          <span class="viewer-corner" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <rect x="4" y="5" width="16" height="14" rx="3"></rect>
-              <path d="M4 9h16"></path>
-              <path d="M8 7h.01"></path>
-              <path d="M11 7h.01"></path>
-            </svg>
-          </span>
-        </button>
+
+        <div class="hobby-art" aria-hidden="true">
+          <span class="hobby-art-glow"></span>
+          <ul class="hobby-icon-grid">
+            {hobby.lines.map((item) => (
+              <li class:list={["hobby-icon-cell", `hobby-icon-cell--${item.key}`]}>
+                <img
+                  src={hobbyIcons[item.key as keyof typeof hobbyIcons]}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  class="hobby-icon"
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
-      <div class="site-card-face site-card-face--back" data-card-back aria-hidden="true">
-        <div class="site-window-chrome">
-          <span class="site-window-dots" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </span>
-          <div class="site-window-bar">
-            <span class="site-window-host">{site.networking.host}</span>
-            <p class="site-window-title">{site.networking.title}</p>
-          </div>
-          <div class="site-window-actions">
-            <a
-              href={site.networking.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="site-window-link"
-              aria-label={`${t.viewerOpen}: ${site.networking.title}`}
-            >
-              ↗
-            </a>
-            <button
-              class="site-window-close"
-              type="button"
-              data-card-close
-              aria-label={`${t.viewerClose}: ${site.networking.title}`}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-        <div class="site-window-frame">
-          <iframe
-            class="site-window-iframe"
-            data-site-frame
-            data-site-src={site.networking.url}
-            title={site.networking.title}
-            loading="lazy"
-          ></iframe>
-        </div>
+      <!-- Face 2: hobby list -->
+      <div class="hobby-face hobby-face--back" aria-hidden="true">
+        <p class="kicker">{t.interests}</p>
+
+        <ul class="hobby-list" role="list">
+          {hobby.lines.map((item) => (
+            <li class="hobby-list-item">
+              <span class:list={["hobby-list-icon", `hobby-list-icon--${item.key}`]} aria-hidden="true">
+                <img
+                  src={hobbyIcons[item.key as keyof typeof hobbyIcons]}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  class="hobby-icon hobby-icon--list"
+                />
+              </span>
+              <span class="hobby-list-text">{item.text}</span>
+            </li>
+          ))}
+        </ul>
       </div>
-    </article>
+
+      <!-- Face 3: equipment (minimal placeholder — full list lives in the popover) -->
+      <div class="hobby-face hobby-face--equip" aria-hidden="true">
+        <p class="kicker">{t.equipment}</p>
+        <h3 class="equip-title">{t.equipmentText}</h3>
+      </div>
+    </button>
 
     <!-- Current State Card -->
     <button class="card card--current" id="current-card" type="button" aria-expanded="false">
@@ -470,7 +313,7 @@ const site = sitePages[locale as keyof typeof sitePages] || sitePages.zh;
           <p class="kicker">{t.currentChart}</p>
           <div class="chart-shell">
             <img
-              src="https://ghchart.rshah.org/moyuin-aka"
+              src="/examples/activity.svg"
               alt={t.currentChart}
               loading="lazy"
               decoding="async"
@@ -574,1427 +417,59 @@ const site = sitePages[locale as keyof typeof sitePages] || sitePages.zh;
       </div>
     </article>
   </div>
+
+  <!-- Equipment Popover (position: fixed, anchored to hobby card via JS) -->
+  <div
+    class="equip-popover"
+    id="equip-popover"
+    role="dialog"
+    aria-modal="false"
+    aria-hidden="true"
+    aria-label={t.equipmentText}
+    data-direction="down"
+  >
+    <div class="equip-popover-inner">
+      <div class="equip-popover-head">
+        <div class="equip-popover-title-group">
+          <p class="kicker">{t.equipment}</p>
+          <p class="equip-popover-title">{t.equipmentText}</p>
+        </div>
+        <button
+          class="equip-popover-close"
+          type="button"
+          aria-label={locale === "zh" ? "关闭设备列表" : "Close device list"}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <ul class="equip-popover-grid" role="list">
+        {equipmentItems.map((item) => (
+          <li class="equip-item">
+            <span class="equip-logo-wrap" aria-hidden="true">
+              <img
+                src={item.src}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                class:list={["equip-logo", item.external && "equip-logo--external"]}
+              />
+            </span>
+            <span class="equip-name">{item.name}</span>
+            <span class="equip-label">{item.label[locale as keyof typeof item.label]}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div class="equip-popover-arrow" aria-hidden="true"></div>
+  </div>
 </div>
 
-<style>
-  /* ─── Container ─────────────────────────────────────────── */
-  .personality-flow-container {
-    margin-top: 5rem;
-    padding: 0;
-  }
-
-  .section-head {
-    max-width: 42rem;
-    margin: 0 auto 2.5rem;
-    text-align: center;
-  }
-
-  .section-title {
-    margin: 0;
-    font-family: var(--font-serif);
-    font-size: clamp(1.9rem, 4vw, 2.6rem);
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.03em;
-  }
-
-  .section-lead {
-    margin: 0.75rem auto 0;
-    max-width: 30rem;
-    font-size: 1rem;
-    line-height: 1.9;
-    color: var(--grey);
-    opacity: 0.85;
-  }
-
-  /* ─── Grid ───────────────────────────────────────────────── */
-  .bento-grid {
-    display: grid;
-    width: min(100%, 1060px);
-    margin: 0 auto;
-    gap: 1rem;
-    grid-template-columns: 240px 1fr 1fr 220px;
-    grid-template-rows: 260px minmax(216px, auto) minmax(248px, auto);
-    grid-template-areas:
-      "mbti motto motto reading"
-      "mbti major interest reading"
-      "current current social social";
-  }
-
-  /* ─── Card Base ──────────────────────────────────────────── */
-  .card {
-    --glow-x: 50%;
-    --glow-y: 50%;
-    --glow-opacity: 0;
-    --card-glow-size-x: 220px;
-    --card-glow-size-y: 180px;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: 1.5rem;
-    border-radius: 28px;
-    overflow: hidden;
-    transition:
-      box-shadow 0.3s ease,
-      border-color 0.3s ease,
-      color 0.25s ease;
-
-    /* Dark glassmorphism */
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background:
-      linear-gradient(155deg, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
-      rgba(14, 10, 28, 0.65);
-    box-shadow:
-      0 24px 56px -36px rgba(0, 0, 0, 0.85),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(28px) saturate(150%);
-    -webkit-backdrop-filter: blur(28px) saturate(150%);
-    color: rgba(255, 255, 255, 0.88);
-    text-decoration: none;
-  }
-
-  .card--site {
-    padding: 0;
-  }
-
-  .card--site.card--mbti,
-  .card--site.card--social {
-    --site-card-padding: 1.5rem;
-  }
-
-  .card--site.card--mbti {
-    padding-bottom: 0;
-  }
-
-  .card--site.card--major,
-  .card--site.card--interest {
-    --site-card-padding: 1.25rem;
-  }
-
-  .card--motto:focus-visible,
-  .card--current:focus-visible,
-  .site-open-button:focus-visible,
-  .site-window-link:focus-visible,
-  .site-window-close:focus-visible {
-    outline: 2px solid rgba(162, 89, 236, 0.6);
-    outline-offset: 4px;
-  }
-
-  /* Accent glow */
-  .card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(
-      ellipse var(--card-glow-size-x) var(--card-glow-size-y) at var(--glow-x) var(--glow-y),
-      var(--card-accent, rgba(162, 89, 236, 0.25)) 0%,
-      transparent 72%
-    );
-    opacity: var(--glow-opacity);
-    transition: opacity 0.28s ease;
-  }
-
-  /* ─── Grid Areas ─────────────────────────────────────────── */
-  .card--mbti {
-    grid-area: mbti;
-  }
-  .card--motto {
-    grid-area: motto;
-  }
-  .card--reading {
-    grid-area: reading;
-  }
-  .card--major {
-    grid-area: major;
-  }
-  .card--interest {
-    grid-area: interest;
-  }
-  .card--current {
-    grid-area: current;
-  }
-  .card--social {
-    grid-area: social;
-  }
-
-  /* ─── Card Accents ───────────────────────────────────────── */
-  .card--mbti {
-    --card-accent: rgba(177, 141, 238, 0.35);
-  }
-  .card--motto {
-    --card-accent: rgba(220, 183, 108, 0.3);
-  }
-  .card--reading {
-    --card-accent: rgba(108, 149, 214, 0.3);
-  }
-  .card--major {
-    --card-accent: rgba(146, 122, 222, 0.32);
-    --trait-icon-color: rgba(206, 188, 255, 0.9);
-    --trait-bg-icon-color: rgba(214, 197, 255, 0.24);
-    --trait-glow-color: rgba(146, 122, 222, 0.26);
-  }
-  .card--interest {
-    --card-accent: rgba(114, 176, 149, 0.32);
-    --trait-icon-color: rgba(171, 234, 206, 0.88);
-    --trait-bg-icon-color: rgba(186, 242, 220, 0.24);
-    --trait-glow-color: rgba(114, 176, 149, 0.24);
-  }
-  .card--current {
-    --card-accent: rgba(225, 152, 104, 0.24);
-    --card-glow-size-x: 260px;
-    --card-glow-size-y: 196px;
-  }
-  .card--social {
-    --card-accent: rgba(208, 124, 168, 0.3);
-    --bg-icon-color: rgba(231, 162, 196, 0.16);
-    --card-glow-size-x: 260px;
-    --card-glow-size-y: 196px;
-  }
-
-  /* ─── Shared Typography ──────────────────────────────────── */
-  .kicker {
-    margin: 0 0 0.4rem;
-    font-family: var(--font-sans);
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.42);
-    position: relative;
-    z-index: 1;
-    transition: color 0.25s ease;
-  }
-
-  h3 {
-    margin: 0.15rem 0 0.35rem;
-    font-family: var(--font-serif);
-    font-size: 1.35rem;
-    font-weight: 700;
-    line-height: 1.25;
-    color: rgba(255, 255, 255, 0.95);
-    position: relative;
-    z-index: 1;
-    transition: color 0.25s ease;
-  }
-
-  .detail {
-    margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.65;
-    color: rgba(255, 255, 255, 0.58);
-    position: relative;
-    z-index: 1;
-    transition: color 0.25s ease;
-  }
-
-  .viewer-corner {
-    position: absolute;
-    top: 1.2rem;
-    right: 1.3rem;
-    width: 2rem;
-    height: 2rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
-    color: rgba(255, 255, 255, 0.3);
-    transition:
-      color 0.25s ease,
-      border-color 0.25s ease,
-      background 0.25s ease,
-      transform 0.25s ease;
-    z-index: 2;
-  }
-
-  .viewer-corner svg {
-    width: 1rem;
-    height: 1rem;
-  }
-
-  .card--link:hover .kicker,
-  .card--motto:hover .kicker,
-  .card--current:hover .kicker {
-    color: rgba(255, 255, 255, 0.58);
-  }
-
-  .card--link:hover h3,
-  .card--motto:hover h3,
-  .card--current:hover h3 {
-    color: rgba(255, 255, 255, 1);
-  }
-
-  .card--link:hover .detail,
-  .card--motto:hover .detail,
-  .card--current:hover .detail {
-    color: rgba(255, 255, 255, 0.72);
-  }
-
-  .card--link:hover .viewer-corner {
-    color: rgba(255, 255, 255, 0.74);
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-2px);
-  }
-
-  .site-card-face {
-    position: absolute;
-    inset: 0;
-    transition:
-      opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1),
-      transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: opacity, transform;
-  }
-
-  .site-card-face--front {
-    padding: var(--site-card-padding, 1.5rem);
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  .site-card-face--back {
-    padding: 0;
-    opacity: 0;
-    transform: translateY(8px);
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    background: rgba(8, 9, 18, 0.18);
-  }
-
-  .card--site.is-window .site-card-face--front {
-    opacity: 0;
-    transform: translateY(-8px);
-    pointer-events: none;
-  }
-
-  .card--site.is-window .site-card-face--back {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  .site-open-button {
-    position: absolute;
-    inset: 0;
-    z-index: 4;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    color: inherit;
-  }
-
-  /* ─── MBTI Card ──────────────────────────────────────────── */
-  .card--mbti {
-    justify-content: flex-start;
-    padding-bottom: 1.25rem;
-  }
-
-  .mbti-top {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .mbti-title {
-    font-size: 2rem !important;
-    letter-spacing: 0.04em;
-    margin: 0.15rem 0 0.2rem !important;
-  }
-
-  .mbti-detail {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.08rem 0.16rem;
-    max-width: 12.5rem;
-  }
-
-  .mbti-separator {
-    opacity: 0.46;
-  }
-
-  .mbti-detail-line {
-    display: inline-block;
-  }
-
-  /* SVG free-floats from the bottom, no container */
-  .mbti-img {
-    position: absolute;
-    bottom: 1.15rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 220px;
-    height: auto;
-    filter: drop-shadow(0 -6px 20px rgba(162, 89, 236, 0.18));
-    transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  .card--mbti:hover .mbti-img {
-    transform: translateX(-50%) translateY(-8px) scale(1.04) rotate(-2deg);
-  }
-
-  /* ─── Motto Card ─────────────────────────────────────────── */
-  .card--motto {
-    cursor: pointer;
-    min-height: 260px;
-    /* Reset button defaults */
-    -webkit-appearance: none;
-    appearance: none;
-    background: none;
-    border: none;
-    font: inherit;
-    color: inherit;
-    text-align: left;
-    /* Restore card look */
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background:
-      linear-gradient(155deg, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
-      rgba(14, 10, 28, 0.65);
-    box-shadow:
-      0 24px 56px -36px rgba(0, 0, 0, 0.85),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(28px) saturate(150%);
-    -webkit-backdrop-filter: blur(28px) saturate(150%);
-  }
-
-  /* Two-panel cross-fade container */
-  .motto-face {
-    position: absolute;
-    inset: 1.5rem; /* match card padding */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition:
-      opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1),
-      transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: opacity, transform;
-  }
-
-  .motto-face--front {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  .motto-face--back {
-    opacity: 0;
-    transform: translateY(8px);
-    pointer-events: none;
-  }
-
-  /* Toggled state */
-  .card--motto.is-diary .motto-face--front {
-    opacity: 0;
-    transform: translateY(-8px);
-    pointer-events: none;
-  }
-
-  .card--motto.is-diary .motto-face--back {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  .motto-inner {
-    margin-top: auto;
-  }
-
-  .motto-text {
-    margin: 0 0 0.55rem;
-    padding: 0;
-    font-family: var(--font-serif);
-    font-size: clamp(1.3rem, 2.2vw, 1.65rem);
-    font-weight: 500;
-    line-height: 1.5;
-    color: rgba(255, 255, 255, 0.95);
-    white-space: pre-line;
-    border: none;
-  }
-
-  .motto-foot {
-    margin: 0;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.4);
-    font-style: italic;
-  }
-
-  /* Diary face */
-  .diary-scroll {
-    flex: 1;
-    overflow-y: auto;
-    /* Hide scrollbar but keep scrollability */
-    scrollbar-width: none;
-  }
-
-  .diary-scroll::-webkit-scrollbar {
-    display: none;
-  }
-
-  .diary-p {
-    margin: 0 0 0.8rem;
-    font-family: var(--font-serif);
-    font-size: 0.92rem;
-    line-height: 1.85;
-    color: rgba(255, 255, 255, 0.75);
-    text-align: justify;
-  }
-
-  .diary-p:last-child {
-    margin-bottom: 0;
-  }
-
-  .diary-highlight {
-    color: rgba(196, 168, 255, 0.95);
-    font-weight: 500;
-  }
-
-  .bg-quote {
-    position: absolute;
-    bottom: -2.5rem;
-    right: 0.5rem;
-    font-family: var(--font-serif);
-    font-size: 12rem;
-    line-height: 1;
-    color: rgba(255, 255, 255, 0.03);
-    pointer-events: none;
-    user-select: none;
-    z-index: 0;
-  }
-
-  /* ─── Reading Card ───────────────────────────────────────── */
-  .card--reading {
-    justify-content: center;
-    padding-bottom: 1.25rem;
-  }
-
-  .reading-info {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .reading-desc-text {
-    margin: 0;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.5);
-    line-height: 1.5;
-  }
-
-  /* Book cover fills the lower card space — centred, no side layout */
-  .reading-cover-wrap {
-    margin-top: 1rem;
-    position: relative;
-    z-index: 1;
-    display: flex;
-    justify-content: center;
-  }
-
-  .card--reading :global(.recently-read-container) {
-    width: 100%;
-  }
-
-  .card--reading :global(.reading-list-grid) {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-
-  .card--reading :global(.book-card) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.6rem;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    padding: 0;
-  }
-
-  .card--reading :global(.book-cover) {
-    width: 100%;
-    max-width: 150px;
-    border-radius: 10px;
-  }
-
-  .card--reading :global(.book-info) {
-    padding: 0;
-    text-align: center;
-  }
-
-  .card--reading :global(.book-title) {
-    font-size: 0.95rem;
-    font-weight: 600;
-    line-height: 1.4;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 0.2rem;
-  }
-
-  .card--reading :global(.book-author) {
-    font-size: 0.82rem;
-    color: rgba(255, 255, 255, 0.48);
-  }
-
-  /* ─── Trait Cards (Major / Interest) ────────────────────── */
-  .card--major,
-  .card--interest {
-    justify-content: flex-start;
-    gap: 0;
-    padding: 1.25rem;
-    min-height: 216px;
-  }
-
-  .card--major h3,
-  .card--interest h3 {
-    font-size: 1.18rem;
-    line-height: 1.22;
-  }
-
-  .card--major .detail,
-  .card--interest .detail {
-    font-size: 0.84rem;
-    line-height: 1.55;
-  }
-
-  .trait-copy {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    max-width: min(11.5rem, calc(100% - 5.8rem));
-  }
-
-  .trait-illustration {
-    position: absolute;
-    right: -0.2rem;
-    bottom: -0.15rem;
-    width: 7.2rem;
-    height: 7.2rem;
-    pointer-events: none;
-    user-select: none;
-    z-index: 0;
-    transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .trait-illustration::before {
-    content: "";
-    position: absolute;
-    inset: 1.75rem 0.45rem 0.2rem 1.75rem;
-    border-radius: 999px;
-    background: radial-gradient(
-      circle at 50% 50%,
-      var(--trait-glow-color, rgba(255, 255, 255, 0.18)) 0%,
-      transparent 74%
-    );
-    filter: blur(11px);
-    opacity: 0.9;
-  }
-
-  .trait-bg-icon {
-    position: relative;
-    z-index: 1;
-    position: absolute;
-    right: 0.7rem;
-    bottom: 0.6rem;
-    width: 4.8rem;
-    height: 4.8rem;
-    color: var(--trait-bg-icon-color, rgba(255, 255, 255, 0.22));
-    filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.12));
-    transform: rotate(-10deg);
-    transition:
-      transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
-      color 0.25s ease;
-  }
-
-  .card--major:hover .trait-illustration,
-  .card--interest:hover .trait-illustration {
-    transform: translateY(-4px) scale(1.03);
-  }
-
-  .card--major:hover .trait-bg-icon,
-  .card--interest:hover .trait-bg-icon {
-    transform: rotate(-6deg) scale(1.05);
-  }
-
-  /* ─── Wide Cards (Current / Social) ─────────────────────── */
-  .card--social {
-    flex-direction: row;
-    align-items: flex-end;
-    gap: 1.5rem;
-  }
-
-  .site-card-face--front-social {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-    gap: 1.5rem;
-    padding: var(--site-card-padding, 1.5rem);
-  }
-
-  .card--current {
-    cursor: pointer;
-    min-height: 248px;
-    width: 100%;
-    justify-content: flex-start;
-    gap: 0;
-    -webkit-appearance: none;
-    appearance: none;
-    font: inherit;
-    color: inherit;
-    text-align: left;
-  }
-
-  .current-face {
-    position: absolute;
-    inset: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 1rem;
-    transition:
-      opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1),
-      transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: opacity, transform;
-  }
-
-  .current-face--front {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  .current-face--back {
-    opacity: 0;
-    transform: translateY(8px);
-    pointer-events: none;
-  }
-
-  .card--current.is-chart .current-face--front {
-    opacity: 0;
-    transform: translateY(-8px);
-    pointer-events: none;
-  }
-
-  .card--current.is-chart .current-face--back {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  .wide-copy {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .chips {
-    flex-shrink: 0;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.48rem;
-    align-self: center;
-    position: relative;
-    z-index: 1;
-  }
-
-  .chips li {
-    padding: 0.38rem 0.9rem;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.82);
-    font-size: 0.82rem;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-    transition:
-      background 0.2s,
-      border-color 0.2s;
-  }
-
-  .stack-head {
-    position: relative;
-    z-index: 1;
-    max-width: 28rem;
-  }
-
-  .stack-head h3 {
-    margin-top: 0;
-  }
-
-  .stack-cloud {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    margin-top: 0.35rem;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.56rem 0.68rem;
-  }
-
-  .stack-link {
-    width: 1.95rem;
-    height: 1.95rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    text-decoration: none;
-    transition: opacity 0.22s ease;
-  }
-
-  .stack-icon {
-    width: 1.35rem;
-    height: 1.35rem;
-    display: block;
-    opacity: 0.82;
-    filter: grayscale(1);
-    transition:
-      opacity 0.22s ease,
-      filter 0.22s ease;
-  }
-
-  .stack-icon--external {
-    filter: grayscale(1) contrast(1.02);
-  }
-
-  .stack-link:hover .stack-icon {
-    opacity: 1;
-  }
-
-  .chart-panel {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 0.65rem;
-    min-height: 100%;
-  }
-
-  .chart-shell {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.1rem 0 0;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-  }
-
-  .chart-shell::-webkit-scrollbar {
-    display: none;
-  }
-
-  .github-chart {
-    display: block;
-    width: 100%;
-    min-width: 0;
-    height: auto;
-    opacity: 0.92;
-    filter: hue-rotate(244deg) saturate(0.72) brightness(1.02) contrast(1.04);
-  }
-
-  .bg-icon {
-    position: absolute;
-    right: 1.5rem;
-    bottom: -0.4rem;
-    width: 7rem;
-    height: 7rem;
-    color: var(--bg-icon-color, rgba(255, 255, 255, 0.1));
-    pointer-events: none;
-    user-select: none;
-    transform: rotate(-15deg);
-    transition:
-      opacity 0.4s ease,
-      transform 0.5s ease;
-    z-index: 0;
-  }
-
-  /* ─── Site Window ───────────────────────────────────────── */
-  .site-window-chrome {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-height: 3.4rem;
-    padding: 0.72rem 0.9rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.035);
-    cursor: pointer;
-  }
-
-  .site-window-dots {
-    display: inline-flex;
-    gap: 0.32rem;
-  }
-
-  .site-window-dots span {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.22);
-  }
-
-  .site-window-dots span:nth-child(1) {
-    background: rgba(235, 114, 135, 0.82);
-  }
-
-  .site-window-dots span:nth-child(2) {
-    background: rgba(232, 190, 96, 0.82);
-  }
-
-  .site-window-dots span:nth-child(3) {
-    background: rgba(105, 196, 145, 0.82);
-  }
-
-  .site-window-host {
-    display: block;
-    font-size: 0.76rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.42);
-  }
-
-  .site-window-bar {
-    min-width: 0;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.14rem;
-  }
-
-  .site-window-title {
-    margin: 0;
-    overflow: hidden;
-    font-size: 0.82rem;
-    line-height: 1.35;
-    color: rgba(255, 255, 255, 0.82);
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .site-window-actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    flex-shrink: 0;
-  }
-
-  .site-window-link,
-  .site-window-close {
-    width: 1.92rem;
-    height: 1.92rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.045);
-    color: rgba(255, 255, 255, 0.84);
-    transition:
-      background 0.25s ease,
-      border-color 0.25s ease,
-      color 0.25s ease;
-  }
-
-  .site-window-link,
-  .site-window-close {
-    position: relative;
-    z-index: 1;
-  }
-
-  .site-window-link {
-    text-decoration: none;
-    font-size: 0.95rem;
-  }
-
-  .site-window-close {
-    padding: 0;
-    font: inherit;
-    font-size: 1.1rem;
-    line-height: 1;
-    cursor: pointer;
-  }
-
-  .site-window-link:hover,
-  .site-window-close:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.18);
-    color: rgba(255, 255, 255, 1);
-  }
-
-  .site-window-frame {
-    position: relative;
-    flex: 1;
-    min-height: 0;
-    background: rgba(255, 255, 255, 0.04);
-  }
-
-  .site-window-iframe {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border: 0;
-    background: #fff;
-  }
-
-  /* ─── Light Mode ─────────────────────────────────────────── */
-  :global(html:not(.dark)) .card {
-    border-color: rgba(80, 50, 110, 0.09);
-    background:
-      linear-gradient(
-        155deg,
-        rgba(255, 255, 255, 0.72) 0%,
-        rgba(255, 255, 255, 0.45) 55%
-      ),
-      rgba(248, 244, 255, 0.75);
-    box-shadow:
-      0 18px 48px -28px rgba(80, 50, 120, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    color: rgba(30, 15, 50, 0.9);
-  }
-
-  :global(html:not(.dark)) .kicker {
-    color: rgba(80, 50, 110, 0.48);
-  }
-
-  :global(html:not(.dark)) h3 {
-    color: #1a0f2e;
-  }
-
-  :global(html:not(.dark)) .detail {
-    color: rgba(80, 50, 110, 0.65);
-  }
-
-  :global(html:not(.dark)) .motto-text {
-    color: #1a0f2e;
-  }
-
-  :global(html:not(.dark)) .motto-foot,
-  :global(html:not(.dark)) .reading-desc-text {
-    color: rgba(80, 50, 110, 0.45);
-  }
-
-  :global(html:not(.dark)) .bg-quote {
-    color: rgba(0, 0, 0, 0.02);
-  }
-
-  :global(html:not(.dark)) .viewer-corner {
-    border-color: rgba(80, 50, 110, 0.08);
-    background: rgba(80, 50, 110, 0.035);
-    color: rgba(80, 50, 110, 0.24);
-  }
-
-  :global(html:not(.dark)) .card--link:hover .viewer-corner {
-    border-color: rgba(80, 50, 110, 0.14);
-    background: rgba(80, 50, 110, 0.08);
-    color: rgba(80, 50, 110, 0.64);
-  }
-
-  :global(html:not(.dark)) .card--link:hover .kicker,
-  :global(html:not(.dark)) .card--motto:hover .kicker,
-  :global(html:not(.dark)) .card--current:hover .kicker {
-    color: rgba(80, 50, 110, 0.58);
-  }
-
-  :global(html:not(.dark)) .card--link:hover h3,
-  :global(html:not(.dark)) .card--motto:hover h3,
-  :global(html:not(.dark)) .card--current:hover h3 {
-    color: rgba(35, 18, 60, 0.98);
-  }
-
-  :global(html:not(.dark)) .card--link:hover .detail,
-  :global(html:not(.dark)) .card--motto:hover .detail,
-  :global(html:not(.dark)) .card--current:hover .detail {
-    color: rgba(80, 50, 110, 0.76);
-  }
-
-  :global(html:not(.dark)) .card--major {
-    --trait-icon-color: rgba(104, 69, 192, 0.88);
-    --trait-bg-icon-color: rgba(123, 93, 211, 0.22);
-    --trait-glow-color: rgba(137, 100, 224, 0.16);
-  }
-
-  :global(html:not(.dark)) .card--interest {
-    --trait-icon-color: rgba(37, 122, 93, 0.88);
-    --trait-bg-icon-color: rgba(50, 147, 109, 0.22);
-    --trait-glow-color: rgba(63, 165, 124, 0.14);
-  }
-
-  :global(html:not(.dark)) .card--social {
-    --bg-icon-color: rgba(161, 74, 117, 0.16);
-  }
-
-  :global(html:not(.dark)) .trait-bg-icon {
-    filter: drop-shadow(0 12px 22px rgba(84, 53, 130, 0.1));
-  }
-
-  :global(html:not(.dark)) .chips li {
-    background: rgba(80, 50, 110, 0.04);
-    border-color: rgba(80, 50, 110, 0.1);
-    color: rgba(30, 15, 50, 0.8);
-  }
-
-  :global(html:not(.dark)) .stack-icon {
-    opacity: 0.38;
-    filter: grayscale(1);
-  }
-
-  :global(html:not(.dark)) .stack-icon--external {
-    filter: grayscale(1) contrast(1.02);
-  }
-
-  :global(html:not(.dark)) .github-chart {
-    opacity: 0.88;
-    filter: hue-rotate(242deg) saturate(0.84) brightness(0.93) contrast(1.05);
-  }
-
-  :global(html:not(.dark)) .site-window-chrome {
-    border-color: rgba(80, 50, 110, 0.08);
-    background: rgba(255, 255, 255, 0.36);
-  }
-
-  :global(html:not(.dark)) .site-window-host {
-    color: rgba(80, 50, 110, 0.42);
-  }
-
-  :global(html:not(.dark)) .site-window-title {
-    color: rgba(30, 15, 50, 0.8);
-  }
-
-  :global(html:not(.dark)) .site-window-link,
-  :global(html:not(.dark)) .site-window-close {
-    border-color: rgba(80, 50, 110, 0.1);
-    background: rgba(80, 50, 110, 0.04);
-    color: rgba(30, 15, 50, 0.84);
-  }
-
-  :global(html:not(.dark)) .site-window-link:hover,
-  :global(html:not(.dark)) .site-window-close:hover {
-    border-color: rgba(80, 50, 110, 0.16);
-    background: rgba(80, 50, 110, 0.08);
-    color: rgba(30, 15, 50, 0.95);
-  }
-
-  :global(html:not(.dark)) .site-window-frame {
-    background: rgba(255, 255, 255, 0.4);
-  }
-
-  :global(html:not(.dark)) .diary-p {
-    color: rgba(30, 15, 50, 0.78);
-  }
-
-  :global(html:not(.dark)) .diary-highlight {
-    color: rgba(110, 60, 200, 0.95);
-  }
-
-  :global(html:not(.dark)) .card--reading :global(.book-title) {
-    color: #1a0f2e;
-  }
-
-  :global(html:not(.dark)) .card--reading :global(.book-author) {
-    color: rgba(80, 50, 110, 0.55);
-  }
-
-  :global(html:not(.dark)) .mbti-img {
-    filter: drop-shadow(0 -6px 20px rgba(100, 60, 180, 0.12));
-  }
-
-  :global(html.dark) .stack-icon {
-    filter: grayscale(1) brightness(0) invert(1);
-  }
-
-  :global(html.dark) .stack-icon--external {
-    filter: grayscale(1) brightness(0) invert(0.74) contrast(1.02);
-  }
-
-  :global(html.dark) .github-chart {
-    filter: hue-rotate(246deg) saturate(0.7) brightness(0.96) contrast(1.03);
-  }
-
-  /* ─── Responsive: Tablet (~860px) ───────────────────────── */
-  @media (max-width: 860px) {
-    .bento-grid {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto;
-      grid-template-areas:
-        "mbti motto"
-        "reading reading"
-        "major interest"
-        "current social";
-    }
-
-    .card--mbti {
-      min-height: 280px;
-      padding-bottom: 0;
-    }
-
-    .mbti-img {
-      bottom: 0.35rem;
-    }
-
-    .card--motto {
-      min-height: 250px;
-    }
-
-    .card--reading {
-      /* Side-by-side on tablet */
-      padding-bottom: 1.5rem;
-      justify-content: flex-start;
-    }
-
-    .card--reading :global(.book-card) {
-      flex-direction: row;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .card--reading :global(.book-cover) {
-      max-width: 100px;
-    }
-
-    .card--reading :global(.book-info) {
-      text-align: left;
-    }
-
-    .reading-cover-wrap {
-      margin-top: auto;
-      justify-content: flex-start;
-      padding-top: 0.75rem;
-    }
-
-    .card--social {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .site-card-face--front-social {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .trait-copy {
-      max-width: calc(100% - 5.2rem);
-    }
-
-    .card--current {
-      min-height: 260px;
-    }
-
-    .current-face {
-      gap: 0.9rem;
-    }
-
-    .chips {
-      flex-direction: row;
-      flex-wrap: wrap;
-    }
-
-  }
-
-  /* ─── Responsive: Mobile (~520px) ───────────────────────── */
-  @media (max-width: 520px) {
-    .bento-grid {
-      grid-template-columns: 1fr;
-      grid-template-areas:
-        "mbti"
-        "motto"
-        "major"
-        "interest"
-        "reading"
-        "current"
-        "social";
-      gap: 0.75rem;
-    }
-
-    .card {
-      border-radius: 28px;
-      padding: 1.25rem;
-    }
-
-    .card--site.card--mbti,
-    .card--site.card--social,
-    .card--site.card--major,
-    .card--site.card--interest {
-      --site-card-padding: 1.25rem;
-    }
-
-    .card--mbti {
-      min-height: 260px;
-      padding-bottom: 0;
-    }
-
-    .mbti-top {
-      max-width: 9.25rem;
-    }
-
-    .mbti-detail {
-      display: grid;
-      gap: 0.1rem;
-      max-width: 8em;
-    }
-
-    .mbti-separator {
-      display: none;
-    }
-
-    .mbti-img {
-      bottom: 0.15rem;
-      width: 82%;
-      max-width: 196px;
-    }
-
-    .card--motto {
-      min-height: 240px;
-    }
-
-    .card--reading,
-    .card--social {
-      min-height: 180px;
-    }
-
-    .card--current {
-      min-height: 252px;
-    }
-
-    .trait-copy {
-      max-width: calc(100% - 4.9rem);
-    }
-
-    .trait-illustration {
-      right: -0.15rem;
-      bottom: -0.1rem;
-      width: 6.1rem;
-      height: 6.1rem;
-    }
-
-    .trait-bg-icon {
-      right: 0.68rem;
-      bottom: 0.58rem;
-      width: 4.15rem;
-      height: 4.15rem;
-    }
-
-    .current-face {
-      inset: 1.25rem;
-    }
-
-    .card--reading {
-      padding-bottom: 1.25rem;
-      justify-content: flex-start;
-    }
-
-    .card--reading :global(.book-card) {
-      flex-direction: row;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .card--reading :global(.book-cover) {
-      max-width: 80px;
-    }
-
-    .card--reading :global(.book-info) {
-      flex: 1;
-      min-height: 80px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      text-align: center;
-    }
-
-    .reading-cover-wrap {
-      margin-top: auto;
-      justify-content: flex-start;
-      padding-top: 0.75rem;
-    }
-
-    .site-card-face--front-social {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .stack-cloud {
-      gap: 0.5rem 0.62rem;
-    }
-
-    .stack-link {
-      width: 1.82rem;
-      height: 1.82rem;
-    }
-
-    .stack-icon {
-      width: 1.2rem;
-      height: 1.2rem;
-    }
-
-    .chart-shell {
-      padding-top: 0.05rem;
-    }
-
-    .motto-face {
-      inset: 1.25rem;
-    }
-
-    .motto-text {
-      font-size: 1.16rem;
-      line-height: 1.55;
-    }
-
-    .site-window-chrome {
-      min-height: 3.15rem;
-      padding: 0.68rem 0.78rem;
-    }
-
-    .site-window-title {
-      font-size: 0.76rem;
-    }
-  }
-
-  /* ─── Reduced Motion ─────────────────────────────────────── */
-  @media (prefers-reduced-motion: reduce) {
-    .card,
-    .card::after,
-    .mbti-img,
-    .bg-icon,
-    .viewer-corner,
-    .site-card-face,
-    .site-window-link,
-    .site-window-close,
-    .current-face,
-    .stack-link,
-    .stack-icon {
-      transition: none !important;
-      transform: none !important;
-    }
-
-    .card--mbti:hover .mbti-img {
-      transform: translateX(-50%) !important;
-    }
-  }
-</style>
-
 <script>
+  import { animate, stagger, createAnimatable, createSpring } from "animejs";
+
   document.addEventListener("astro:page-load", () => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const finePointer = window.matchMedia("(pointer: fine)");
@@ -2109,10 +584,202 @@ const site = sitePages[locale as keyof typeof sitePages] || sitePages.zh;
       backSelector: ".current-face--back",
     });
 
-    setupSiteCard("mbti-site-card");
+    // ─── Hobby card: 3-state cycle (front → list → equip → front)
+    // equip state opens a fixed popover instead of rendering grid inside the card
+    const hobbyCard = document.getElementById("hobby-card");
+    const equipPopover = document.getElementById("equip-popover") as HTMLElement | null;
+
+    if (hobbyCard && hobbyCard.dataset.bound !== "true") {
+      hobbyCard.dataset.bound = "true";
+
+      const faceFront = hobbyCard.querySelector(".hobby-face--front") as HTMLElement | null;
+      const faceBack = hobbyCard.querySelector(".hobby-face--back") as HTMLElement | null;
+      const faceEquip = hobbyCard.querySelector(".hobby-face--equip") as HTMLElement | null;
+      const popoverCloseBtn = equipPopover?.querySelector(".equip-popover-close") as HTMLButtonElement | null;
+
+      const states = ["front", "list", "equip"] as const;
+      type HobbyState = (typeof states)[number];
+
+      // The popover is position:absolute inside .personality-flow-container
+      // (its containing block — the container's `perspective` makes it one),
+      // so all coordinates are relative to the container, NOT the viewport.
+      // That way it scrolls with the page and stays glued to the card.
+      const container = equipPopover?.closest(
+        ".personality-flow-container",
+      ) as HTMLElement | null;
+
+      const positionPopover = () => {
+        if (!equipPopover || !container) return;
+        const cardRect = hobbyCard.getBoundingClientRect();
+        const boxRect = container.getBoundingClientRect();
+        const gap = 12;
+        const containerW = container.clientWidth;
+        const containerH = container.clientHeight;
+        const pw = Math.min(380, window.innerWidth - 24);
+
+        // Card position within the container's coordinate space — constant
+        // across scrolling, since both rects shift by the same amount.
+        const cardLeft = cardRect.left - boxRect.left;
+        const cardTop = cardRect.top - boxRect.top;
+        const cardCenterX = cardLeft + cardRect.width / 2;
+
+        const left = Math.max(0, Math.min(cardCenterX - pw / 2, containerW - pw));
+        equipPopover.style.width = `${pw}px`;
+        equipPopover.style.left = `${left}px`;
+
+        // Arrow points to the centre of the hobby card.
+        equipPopover.style.setProperty("--arrow-offset", `${cardCenterX - left}px`);
+
+        // Above the card when there's screen room, otherwise below.
+        if (cardRect.top > 340) {
+          equipPopover.style.bottom = `${containerH - cardTop + gap}px`;
+          equipPopover.style.top = "auto";
+          equipPopover.dataset.direction = "down";
+        } else {
+          equipPopover.style.top = `${cardTop + cardRect.height + gap}px`;
+          equipPopover.style.bottom = "auto";
+          equipPopover.dataset.direction = "up";
+        }
+      };
+
+      const openPopover = () => {
+        if (!equipPopover) return;
+        positionPopover();
+        equipPopover.style.display = "block";
+        requestAnimationFrame(() => {
+          equipPopover.classList.add("is-open");
+          equipPopover.setAttribute("aria-hidden", "false");
+        });
+      };
+
+      const closePopover = () => {
+        if (!equipPopover) return;
+        equipPopover.classList.remove("is-open");
+        equipPopover.setAttribute("aria-hidden", "true");
+        equipPopover.addEventListener("transitionend", () => {
+          if (!equipPopover.classList.contains("is-open")) {
+            equipPopover.style.display = "none";
+          }
+        }, { once: true });
+      };
+
+      const applyState = (state: HobbyState) => {
+        hobbyCard.dataset.state = state;
+        hobbyCard.setAttribute("aria-expanded", state !== "front" ? "true" : "false");
+        if (faceFront) faceFront.setAttribute("aria-hidden", String(state !== "front"));
+        if (faceBack) faceBack.setAttribute("aria-hidden", String(state !== "list"));
+        if (faceEquip) faceEquip.setAttribute("aria-hidden", String(state !== "equip"));
+        hobbyCard.classList.toggle("is-revealed", state === "list");
+        hobbyCard.classList.toggle("is-equip", state === "equip");
+        if (state === "equip") openPopover();
+        else closePopover();
+      };
+
+      hobbyCard.addEventListener("click", () => {
+        const cur = (hobbyCard.dataset.state as HobbyState) || "front";
+        const idx = states.indexOf(cur);
+        applyState(states[(idx + 1) % states.length]);
+      });
+
+      popoverCloseBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        applyState("front");
+      });
+
+      // Close when clicking outside both card and popover
+      document.addEventListener("click", (e) => {
+        if (hobbyCard.dataset.state !== "equip") return;
+        const target = e.target as Node;
+        if (!hobbyCard.contains(target) && !equipPopover?.contains(target)) {
+          applyState("front");
+        }
+      });
+
+      // Recompute on resize (layout shifts). No scroll handler needed:
+      // the popover is absolutely positioned within the flow container,
+      // so it scrolls together with the card as part of the page.
+      window.addEventListener("resize", () => {
+        if (hobbyCard.dataset.state === "equip") positionPopover();
+      }, { passive: true });
+    }
+
     setupSiteCard("major-site-card");
-    setupSiteCard("interest-site-card");
     setupSiteCard("social-site-card");
     setupPointerGlow();
+
+    // ─── Anime.js: 3D Tilt + Entrance Animations ─────────────
+    if (!prefersReducedMotion.matches) {
+      // ── 3D Card Tilt (createAnimatable) ──────────────────────
+      // Only for fine-pointer (mouse) users. Creates a live
+      // rotateX/rotateY that tracks the cursor position.
+      if (finePointer.matches) {
+        document.querySelectorAll(".bento-grid .card").forEach((card) => {
+          const el = card as HTMLElement;
+          if (el.dataset.tiltBound === "true") return;
+          el.dataset.tiltBound = "true";
+
+          const tilt = createAnimatable(el, {
+            rotateX: { duration: 350, ease: "out(3)" },
+            rotateY: { duration: 350, ease: "out(3)" },
+          });
+
+          el.addEventListener("pointermove", (e: PointerEvent) => {
+            const rect = el.getBoundingClientRect();
+            tilt.rotateX(((e.clientY - rect.top) / rect.height - 0.5) * -6);
+            tilt.rotateY(((e.clientX - rect.left) / rect.width - 0.5) * 6);
+          });
+
+          el.addEventListener("pointerleave", () => {
+            tilt.rotateX(0);
+            tilt.rotateY(0);
+          });
+        });
+      }
+
+      // ── Scroll-triggered Entrance Animations ─────────────────
+      // Uses IntersectionObserver to fire once when the bento
+      // grid first scrolls into view, then disconnects.
+      const bentoGrid = document.querySelector<HTMLElement>(".bento-grid");
+      if (bentoGrid) {
+        const entranceObserver = new IntersectionObserver(
+          (entries) => {
+            if (!entries[0].isIntersecting) return;
+            entranceObserver.disconnect();
+
+            // 1. Cards stagger float-in
+            animate(".bento-grid .card", {
+              opacity: [0, 1],
+              translateY: [28, 0],
+              scale: [0.97, 1],
+              delay: stagger(65),
+              duration: 700,
+              ease: "outExpo",
+            });
+
+            // 2. Tech stack icons scatter-in (starts 320ms after cards)
+            animate(".stack-cloud li", {
+              opacity: [0, 1],
+              scale: [0.72, 1],
+              delay: stagger(18, { from: "random", start: 340 }),
+              duration: 420,
+              ease: "outBack(1.4)",
+            });
+
+            // 3. Social chips spring bounce-in (starts 420ms after cards)
+            animate(".chips li", {
+              opacity: [0, 1],
+              translateX: [18, 0],
+              scale: [0.9, 1],
+              delay: stagger(80, { start: 440 }),
+              duration: 560,
+              ease: createSpring({ stiffness: 100, damping: 14 }),
+            });
+          },
+          { threshold: 0.08 },
+        );
+
+        entranceObserver.observe(bentoGrid);
+      }
+    }
   });
 </script>

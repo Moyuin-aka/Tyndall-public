@@ -11,7 +11,7 @@ import { createHash } from "node:crypto";
 const ENGLISH_MONTHS =
   "JanuaryFebruaryMarchAprilMayJuneJulyAugustSeptemberOctoberNovemberDecember";
 const STATIC_CHARS =
-  "0123456789年月日…#, Moyuin moyuin.top" +
+  "0123456789年月日…#, Your Name example.com" +
   ENGLISH_MONTHS +
   Object.values(CATEGORY_DISPLAY_NAMES)
     .flatMap((n) => [n.zh, n.en])
@@ -275,7 +275,7 @@ export async function renderOgImage(data: OgCardData): Promise<Buffer> {
                             type: "div",
                             props: {
                               style: { display: "flex", fontSize: 24, color: "#d8d3ea" },
-                              children: "Moyuin",
+                              children: "Your Name",
                             },
                           },
                         ],

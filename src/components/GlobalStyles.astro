@@ -15,6 +15,15 @@
             "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
         --font-serif: var(--font-serif-zh);
         --font-sans: var(--font-sans-zh);
+
+        /* Semantic typography roles
+         * - content: prose and narrative navigation
+         * - control: commands, filters, pagination and form actions
+         * - status: editorial metadata such as language/fallback badges
+         */
+        --font-content: var(--font-serif);
+        --font-control: var(--font-sans);
+        --font-status: var(--font-serif);
     }
 
     html[lang="en"] {
@@ -35,10 +44,21 @@
         box-sizing: border-box;
     }
 
-    /* 全站默认使用更纤细的无衬线字体 */
+    /* 全站正文默认使用衬线字体；动作控件由下方规则切换为无衬线字体 */
     html,
     body {
         font-family: var(--font-serif);
+    }
+
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"] {
+        font-family: var(--font-control);
+    }
+
+    .language-badge {
+        font-family: var(--font-status);
     }
     :root {
         --purple: #a259ec;
@@ -193,6 +213,72 @@
     html.no-transition * {
         transition: none !important;
     }
+
+    /* ── Inline HTML component design tokens (light) ── */
+    :root {
+        --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+        --border-radius-lg: 10px;
+        --border-radius-md: 6px;
+
+        --color-background-primary:   #ffffff;
+        --color-background-secondary: #f4f4f6;
+        --color-background-tertiary:  #eaeaee;
+
+        --color-text-primary:   #1a1a2e;
+        --color-text-secondary: #5c5c78;
+        --color-text-tertiary:  #9a9ab0;
+
+        --color-border-primary:   #c0c0d0;
+        --color-border-secondary: #d8d8e8;
+        --color-border-tertiary:  #ebebf2;
+
+        --color-text-info:         #1d5fa8;
+        --color-background-info:   #ddeeff;
+        --color-border-info:       #90b8e8;
+
+        --color-text-warning:         #92510a;
+        --color-background-warning:   #fef3c7;
+        --color-border-warning:       #f5c06a;
+
+        --color-text-success:         #1a5c34;
+        --color-background-success:   #d1fae5;
+        --color-border-success:       #6ee7b7;
+
+        --color-text-danger:         #b91c1c;
+        --color-background-danger:   #fee2e2;
+        --color-border-danger:       #fca5a5;
+    }
+
+    /* ── dark mode overrides ── */
+    html.dark {
+        --color-background-primary:   #070615;
+        --color-background-secondary: #0f0e20;
+        --color-background-tertiary:  #1a1930;
+
+        --color-text-primary:   #f0effc;
+        --color-text-secondary: #a6a6c1;
+        --color-text-tertiary:  #66668a;
+
+        --color-border-primary:   #38375a;
+        --color-border-secondary: #28274a;
+        --color-border-tertiary:  #1e1d38;
+
+        --color-text-info:         #7ab8f5;
+        --color-background-info:   #162840;
+        --color-border-info:       #3a6090;
+
+        --color-text-warning:         #fbbf24;
+        --color-background-warning:   #2d1f00;
+        --color-border-warning:       #8a5a00;
+
+        --color-text-success:         #4ade80;
+        --color-background-success:   #052e16;
+        --color-border-success:       #166534;
+
+        --color-text-danger:         #f87171;
+        --color-background-danger:   #3b0a0a;
+        --color-border-danger:       #991b1b;
+    }
     body.theme-loaded {
         visibility: visible;
     }
@@ -230,5 +316,35 @@
             font-size: 0.96rem;
             line-height: 1.8;
         }
+    }
+
+    /* ── Apple Music embed ──────────────────────────────────────────
+       Shared by <AppleMusicEmbed> and the ::apple-music markdown
+       directive. Defined globally so Markdown-rendered iframes (which
+       sit outside any scoped component) pick it up too. */
+    .apple-music-embed {
+        width: 100%;
+        max-width: 660px;
+        margin: 1.5rem auto;
+        border-radius: 14px;
+        overflow: hidden;
+        /* Reserve height so the lazy iframe doesn't shift layout. */
+        min-height: var(--am-height, 450px);
+        background: color-mix(in srgb, var(--grey, #888) 8%, transparent);
+    }
+
+    .apple-music-embed iframe {
+        width: 100%;
+        height: var(--am-height, 450px);
+        display: block;
+        border: 0;
+        border-radius: 14px;
+        background: transparent;
+    }
+
+    .apple-music-embed-error {
+        margin: 1rem 0;
+        color: var(--grey);
+        font-size: 0.92rem;
     }
 </style>

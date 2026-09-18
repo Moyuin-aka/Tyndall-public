@@ -234,6 +234,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
   }
 
   .language-badge {
+    font-family: var(--font-status);
     font-size: 0.75rem;
     background: rgba(162, 89, 236, 0.1);
     color: var(--purple);
@@ -268,7 +269,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
   .pagination-info {
     text-align: center;
     font-size: 0.95rem;
-    font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, "LXGW WenKai", Garamond, serif;
+    font-family: var(--font-serif);
     color: var(--grey);
     margin-bottom: 1.5rem;
     letter-spacing: 0.02em;
@@ -293,7 +294,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
     border-radius: 8px;
     text-decoration: none;
     font-size: 0.9rem;
-    font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, "LXGW WenKai", Garamond, serif;
+    font-family: var(--font-control);
     font-weight: 500;
     letter-spacing: 0.02em;
     transition: all 0.24s cubic-bezier(.16,1,.3,1);
@@ -325,7 +326,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
     text-decoration: none;
     color: color-mix(in oklab, var(--text) 70%, var(--purple));
     background-color: transparent;
-    font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, "LXGW WenKai", Garamond, serif;
+    font-family: var(--font-control);
     font-size: 0.95rem;
     font-weight: 500;
     transition: all 0.24s cubic-bezier(.16,1,.3,1);
@@ -355,7 +356,7 @@ function generatePageNumbers(current: number, total: number): (number | 'ellipsi
     min-width: 40px;
     height: 40px;
     color: var(--grey);
-    font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, "LXGW WenKai", Garamond, serif;
+    font-family: var(--font-control);
     font-size: 0.95rem;
     user-select: none;
     opacity: 0.6;

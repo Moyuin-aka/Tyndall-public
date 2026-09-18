@@ -95,9 +95,9 @@ export const POST: APIRoute = async ({ request, url }) => {
   }
 
   const workerUrl =
-    import.meta.env.COMMENT_NOTIFY_URL || "";
+    process.env.COMMENT_NOTIFY_URL || import.meta.env.COMMENT_NOTIFY_URL || "";
   const workerSecret =
-    import.meta.env.COMMENT_NOTIFY_SECRET || "";
+    process.env.COMMENT_NOTIFY_SECRET || import.meta.env.COMMENT_NOTIFY_SECRET || "";
 
   // Optional feature: if not configured, silently skip.
   if (!workerUrl || !workerSecret) {

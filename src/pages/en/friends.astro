@@ -1,21 +1,21 @@
 ---
-import Layout from '@layouts/Layout.astro';
-import { useTranslations } from '@utils/ui';
-import { friends, friendshipGuidelines } from '@data/friends';
-import '@styles/markdown.css';
+import Layout from "@layouts/Layout.astro";
+import { useTranslations } from "@utils/ui";
+import { friends, friendshipGuidelines } from "@data/friends";
+import "@styles/markdown.css";
 
 const t = useTranslations(Astro.currentLocale);
 const guidelines = friendshipGuidelines.en;
 
 // 自动收集所有标签
 const allTags = new Set<string>();
-friends.forEach(friend => {
-  friend.tags?.forEach(tag => allTags.add(tag));
+friends.forEach((friend) => {
+  friend.tags?.forEach((tag) => allTags.add(tag));
 });
 const tags = Array.from(allTags);
 ---
 
-<Layout title={t('friends_title')}>
+<Layout title={t("friends_title")}>
   <main class="friends-container">
     <!-- Hero Section -->
     <header class="friends-hero">
@@ -23,150 +23,163 @@ const tags = Array.from(allTags);
       <h1 class="friends-hero-title">Friendship Links</h1>
     </header>
 
-    <!-- Category Filter - Similar to blog page notice design -->
-    {tags.length > 0 && (
-      <div class="category-filter">
-        <button class="filter-btn active" data-category="all">
-          All ({friends.length})
-        </button>
-        {tags.map(tag => {
-          const count = friends.filter(f => f.tags?.includes(tag)).length;
-          return (
-            <button class="filter-btn" data-category={tag}>
-              {tag} ({count})
+    <!-- Category filter — lightweight pills -->
+    {
+      tags.length > 0 && (
+        <nav class="filter-nav" aria-label="Filter by tag">
+          <button class="filter-pill active" data-category="all">
+            All
+          </button>
+          {tags.map((tag) => (
+            <button class="filter-pill" data-category={tag}>
+              {tag}
             </button>
-          );
-        })}
-      </div>
-    )}
+          ))}
+        </nav>
+      )
+    }
 
     <!-- Friends Grid -->
     <section class="friends-grid">
-      {friends.map((friend) => (
-        <a 
-          href={friend.url} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          class="friend-card"
-          data-tags={friend.tags?.join(',') || ''}
-        >
-          <div class="friend-avatar">
-            {friend.avatar ? (
-              <img src={friend.avatar} alt={friend.name} loading="lazy" />
-            ) : (
-              <div class="avatar-placeholder">{friend.name.charAt(0)}</div>
+      {
+        friends.map((friend, i) => (
+          <a
+            href={friend.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="friend-card"
+            data-tags={friend.tags?.join(",") || ""}
+            style={`animation-delay: ${i * 0.06}s`}
+          >
+            <div class="card-avatar">
+              {friend.avatar ? (
+                <img src={friend.avatar} alt={friend.name} loading="lazy" />
+              ) : (
+                <span class="avatar-letter">{friend.name.charAt(0)}</span>
+              )}
+            </div>
+            <h3 class="card-name">{friend.name}</h3>
+            {friend.description && (
+              <p class="card-desc">{friend.description}</p>
             )}
-          </div>
-          <div class="friend-info">
-            <h3 class="friend-name">{friend.name}</h3>
-            <p class="friend-description">{friend.description}</p>
-          </div>
-        </a>
-      ))}
+            <span class="card-url">{new URL(friend.url).hostname}</span>
+          </a>
+        ))
+      }
     </section>
 
-    <!-- Add Friend Link Section -->
+    <!-- Add Friend Link Section — compact collapsible -->
     <section class="apply-section">
-      <div class="apply-content">
-        <h2>Add Friend Link</h2>
-        
-        <div class="my-info-card">
-          <div class="my-avatar">
+      <button class="apply-toggle" id="apply-toggle" aria-expanded="false">
+        <span class="toggle-text">Add Friend Link</span>
+        <svg class="toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+
+      <div class="apply-panel" id="apply-panel">
+        <div class="my-card">
+          <div class="my-card-avatar">
             <img src={guidelines.myInfo.avatar} alt={guidelines.myInfo.name} />
           </div>
-          <div class="my-details">
-            <h3>{guidelines.myInfo.name}</h3>
-            <p class="my-url">{guidelines.myInfo.url}</p>
-            <p class="my-description">{guidelines.myInfo.description}</p>
+          <div class="my-card-body">
+            <strong>{guidelines.myInfo.name}</strong>
+            <span class="my-card-url">{guidelines.myInfo.url}</span>
+            <em>{guidelines.myInfo.description}</em>
           </div>
         </div>
 
-        <div class="json-box">
-          <div class="json-line"><span class="key">myInfo</span>: <span class="bracket">{'{'}</span></div>
-          <div class="json-line indent">
-            <span class="key">name</span>: <span class="value">'{guidelines.myInfo.name}'</span>,
-          </div>
-          <div class="json-line indent">
-            <span class="key">avatar</span>: <span class="value">'{guidelines.myInfo.avatar}'</span>,
-          </div>
-          <div class="json-line indent">
-            <span class="key">url</span>: <span class="value">'{guidelines.myInfo.url}'</span>,
-          </div>
-          <div class="json-line indent">
-            <span class="key">description</span>: <span class="value">'{guidelines.myInfo.description}'</span>
-          </div>
-          <div class="json-line"><span class="bracket">{'}'}</span>,</div>
+        <div class="info-code">
+          <pre><code>{`{
+  name: '${guidelines.myInfo.name}',
+  avatar: '${guidelines.myInfo.avatar}',
+  url: '${guidelines.myInfo.url}',
+  description: '${guidelines.myInfo.description}'
+}`}</code></pre>
+          <button class="copy-btn" id="copy-info-btn" aria-label="Copy info">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
         </div>
 
-        <p class="apply-tip" set:html={guidelines.howToApply}></p>
+        <p class="apply-tip" set:html={guidelines.howToApply} />
       </div>
     </section>
   </main>
 </Layout>
 
 <script>
-  // Category filter functionality
-  document.addEventListener('astro:page-load', () => {
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    const friendCards = document.querySelectorAll('.friend-card');
+  import { initFriendFilter } from "@utils/friend-filter";
 
-    filterBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const category = btn.getAttribute('data-category');
-        
-        // Update button state
-        filterBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+  function initApplyPanel() {
+    const toggle = document.getElementById("apply-toggle");
+    const panel = document.getElementById("apply-panel");
+    if (!toggle || !panel) return;
 
-        // Filter cards
-        friendCards.forEach(card => {
-          const cardTags = card.getAttribute('data-tags') || '';
-          const tagsArray = cardTags.split(',').filter(t => t);
-
-          if (category === 'all' || tagsArray.includes(category)) {
-            card.style.display = 'flex';
-            // Add fade-in animation
-            card.style.animation = 'fadeIn 0.3s ease';
-          } else {
-            card.style.display = 'none';
-          }
-        });
-      });
+    toggle.addEventListener("click", () => {
+      const expanded = toggle.getAttribute("aria-expanded") === "true";
+      toggle.setAttribute("aria-expanded", String(!expanded));
+      panel.classList.toggle("open");
     });
+
+    // Copy button
+    const copyBtn = document.getElementById("copy-info-btn");
+    const codeEl = panel.querySelector(".info-code code");
+    if (copyBtn && codeEl) {
+      copyBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(codeEl.textContent || "");
+          copyBtn.classList.add("copied");
+          setTimeout(() => copyBtn.classList.remove("copied"), 1500);
+        } catch {}
+      });
+    }
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    initFriendFilter();
+    initApplyPanel();
   });
 </script>
 
 <style>
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
+  /* ─── Container ─── */
   .friends-container {
-    max-width: 1000px;
-    margin: 5rem auto 2rem;
-    padding: 20px;
+    max-width: 960px;
+    margin: 5rem auto 3rem;
+    padding: 0 24px;
   }
 
-  /* Hero Section */
+  /* ─── Hero ─── */
   .friends-hero {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 3.5rem;
+    position: relative;
+  }
+
+  .friends-hero::after {
+    content: "";
+    position: absolute;
+    bottom: -1.4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple), rgba(162, 89, 236, 0.3));
+    border-radius: 2px;
+    opacity: 0.6;
   }
 
   .friends-hero-subtitle {
     font-family: var(--font-serif);
-    font-size: 0.9rem;
-    letter-spacing: 0.1em;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
     color: var(--grey);
     text-transform: uppercase;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
+    opacity: 0.8;
   }
 
   .friends-hero-title {
@@ -175,255 +188,327 @@ const tags = Array.from(allTags);
     font-weight: 700;
     color: var(--text);
     line-height: 1.2;
-    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--text) 0%, var(--grey) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  .friends-hero-description {
-    font-family: var(--font-serif);
-    font-size: 1.1rem;
-    color: var(--grey);
-    opacity: 0.8;
-  }
-
-  /* Category Filter - Similar to blog page notice design */
-  .category-filter {
+  /* ─── Filter Pills ─── */
+  .filter-nav {
     display: flex;
     justify-content: center;
-    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2.5rem;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    padding: 1rem 1.5rem;
-    background: rgba(162, 89, 236, 0.08);
-    border: 1px solid rgba(162, 89, 236, 0.2);
-    border-radius: 8px;
-    margin-bottom: 3rem;
   }
 
-  .filter-btn {
-    font-family: var(--font-serif);
-    padding: 0.5rem 1rem;
+  .filter-pill {
+    font-family: var(--font-control);
+    font-size: 0.85rem;
+    padding: 0.4rem 1rem;
     border-radius: 6px;
-    border: 1px solid rgba(162, 89, 236, 0.2);
+    border: 1px solid rgba(162, 89, 236, 0.15);
     background: transparent;
-    color: var(--text);
-    font-size: 0.9rem;
+    color: var(--grey);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
   }
 
-  .filter-btn:hover {
-    background: rgba(162, 89, 236, 0.1);
-    border-color: rgba(162, 89, 236, 0.3);
-    transform: translateY(-1px);
-  }
-
-  .filter-btn.active {
-    background: rgba(162, 89, 236, 0.15);
-    border-color: rgba(162, 89, 236, 0.4);
+  .filter-pill:hover {
     color: var(--purple);
+    border-color: rgba(162, 89, 236, 0.35);
+    background: rgba(162, 89, 236, 0.06);
+  }
+
+  .filter-pill.active {
+    color: var(--purple);
+    border-color: rgba(162, 89, 236, 0.4);
+    background: rgba(162, 89, 236, 0.1);
     font-weight: 600;
   }
 
-  /* Friends Grid */
+  /* ─── Cards Grid ─── */
   .friends-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.25rem;
     margin-bottom: 4rem;
   }
 
+  /* ─── Card ─── */
   .friend-card {
     display: flex;
-    gap: 1rem;
-    padding: 1.5rem;
-    background: rgba(162, 89, 236, 0.04);
-    border: 1px solid rgba(162, 89, 236, 0.15);
-    border-radius: 12px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1.8rem 1.2rem 1.4rem;
+    border-radius: 16px;
     text-decoration: none;
     color: var(--text);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* glassmorphism */
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow:
+      0 4px 20px -3px rgba(0, 0, 0, 0.04),
+      0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+
+    /* staggered entrance */
+    opacity: 0;
+    animation: cardIn 0.5s ease forwards;
   }
 
-  .friend-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--purple), rgba(162, 89, 236, 0.5));
-    transform: scaleX(0);
-    transition: transform 0.3s ease;
+  @keyframes cardIn {
+    from {
+      opacity: 0;
+      transform: translateY(18px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 
   .friend-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--purple);
-    box-shadow: 0 8px 24px rgba(162, 89, 236, 0.2);
+    transform: translateY(-6px);
+    box-shadow:
+      0 14px 36px -6px rgba(162, 89, 236, 0.14),
+      0 0 0 1px rgba(162, 89, 236, 0.22) inset;
+    background: rgba(255, 255, 255, 0.75);
   }
 
-  .friend-card:hover::before {
-    transform: scaleX(1);
+  .friend-card:hover .card-avatar img,
+  .friend-card:hover .avatar-letter {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(162, 89, 236, 0.25);
   }
 
-  .friend-avatar {
-    flex-shrink: 0;
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: rgba(162, 89, 236, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .friend-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .avatar-placeholder {
-    font-size: 1.5rem;
-    font-weight: 600;
+  .friend-card:hover .card-url {
+    opacity: 1;
     color: var(--purple);
   }
 
-  .friend-info {
-    flex: 1;
-    min-width: 0;
+  /* ─── Avatar ─── */
+  .card-avatar {
+    width: 68px;
+    height: 68px;
+    margin-bottom: 0.9rem;
+    flex-shrink: 0;
   }
 
-  .friend-name {
-    font-family: var(--font-serif);
-    font-size: 1.2rem;
+  .card-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .avatar-letter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    font-size: 1.6rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--text);
+    color: var(--purple);
+    background: rgba(162, 89, 236, 0.1);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .friend-description {
-    font-size: 0.95rem;
+  .card-name {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .card-desc {
+    font-size: 0.88rem;
     color: var(--grey);
     line-height: 1.5;
+    margin-bottom: 0.4rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  /* Add Friend Link Section */
+  .card-url {
+    font-family: ui-monospace, "SF Mono", "Fira Code", monospace;
+    font-size: 0.72rem;
+    color: var(--grey);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+    margin-top: auto;
+  }
+
+  /* ─── Apply Section ─── */
   .apply-section {
-    margin-top: 4rem;
-    padding-top: 3rem;
-    border-top: 2px solid rgba(162, 89, 236, 0.15);
+    border-top: 1px solid rgba(162, 89, 236, 0.12);
+    padding-top: 1.5rem;
   }
 
-  .apply-content {
-    font-family: var(--font-serif);
-  }
-
-  .apply-content h2 {
-    font-family: var(--font-serif);
-    font-size: 2rem;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 2rem;
-    text-align: center;
-  }
-
-  /* My Info Card */
-  .my-info-card {
+  .apply-toggle {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    padding: 2rem;
-    background: rgba(162, 89, 236, 0.06);
-    border: 1px solid rgba(162, 89, 236, 0.2);
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.9rem;
+    border: none;
+    background: transparent;
+    color: var(--grey);
+    font-family: var(--font-control);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
   }
 
-  .my-avatar {
+  .apply-toggle:hover {
+    color: var(--purple);
+  }
+
+  .toggle-icon {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .apply-toggle[aria-expanded="true"] .toggle-icon {
+    transform: rotate(180deg);
+  }
+
+  /* ─── Apply Panel (collapsed by default) ─── */
+  .apply-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease;
+    opacity: 0;
+  }
+
+  .apply-panel.open {
+    max-height: 600px;
+    opacity: 1;
+  }
+
+  /* My Card */
+  .my-card {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    padding: 1.4rem;
+    border-radius: 14px;
+    margin: 0.5rem 0 1rem;
+    background: rgba(162, 89, 236, 0.04);
+    border: 1px solid rgba(162, 89, 236, 0.12);
+  }
+
+  .my-card-avatar {
     flex-shrink: 0;
-    width: 80px;
-    height: 80px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     overflow: hidden;
-    border: 3px solid var(--purple);
+    border: 2px solid rgba(162, 89, 236, 0.3);
   }
 
-  .my-avatar img {
+  .my-card-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
-  .my-details {
-    flex: 1;
+  .my-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-family: var(--font-serif);
   }
 
-  .my-details h3 {
-    font-family: var(--font-serif);
-    font-size: 1.5rem;
-    margin: 0 0 0.5rem 0;
+  .my-card-body strong {
+    font-size: 1.1rem;
     color: var(--text);
   }
 
-  .my-url {
-    font-family: 'Courier New', monospace;
-    font-size: 0.95rem;
+  .my-card-url {
+    font-family: ui-monospace, "SF Mono", "Fira Code", monospace;
+    font-size: 0.8rem;
     color: var(--purple);
-    margin-bottom: 0.5rem;
+    opacity: 0.8;
   }
 
-  .my-description {
-    font-size: 1rem;
+  .my-card-body em {
+    font-size: 0.88rem;
     color: var(--grey);
     font-style: italic;
   }
 
-  /* Friend Link Info Box */
-  .info-box {
+  /* Info Code Block */
+  .info-code {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+
+  .info-code pre {
     background: rgba(162, 89, 236, 0.04);
-    border: 1px solid rgba(162, 89, 236, 0.2);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin: 1.5rem 0;
-    font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
-  }
-
-  .info-row {
-    display: flex;
-    padding: 0.5rem 0;
-    line-height: 1.6;
-  }
-
-  .info-label {
-    color: var(--grey);
-    min-width: 4.5rem;
-    flex-shrink: 0;
-  }
-
-  .info-value {
+    border: 1px solid rgba(162, 89, 236, 0.12);
+    border-radius: 10px;
+    padding: 1.2rem 1.4rem;
+    margin: 0;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.7;
     color: var(--text);
-    word-break: break-all;
-    user-select: all;
+    font-family: ui-monospace, "SF Mono", "Fira Code", monospace;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.7rem;
+    padding: 6px;
+    border: none;
+    background: rgba(162, 89, 236, 0.08);
+    border-radius: 6px;
+    color: var(--grey);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .copy-btn:hover {
+    background: rgba(162, 89, 236, 0.18);
+    color: var(--purple);
+  }
+
+  .copy-btn.copied {
+    color: #28c840;
   }
 
   .apply-tip {
     text-align: center;
-    font-size: 1rem;
-    color: var(--text);
+    font-family: var(--font-serif);
+    font-size: 0.92rem;
+    color: var(--grey);
     line-height: 1.8;
-    padding: 1.5rem;
-    background: rgba(162, 89, 236, 0.04);
-    border-radius: 8px;
-    border: 1px dashed rgba(162, 89, 236, 0.2);
+    padding: 1rem 1.2rem;
+    background: rgba(162, 89, 236, 0.03);
+    border-radius: 10px;
+    border: 1px dashed rgba(162, 89, 236, 0.15);
   }
 
   .apply-tip :global(a) {
@@ -438,113 +523,86 @@ const tags = Array.from(allTags);
     border-bottom-color: var(--purple);
   }
 
-  /* Dark mode adjustments */
+  /* ─── Dark Mode ─── */
   :global(html.dark) .friend-card {
-    background: rgba(162, 89, 236, 0.08);
-    border-color: rgba(162, 89, 236, 0.2);
+    background: rgba(7, 6, 21, 0.4);
+    border-color: rgba(162, 89, 236, 0.06);
+    box-shadow: none;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
 
   :global(html.dark) .friend-card:hover {
-    background: rgba(162, 89, 236, 0.12);
+    background: rgba(162, 89, 236, 0.06);
+    border-color: rgba(162, 89, 236, 0.2);
+    box-shadow: 0 12px 32px -8px rgba(162, 89, 236, 0.15);
   }
 
-  /* Responsive */
+  :global(html.dark) .card-avatar img {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  }
+
+  :global(html.dark) .friend-card:hover .card-avatar img {
+    box-shadow: 0 4px 16px rgba(162, 89, 236, 0.3);
+  }
+
+  :global(html.dark) .my-card {
+    background: rgba(162, 89, 236, 0.06);
+    border-color: rgba(162, 89, 236, 0.18);
+  }
+
+  :global(html.dark) .info-code pre {
+    background: rgba(162, 89, 236, 0.06);
+    border-color: rgba(162, 89, 236, 0.18);
+  }
+
+  /* ─── Responsive ─── */
   @media (max-width: 768px) {
     .friends-hero-title {
-      font-size: 2.5rem;
+      font-size: 2.4rem;
     }
 
     .friends-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.9rem;
     }
 
-    .my-info-card {
+    .friend-card {
+      padding: 1.4rem 0.9rem 1.1rem;
+    }
+
+    .card-avatar {
+      width: 54px;
+      height: 54px;
+    }
+
+    .card-name {
+      font-size: 0.95rem;
+    }
+
+    .card-desc {
+      font-size: 0.82rem;
+    }
+
+    .my-card {
       flex-direction: column;
       text-align: center;
     }
-
-    .my-details h3 {
-      margin-top: 0;
-    }
-
-    .category-filter {
-      padding: 1rem;
-    }
-
-    .filter-btn {
-      font-size: 0.85rem;
-      padding: 0.4rem 0.8rem;
-    }
-
-    /* MyInfo Mobile Adaptation */
-    .apply-section {
-      margin-top: 2rem;
-      padding-top: 2rem;
-    }
-
-    .apply-content h2 {
-      font-size: 1.5rem;
-    }
-
-    .my-avatar {
-      margin-bottom: 0.5rem;
-    }
-
-    .json-box {
-      padding: 1.5em;
-      font-size: 3.2vw;
-      overflow-x: hidden;
-      margin: 1rem 0;
-    }
-
-    .json-line {
-      white-space: nowrap;
-    }
-
-    .json-line.indent {
-      padding-left: 1.5em;
-    }
   }
 
-  /* JSON Box */
-  .json-box {
-    background: rgba(162, 89, 236, 0.04);
-    border: 1px solid rgba(162, 89, 236, 0.2);
-    border-radius: 8px;
-    padding: 1.5em;
-    margin: 1.5rem 0;
-    font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: var(--grey); /* Punctuation becomes grey */
-    transition: all 0.3s ease;
-  }
+  @media (max-width: 420px) {
+    .friends-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.7rem;
+    }
 
-  .json-box:hover {
-    background: rgba(162, 89, 236, 0.06);
-    border-color: rgba(162, 89, 236, 0.3);
-  }
+    .friend-card {
+      padding: 1.2rem 0.7rem 1rem;
+    }
 
-  .json-line {
-    display: flex;
-    align-items: center;
-  }
-
-  .json-line.indent {
-    padding-left: 1.5rem;
-  }
-
-  .key {
-    color: var(--purple);
-    margin-right: 0.5rem;
-  }
-
-  .value {
-    color: var(--text); /* Values become main text color */
-    word-break: break-all;
-  }
-
-  .bracket {
-    color: inherit; /* Inherit grey from json-box */
+    .card-avatar {
+      width: 48px;
+      height: 48px;
+    }
   }
 </style>

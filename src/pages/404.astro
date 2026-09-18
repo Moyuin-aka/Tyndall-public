@@ -35,7 +35,7 @@ const t = useTranslations(Astro.currentLocale);
     font-size: clamp(4rem, 15vw, 8rem);
     font-weight: 500;
     margin: 0;
-    font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', STSong, 'LXGW WenKai', Garamond, 'Times New Roman', Georgia, serif;
+    font-family: var(--font-serif);
     color: var(--title-color, rgba(255, 255, 255, 0.75));
     letter-spacing: 0.04em;
     line-height: 1;
@@ -43,10 +43,6 @@ const t = useTranslations(Astro.currentLocale);
     -webkit-font-smoothing: antialiased;
   }
   
-  .error-code:lang(en) {
-    font-family: 'Noto Serif SC', Georgia, serif;
-  }
-
   .error-message {
     font-size: clamp(1rem, 3vw, 1.25rem);
     color: var(--text-secondary, #6b7280);

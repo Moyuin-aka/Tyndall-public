@@ -1,0 +1,7 @@
+{
+  "updatedAt": "2026-09-01T00:00:00Z",
+  "bookmarks": [
+    { "id": "example-1", "title": "Astro Documentation", "url": "https://docs.astro.build/", "favicon": "/svg/tech/astro.svg", "tags": ["Docs"], "note": "示例收藏 / Example bookmark", "createdAt": "2026-09-01T00:00:00Z" },
+    { "id": "example-2", "title": "MDN Web Docs", "url": "https://developer.mozilla.org/", "favicon": null, "tags": ["Web"], "note": null, "createdAt": "2026-09-01T00:00:00Z" }
+  ]
+}

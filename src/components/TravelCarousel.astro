@@ -1,0 +1,328 @@
+---
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+import type { ExifItem } from "@utils/travel-gallery";
+
+interface Props {
+  id: string;
+  photos: ImageMetadata[];
+  exifData?: ExifItem[];
+  altBase?: string;
+}
+
+const { id, photos, exifData = [], altBase = "Travel photo" } = Astro.props as Props;
+---
+
+<div class="carousel" data-carousel data-carousel-id={id}>
+  <div class="viewport" tabindex="0" aria-label="Photo carousel" role="group">
+    <div class="rail">
+      {
+        photos.map((photo, idx) => {
+          const exif = exifData[idx];
+          const hasExif = exif && (exif.model || exif.aperture || exif.shutter_speed || exif.iso);
+          const aspect = photo.width && photo.height ? photo.width / photo.height : 1.5;
+          return (
+            <figure class="slide" data-slide={idx} data-aspect={aspect.toFixed(4)}>
+              <Image
+                class="img"
+                src={photo}
+                widths={[480, 768, 1080, 1440, 1920]}
+                sizes="(max-width: 960px) 100vw, 700px"
+                format="webp"
+                quality={80}
+                alt={`${altBase} ${idx + 1}`}
+                loading={idx === 0 ? "eager" : "lazy"}
+                decoding="async"
+                fetchpriority={idx === 0 ? "high" : "low"}
+              />
+              {hasExif && (
+                <figcaption class="exif">
+                  {exif.model && <span class="exif-model">{exif.model}</span>}
+                  {(exif.aperture || exif.shutter_speed || exif.iso) && (
+                    <span class="exif-params">
+                      {exif.aperture && <span>f/{exif.aperture}</span>}
+                      {exif.shutter_speed && <span>{exif.shutter_speed}s</span>}
+                      {exif.iso && <span>ISO {exif.iso}</span>}
+                      {exif.focal_length && <span>{exif.focal_length}</span>}
+                    </span>
+                  )}
+                </figcaption>
+              )}
+            </figure>
+          );
+        })
+      }
+    </div>
+  </div>
+  {
+    photos.length > 1 && (
+      <>
+        <button class="nav prev" type="button" aria-label="Previous photo">
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <button class="nav next" type="button" aria-label="Next photo">
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </>
+    )
+  }
+</div>
+
+<style>
+  .carousel {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+    position: relative;
+  }
+
+  .nav {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 28%;
+    display: flex;
+    align-items: center;
+    border: none;
+    margin: 0;
+    padding: 0 1rem;
+    cursor: pointer;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    z-index: 2;
+  }
+  .nav.prev {
+    left: 0;
+    justify-content: flex-start;
+    border-radius: 16px 0 0 16px;
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.3),
+      transparent
+    );
+  }
+  .nav.next {
+    right: 0;
+    justify-content: flex-end;
+    border-radius: 0 16px 16px 0;
+    background: linear-gradient(
+      to left,
+      rgba(0, 0, 0, 0.3),
+      transparent
+    );
+  }
+  .carousel:hover .nav,
+  .nav:focus-visible {
+    opacity: 1;
+  }
+  .nav:focus-visible {
+    outline: 2px solid rgba(162, 89, 236, 0.55);
+    outline-offset: -2px;
+  }
+  .nav svg {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav {
+      transition: none;
+    }
+  }
+
+  .viewport {
+    width: 100%;
+    height: var(--frame-height, 60vh);
+    overflow: auto hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    border-radius: 16px;
+    background: transparent;
+    border: 1px solid color-mix(in oklab, var(--text) 10%, transparent);
+    box-shadow: none;
+    outline: none;
+    transition: height 0.4s ease;
+  }
+  .viewport:focus-visible {
+    outline: 2px solid rgba(162, 89, 236, 0.55);
+    outline-offset: 3px;
+  }
+
+  .rail {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  .slide {
+    margin: 0;
+    flex: 0 0 100%;
+    height: 100%;
+    scroll-snap-align: start;
+    position: relative;
+  }
+
+  .img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .exif {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.8rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%);
+    color: rgba(255, 255, 255, 0.88);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    pointer-events: none;
+  }
+
+  .exif-model {
+    opacity: 0.7;
+  }
+
+  .exif-params {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  @media (max-width: 640px) {
+    .exif {
+      font-size: 0.68rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .viewport {
+      scroll-behavior: auto;
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  function initTravelCarousels() {
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const isMobile = () => window.matchMedia("(max-width: 960px)").matches;
+
+    document.querySelectorAll<HTMLElement>("[data-carousel]").forEach((carousel) => {
+      const viewport = carousel.querySelector(".viewport");
+      const prev = carousel.querySelector(".nav.prev");
+      const next = carousel.querySelector(".nav.next");
+      if (
+        !(viewport instanceof HTMLElement) ||
+        viewport.dataset.bound === "true"
+      ) {
+        return;
+      }
+
+      const grid = carousel.closest(".grid");
+      const target = grid instanceof HTMLElement ? grid : carousel;
+
+      const slides = Array.from(
+        viewport.querySelectorAll("[data-slide]"),
+      );
+
+      const currentAspect = () => {
+        const w = viewport.clientWidth || 1;
+        const idx = Math.round(viewport.scrollLeft / w);
+        const slide = slides[idx];
+        if (!(slide instanceof HTMLElement)) return null;
+        const ar = parseFloat(slide.dataset.aspect || "");
+        return Number.isFinite(ar) && ar > 0 ? ar : null;
+      };
+
+      const applyFrameHeight = () => {
+        const ar = currentAspect();
+        if (!ar) return;
+        const w = viewport.clientWidth;
+        if (!w) return;
+        const maxH = window.innerHeight * (isMobile() ? 0.85 : 0.7);
+        const h = Math.min(w / ar, maxH);
+        target.style.setProperty("--frame-height", `${Math.round(h)}px`);
+      };
+
+      // initial
+      applyFrameHeight();
+      // safety: re-run after first image decodes (clientWidth becomes accurate)
+      requestAnimationFrame(applyFrameHeight);
+
+      // on snap end (debounced)
+      let scrollTimer: ReturnType<typeof setTimeout>;
+      viewport.addEventListener(
+        "scroll",
+        () => {
+          clearTimeout(scrollTimer);
+          scrollTimer = setTimeout(applyFrameHeight, 90);
+        },
+        { passive: true },
+      );
+
+      // on resize (debounced via rAF)
+      let resizePending = false;
+      const ro = new ResizeObserver(() => {
+        if (resizePending) return;
+        resizePending = true;
+        requestAnimationFrame(() => {
+          resizePending = false;
+          applyFrameHeight();
+        });
+      });
+      ro.observe(viewport);
+
+      // arrows
+      if (prev instanceof HTMLElement && next instanceof HTMLElement) {
+        const step = (dir: number) => {
+          viewport.scrollBy({
+            left: dir * viewport.clientWidth,
+            behavior: reduce ? "auto" : "smooth",
+          });
+        };
+        prev.addEventListener("click", () => step(-1));
+        next.addEventListener("click", () => step(1));
+      }
+
+      viewport.dataset.bound = "true";
+    });
+  }
+
+  initTravelCarousels();
+  document.addEventListener("astro:page-load", initTravelCarousels);
+</script>

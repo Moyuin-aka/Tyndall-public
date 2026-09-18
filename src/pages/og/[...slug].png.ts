@@ -18,10 +18,10 @@ export const GET: APIRoute = async ({ props, site }) => {
   const { post } = resolvePostForLocale(blogPosts, translationKey, "zh");
   if (!post) return new Response("Not found", { status: 404 });
 
-  const domain = site ? new URL(site).host : "yoursite.com";
+  const domain = site ? new URL(site).host : "example.com";
   const png = await renderPostOgImage(post, "zh", domain);
 
-  return new Response(png, {
+  return new Response(new Uint8Array(png), {
     headers: {
       "Content-Type": "image/png",
       "Cache-Control": "public, max-age=31536000, immutable",

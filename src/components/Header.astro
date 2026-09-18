@@ -24,7 +24,7 @@ const currentLocaleForUrls = Astro.currentLocale || defaultLocale;
         <span class="bar"></span>
       </button>
 
-      <a class="brand" href={t("nav_home_url")}>Moyuin</a>
+      <a class="brand" href={t("nav_home_url")}>Your Name</a>
 
       <ul class="nav-links">
         <li>
@@ -82,6 +82,15 @@ const currentLocaleForUrls = Astro.currentLocale || defaultLocale;
               >
                 <span class="active-indicator"></span>
                 {t("nav_notes")}
+              </a>
+            </li>
+            <li>
+              <a
+                href={getRelativeLocaleUrl(currentLocaleForUrls, "travel")}
+                class={`more-item ${Astro.url.pathname.startsWith(getRelativeLocaleUrl(currentLocaleForUrls, "travel")) ? "is-active" : ""}`}
+              >
+                <span class="active-indicator"></span>
+                {t("nav_travel")}
               </a>
             </li>
             <li>

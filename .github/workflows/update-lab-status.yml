@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   update-status:
+    if: ${{ vars.ENABLE_LAB_SYNC == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

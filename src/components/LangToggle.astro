@@ -182,14 +182,12 @@ const canonicalPath = translationKey ? `/${contentSection}/${translationKey}` : 
 </style>
 
 <script>
-  // 下拉开合逻辑 ----------------------------------------------
   let _controller: AbortController | null = null;
 
   function setupLangDropdown(root: ParentNode) {
     const dropdown = root.querySelector<HTMLElement>(".lang-dropdown");
     if (!dropdown) return;
 
-    // 只初始化一次事件监听器
     if (!dropdown.dataset.initialized) {
       dropdown.dataset.initialized = "true";
       const toggle = dropdown.querySelector<HTMLElement>(".dropdown-toggle");

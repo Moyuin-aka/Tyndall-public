@@ -1,0 +1,55 @@
+---
+// Official Apple Music embed player.
+//
+// Pass any public `music.apple.com` URL (the "Share → Copy Link" link, or an
+// album/song/playlist URL). No Apple Developer account needed — the embed
+// plays 30s previews for everyone, and full tracks for signed-in listeners.
+//
+// Usage in .astro:
+//   <AppleMusicEmbed url="https://music.apple.com/us/album/noman/1648876363" />
+// In Markdown posts, use the ::apple-music directive instead.
+import { toAppleMusicEmbedUrl, defaultEmbedHeight } from "@utils/appleMusic.mjs";
+
+interface Props {
+  url: string;
+  height?: number;
+  title?: string;
+  /** Render eagerly instead of lazily (e.g. above the fold). */
+  eager?: boolean;
+}
+
+const { url, height, title = "Apple Music", eager = false } = Astro.props;
+
+const embedUrl = toAppleMusicEmbedUrl(url);
+const h = height ?? defaultEmbedHeight(url);
+---
+
+{
+  embedUrl ? (
+    <div class="apple-music-embed" style={`--am-height:${h}px`}>
+      <iframe
+        src={embedUrl}
+        title={title}
+        height={h}
+        allow="autoplay *; encrypted-media *; clipboard-write"
+        frameborder="0"
+        loading={eager ? "eager" : "lazy"}
+        sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
+      />
+    </div>
+  ) : (
+    <a class="apple-music-embed-fallback" href={url} target="_blank" rel="noopener">
+      ↗ Apple Music
+    </a>
+  )
+}
+
+<!-- Visual styles live globally in GlobalStyles.astro (.apple-music-embed),
+     shared with the ::apple-music Markdown directive. -->
+<style>
+  .apple-music-embed-fallback {
+    display: inline-block;
+    margin: 1rem 0;
+    font-weight: 500;
+  }
+</style>

@@ -1,6 +1,7 @@
 ---
 import GlobalStyles from "@components/GlobalStyles.astro";
 import { ClientRouter } from "astro:transitions";
+import SpeedInsights from "@vercel/speed-insights/astro";
 import "@styles/fonts.css";
 
 interface Props {
@@ -35,7 +36,7 @@ const isDev = import.meta.env.DEV;
     <meta property="og:title" content={title} />
     <meta property="og:type" content={ogType} />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:site_name" content="Moyuin's Blog" />
+    <meta property="og:site_name" content="Your Name's Blog" />
     {desc && <meta property="og:description" content={desc} />}
     {ogImage && <meta property="og:image" content={ogImage} />}
     {ogImage && <meta property="og:image:width" content="1200" />}
@@ -44,6 +45,8 @@ const isDev = import.meta.env.DEV;
     <meta name="twitter:title" content={title} />
     {desc && <meta name="twitter:description" content={desc} />}
     {ogImage && <meta name="twitter:image" content={ogImage} />}
+
+    <slot name="head" />
 
     <!-- Critical: Inline minimal theme script to prevent FOUC -->
     <script is:inline>
@@ -103,14 +106,14 @@ const isDev = import.meta.env.DEV;
     </script>
 
     <!-- Favicons and PWA manifest -->
-    <link rel="icon" href="/favicon_io/favicon.ico" sizes="any" />
+    <link rel="icon" href="/examples/avatar.svg" sizes="any" />
     <link
       rel="icon"
-      type="image/png"
+      type="image/svg+xml"
       sizes="32x32"
-      href="/favicon_io/favicon-32x32.png"
+      href="/examples/avatar.svg"
     />
-    <link rel="apple-touch-icon" href="/favicon_io/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href="/examples/avatar.svg" />
     <link rel="manifest" href="/manifest.json" />
 
     <!-- RSS Feed -->
@@ -119,14 +122,14 @@ const isDev = import.meta.env.DEV;
         <link
           rel="alternate"
           type="application/rss+xml"
-          title="Moyuin's Blog RSS Feed"
+          title="Your Name's Blog RSS Feed"
           href="/en/rss.xml"
         />
       ) : (
         <link
           rel="alternate"
           type="application/rss+xml"
-          title="Moyuin 的博客 RSS Feed"
+          title="Your Name 的博客 RSS Feed"
           href="/rss.xml"
         />
       )
@@ -134,6 +137,12 @@ const isDev = import.meta.env.DEV;
 
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <!-- Apple Music embeds: warm up DNS/TLS so the player boots faster -->
+    <link rel="preconnect" href="https://embed.music.apple.com" />
+    <link rel="dns-prefetch" href="https://embed.music.apple.com" />
+    <link rel="dns-prefetch" href="https://music.apple.com" />
+    <link rel="dns-prefetch" href="https://amp-api-edge.music.apple.com" />
+    <link rel="dns-prefetch" href="https://is1-ssl.mzstatic.com" />
 
     <!-- Critical CSS -->
     <GlobalStyles />
@@ -149,31 +158,17 @@ const isDev = import.meta.env.DEV;
       <link rel="stylesheet" href="/fonts/google-fonts.css" />
     </noscript>
 
-    <!-- instant.page: 鼠标悬停 65ms 即开始预加载，实现瞬间切换 -->
-    <script src="https://instant.page/5.2.0" type="module" defer></script>
-
-    <!-- 资源状态管理 -->
-    <script>
-      // 简化的资源管理，避免与按需加载冲突
-      if (typeof window !== "undefined") {
-        import("@utils/smart-preload").catch(() => {
-          // 静默失败，不影响主要功能
-        });
-      }
-    </script>
-
-    <slot name="head" />
+    <!-- Prefetch is handled by Astro's ClientRouter — no need for instant.page -->
   </head>
   <body class="has-header">
+    <SpeedInsights />
     <Header translationKey={translationKey} />
     <slot />
     <Footer />
     <!-- Smooth page transitions with built-in animations -->
     <ClientRouter />
 
-    <!-- 优化 ViewTransitions 的过渡效果 -->
     <style is:global>
-      /* 更丝滑的页面切换动画 */
       @media (prefers-reduced-motion: no-preference) {
         ::view-transition-old(root),
         ::view-transition-new(root) {
@@ -182,12 +177,10 @@ const isDev = import.meta.env.DEV;
         }
       }
 
-      /* 旧页面：淡出 + 轻微缩小 */
       ::view-transition-old(root) {
         animation-name: page-fade-out;
       }
 
-      /* 新页面：淡入 + 轻微放大进入 */
       ::view-transition-new(root) {
         animation-name: page-fade-in;
       }
@@ -256,12 +249,6 @@ const isDev = import.meta.env.DEV;
         root.classList.toggle("light-forced", themeState.isUserSelectedLight);
         root.setAttribute("data-theme", isDark ? "dark" : "light");
         root.style.colorScheme = isDark ? "dark" : "light";
-
-        var ownerDoc = root.ownerDocument || document;
-        var themeMeta = ownerDoc.querySelector('meta[name="theme-color"]');
-        if (themeMeta) {
-          themeMeta.setAttribute("content", isDark ? "#070615" : "#ffffff");
-        }
       }
 
       function readThemeStateFromRoot(root) {

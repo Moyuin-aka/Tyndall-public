@@ -1,15 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // Supabase 客户端配置
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('缺少 Supabase 环境变量配置，请检查 .env 文件');
-}
-
-// 创建 Supabase 客户端实例
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// No network/client initialization with missing credentials. Features remain available once configured.
+export const supabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+const client = supabaseConfigured ? createClient(supabaseUrl, supabaseAnonKey) : null;
+export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, property) {
+    if (!client) throw new Error('Configure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY to enable this feature');
+    const value = Reflect.get(client, property);
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+});
 
 // Memos 数据类型定义
 export interface Memo {
@@ -36,6 +40,7 @@ export interface MemoResource {
  * @returns 
  */
 export async function getPublicMemos(limit = 50): Promise<Memo[]> {
+  if (!supabaseConfigured) return [];
   const { data, error } = await supabase
     .from('memos')
     .select('*')
@@ -264,14 +269,43 @@ export async function getSession() {
  * @param provider 'github' | 'google'
  */
 export async function signInWithOAuth(provider: 'github' | 'google') {
+  const redirectUrl = new URL(window.location.href);
+
+  // OAuth grants are returned in the URL hash. Reusing the full current URL can
+  // therefore feed a stale grant back into the next login attempt. It also
+  // makes Supabase replace article anchors with its own auth hash. Always use a
+  // clean, stable article URL and let the comments module restore the viewport.
+  redirectUrl.hash = '';
+  ['code', 'error', 'error_code', 'error_description'].forEach((key) => {
+    redirectUrl.searchParams.delete(key);
+  });
+
+  try {
+    sessionStorage.setItem(
+      'comment_oauth_return',
+      JSON.stringify({
+        path: `${redirectUrl.pathname}${redirectUrl.search}`,
+        createdAt: Date.now(),
+      }),
+    );
+  } catch {
+    // Storage may be disabled in hardened/private browsing. Authentication can
+    // still complete; only automatic viewport restoration will be unavailable.
+  }
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: window.location.href,
+      redirectTo: redirectUrl.toString(),
     },
   });
 
   if (error) {
+    try {
+      sessionStorage.removeItem('comment_oauth_return');
+    } catch {
+      // Ignore unavailable browser storage.
+    }
     console.error('OAuth 登录失败:', error);
     throw error;
   }

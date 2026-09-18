@@ -68,9 +68,25 @@ const postDateLabel = post.data.pubDate.toLocaleDateString(locale, {
 const rawContent = post.body;
 const hasLatex = /\$.*?\$|\$\$[\s\S]*?\$\$/.test(rawContent);
 const hasMermaid = /```mermaid/.test(rawContent);
+
+const postUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: post.data.title,
+  description: post.data.description || "",
+  datePublished: post.data.pubDate.toISOString(),
+  ...(post.data.updatedDate && { dateModified: post.data.updatedDate.toISOString() }),
+  author: { "@type": "Person", name: "Your Name", url: Astro.site?.toString() },
+  url: postUrl,
+  mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+  inLanguage: post.data.lang === "zh" ? "zh-CN" : "en-US",
+};
 ---
 
-<Layout title={post.data.title} translationKey={translationKey}>
+<Layout title={post.data.title} desc={post.data.description} translationKey={translationKey} ogType="article">
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
   {
     hasLatex && (
       <link
@@ -84,6 +100,7 @@ const hasMermaid = /```mermaid/.test(rawContent);
   }
 
   <main class="post-container">
+    <article>
     <div class="post-topbar">
       <a href={notesIndexUrl} class="post-back-link" aria-label={backToNotesLabel}>
         <span class="post-back-icon" set:html={ICONS.arrowLeft} />
@@ -121,6 +138,7 @@ const hasMermaid = /```mermaid/.test(rawContent);
     <div class="markdown-content">
       <Content />
     </div>
+    </article>
 
     <hr class="comment-divider" />
 
@@ -302,8 +320,7 @@ const hasMermaid = /```mermaid/.test(rawContent);
   }
 
   .post-meta-date .post-meta-text {
-    font-family: "Noto Serif SC", "Noto Serif", ui-serif, "Source Han Serif SC", "Songti SC", "STSong",
-      "Hiragino Mincho ProN", Georgia, "Times New Roman", Times, serif;
+    font-family: var(--font-serif);
     letter-spacing: 0.01em;
   }
 

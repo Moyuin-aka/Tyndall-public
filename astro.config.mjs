@@ -1,22 +1,30 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import vercel from '@astrojs/vercel';
 import sitemap from '@astrojs/sitemap';
+import { travelPreprocess } from './src/integrations/travel-preprocess.mjs';
+import { travelRoutesWatch } from './src/integrations/travel-routes-watch.mjs';
 import remarkMath from 'remark-math';
 import remarkBreaks from 'remark-breaks';
+import remarkDirective from 'remark-directive';
+import { remarkAppleMusic } from './src/utils/remark-apple-music.mjs';
+import { remarkTyndallDirectives } from './src/utils/remark-tyndall-directives.mjs';
+import { remarkTravelMap } from './src/utils/remark-travel-map.mjs';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import { rehypeOptimizeImages } from './src/utils/rehype-optimize-images.mjs';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://yoursite.com',
+  site: process.env.PUBLIC_SITE_URL || 'https://example.com',
   output: 'static',
+  adapter: vercel({}),
   vite: {
     optimizeDeps: {
       include: ['marked', 'sanitize-html'],
     },
   },
-  integrations: [sitemap()],
+  integrations: [sitemap(), travelPreprocess(), travelRoutesWatch()],
   i18n: {
     locales: ['en', 'zh'],
     defaultLocale: 'zh',
@@ -28,7 +36,10 @@ export default defineConfig({
     // Keep source punctuation intact. Astro's default smartypants turns straight
     // quotes into typographic quotes, which breaks mixed CJK/English content.
     smartypants: false,
-    remarkPlugins: [remarkMath, remarkBreaks],
+    // remarkDirective must precede remarkAppleMusic / remarkTyndallDirectives /
+    // remarkTravelMap: it parses ::apple-music{...}, :kbd[...] / :::details,
+    // and ::travel-map{...} syntax into the directive nodes those plugins transform.
+    remarkPlugins: [remarkMath, remarkBreaks, remarkDirective, remarkAppleMusic, remarkTyndallDirectives, remarkTravelMap],
     rehypePlugins: [
       [rehypeKatex, {
         strict: false,  // 容错模式

@@ -1,5 +1,7 @@
 ---
 const { limit = null, compact = false } = Astro.props;
+const opdsUrl = import.meta.env.PUBLIC_OPDS_URL || '/examples/books.xml';
+const booksBase = import.meta.env.PUBLIC_BOOKS_BASE || '/examples';
 
 // 简单的 i18n
 const locale = Astro.currentLocale || 'zh';
@@ -9,13 +11,13 @@ const recentlyReadingLabel = locale === 'en' ? 'Currently Reading' : '最近在�
   <div id="reading-list" class="reading-list-grid"></div>
 </div>
 
-<script define:vars={{ limit, compact, recentlyReadingLabel }}>
+<script define:vars={{ limit, compact, recentlyReadingLabel, opdsUrl, booksBase }}>
   async function fetchRecentlyRead() {
     const readingListContainer = document.getElementById('reading-list');
     if (!readingListContainer) return;
 
     try {
-      const response = await fetch('https://YOURSITE/books/opds/shelf/1');
+      const response = await fetch(opdsUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -44,7 +46,7 @@ const recentlyReadingLabel = locale === 'en' ? 'Currently Reading' : '最近在�
         booksHtml += `
           <div class="book-card ${compactClass}">
             <a href="${doubanUrl}" class="book-link" target="_blank" rel="noopener noreferrer" title="在豆瓣上查看《${title}》">
-              <img src="https://YOURSITE/books${coverImageUrl}" alt="Cover of ${title}" class="book-cover"/>
+              <img src="${booksBase}${coverImageUrl}" alt="Cover of ${title}" class="book-cover"/>
             </a>
             ${compact ? `<h3 class="reading-label">${recentlyReadingLabel}</h3>` : ''}
             <div class="book-info">

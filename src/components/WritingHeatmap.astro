@@ -1,0 +1,141 @@
+---
+import heatmapData from '@data/writing-heatmap.json';
+
+const { t } = Astro.props;
+
+interface Day {
+  date: string;
+  count: number;
+}
+
+const days: Day[] = heatmapData.days || [];
+const countByDate = new Map(days.map((d) => [d.date, d.count]));
+
+const WEEKS = 26;
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+// Align the grid end to the upcoming Saturday so columns are full weeks.
+const endOfWeek = new Date(today);
+endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
+const start = new Date(endOfWeek);
+start.setDate(endOfWeek.getDate() - WEEKS * 7 + 1);
+
+const cells: { date: string; count: number }[] = [];
+for (let i = 0; i < WEEKS * 7; i++) {
+  const d = new Date(start);
+  d.setDate(start.getDate() + i);
+  const iso = d.toISOString().slice(0, 10);
+  cells.push({ date: iso, count: countByDate.get(iso) || 0 });
+}
+
+const maxCount = Math.max(1, ...cells.map((c) => c.count));
+
+function level(count: number): number {
+  if (count <= 0) return 0;
+  const ratio = count / maxCount;
+  if (ratio > 0.75) return 4;
+  if (ratio > 0.5) return 3;
+  if (ratio > 0.25) return 2;
+  return 1;
+}
+
+const totalCount = days.reduce((sum, d) => sum + d.count, 0);
+const activeDays = days.filter((d) => d.count > 0).length;
+
+const weeks: { date: string; count: number }[][] = [];
+for (let w = 0; w < WEEKS; w++) {
+  weeks.push(cells.slice(w * 7, w * 7 + 7));
+}
+---
+
+<div class="writing-heatmap">
+  <div class="heatmap-header">
+    <h3 class="heatmap-title">{t('lab_heatmap_title')}</h3>
+    <span class="heatmap-summary">{totalCount} {t('lab_heatmap_commits')} · {activeDays} {t('lab_heatmap_active_days')}</span>
+  </div>
+  <div class="heatmap-scroll">
+    <div class="heatmap-grid">
+      {weeks.map((week) => (
+        <div class="heatmap-column">
+          {week.map((cell) => (
+            <span
+              class={`heatmap-cell level-${level(cell.count)}`}
+              title={`${cell.date} · ${cell.count}`}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  .writing-heatmap {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 20px;
+    padding: 1.5rem 1.75rem;
+    backdrop-filter: blur(10px);
+  }
+
+  :global(.dark) .writing-heatmap {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .heatmap-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .heatmap-title {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .heatmap-summary {
+    font-size: 0.85rem;
+    color: var(--grey);
+    font-family: var(--font-mono);
+  }
+
+  .heatmap-scroll {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .heatmap-grid {
+    display: flex;
+    gap: 3px;
+    width: max-content;
+  }
+
+  .heatmap-column {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .heatmap-cell {
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  :global(.dark) .heatmap-cell {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .heatmap-cell.level-1 { background: rgba(162, 89, 236, 0.3); }
+  .heatmap-cell.level-2 { background: rgba(162, 89, 236, 0.5); }
+  .heatmap-cell.level-3 { background: rgba(162, 89, 236, 0.75); }
+  .heatmap-cell.level-4 { background: rgb(162, 89, 236); }
+</style>

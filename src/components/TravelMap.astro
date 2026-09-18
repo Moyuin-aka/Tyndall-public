@@ -1,0 +1,191 @@
+---
+/**
+ * 旅行行程地图的加载器组件。
+ *
+ * 没有自己的可见模板——地图的挂载点 `.travel-map-embed[data-travel-map]` 是
+ * remark-travel-map.mjs 直接输出在 <Content /> 里的，这个组件只负责把
+ * MapLibre 的 JS/CSS 打包进页面，并在客户端遍历挂载点完成渲染。
+ * 由 blog/[...slug].astro 检测到正文里有 ::travel-map{...} 时才会渲染本组件，
+ * 避免没用到地图的文章也背上 maplibre-gl 这个体积较大的依赖。
+ */
+import 'maplibre-gl/dist/maplibre-gl.css';
+---
+
+<script>
+  import { renderTravelMap } from '@utils/travel-map-client';
+  import type { TravelMapData } from '@utils/travel-map-schema';
+
+  function initTravelMaps() {
+    document.querySelectorAll<HTMLElement>('[data-travel-map]').forEach((el) => {
+      if (el.dataset.travelMapBound === 'true') return;
+
+      const script = el.querySelector('script[type="application/json"]');
+      if (!script?.textContent) return;
+
+      let data: TravelMapData;
+      try {
+        data = JSON.parse(script.textContent);
+      } catch {
+        return;
+      }
+
+      el.dataset.travelMapBound = 'true';
+      renderTravelMap(el, data);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTravelMaps);
+  } else {
+    initTravelMaps();
+  }
+
+  document.addEventListener('astro:page-load', initTravelMaps);
+</script>
+
+<style>
+  :global(.travel-map-embed) {
+    position: relative;
+    width: 100%;
+    height: var(--tm-height, 620px);
+    margin: 1.5rem 0;
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+  }
+
+  :global(.travel-map-embed .tm-map) {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* 图例：玻璃卡片配方来自 lab.astro 的 .service-card，左下角浮层 */
+  :global(.tm-legend) {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    max-width: calc(100% - 24px);
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: var(--border-radius-lg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:
+      0 4px 20px -2px rgba(0, 0, 0, 0.02),
+      0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  }
+  html.dark :global(.tm-legend) {
+    background: rgba(30, 30, 30, 0.2);
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow:
+      0 4px 20px -2px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  }
+
+  /* 图例按钮：徽章配方来自 BlogList.astro 的 .category-badge / .pagination-number.active */
+  :global(.tm-legend__pill) {
+    font-family: var(--font-control);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: rgba(162, 89, 236, 0.1);
+    color: var(--purple);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  :global(.tm-legend__pill:hover) {
+    background: rgba(162, 89, 236, 0.2);
+    transform: translateY(-1px);
+  }
+  :global(.tm-legend__pill[aria-pressed='true']) {
+    background-color: rgba(162, 89, 236, 0.15);
+    border-color: rgba(162, 89, 236, 0.4);
+  }
+  :global(.tm-legend__pill:focus-visible) {
+    outline: 2px solid rgba(162, 89, 236, 0.55);
+    outline-offset: 2px;
+  }
+
+  /* 标记：JS 动态创建，拿不到 scoped style 属性，必须 :global() */
+  :global(.tm-marker) {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+  }
+  :global(.tm-marker__badge) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--marker-color, #a259ec);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+  :global(.tm-marker__label) {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.85);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  html.dark :global(.tm-marker__label) {
+    background: rgba(20, 20, 20, 0.85);
+    color: var(--text);
+  }
+  :global(.tm-marker:focus-visible) {
+    outline: 2px solid rgba(162, 89, 236, 0.55);
+    outline-offset: 2px;
+  }
+
+  /* 弹窗内容：MapLibre 生成的 DOM，同样要 :global() */
+  :global(.tm-popup__title) {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+  }
+  :global(.tm-popup__note) {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--grey);
+  }
+  :global(.maplibregl-popup-content) {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: var(--border-radius-md);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    font-family: var(--font-sans);
+    color: var(--text);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
+  }
+  html.dark :global(.maplibregl-popup-content) {
+    background: rgba(30, 30, 30, 0.85);
+  }
+  :global(.maplibregl-popup-tip) {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.tm-legend__pill),
+    :global(.tm-marker) {
+      transition: none !important;
+    }
+  }
+</style>

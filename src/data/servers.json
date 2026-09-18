@@ -1,0 +1,10 @@
+{
+  "updatedAt": "2026-09-01T00:00:00Z",
+  "systems": [
+    { "id": "example-node", "name": "Example Node (demo)", "status": "up", "cpu": 20, "mem": 42, "disk": 30, "updated": "2026-09-01T00:00:00Z", "history": [
+      { "at": "2026-09-01T00:00:00Z", "cpu": 10, "mem": 40, "disk": 30 },
+      { "at": "2026-09-01T00:10:00Z", "cpu": 25, "mem": 41, "disk": 30 },
+      { "at": "2026-09-01T00:20:00Z", "cpu": 20, "mem": 42, "disk": 30 }
+    ] }
+  ]
+}

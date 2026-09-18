@@ -1,0 +1,23 @@
+name = "telegram-memos-bot"
+main = "worker.js"
+compatibility_date = "2026-02-01"
+
+[observability]
+enabled = true
+
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "your-memos-bucket"
+
+[[durable_objects.bindings]]
+name = "MEDIA_GROUPS"
+class_name = "MediaGroupAggregator"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["MediaGroupAggregator"]
+
+# 首次部署前使用 wrangler secret put 配置以下变量（不要提交实际值）：
+# TELEGRAM_WEBHOOK_SECRET（同时传给 Telegram setWebhook 的 secret_token）
+# R2_PUBLIC_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL,
+# TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID

@@ -62,7 +62,7 @@ export async function GET(context) {
   const lastBuildDate = enPosts.length > 0 ? enPosts[0].data.pubDate : new Date();
   
   return rss({
-    title: "Moyuin",
+    title: "Your Name",
     description: 'Floating or Hovering, with no origin and no destination.',
     site: context.site,
     xmlns: {
@@ -82,18 +82,22 @@ export async function GET(context) {
         pubDate: post.data.pubDate,
         link: `/en/blog/${linkSlug}/`,
         categories: post.data.category ? [post.data.category] : [],
-        author: 'Moyuin - en',
-        customData: `<dc:creator>Moyuin</dc:creator>
+        author: 'Your Name - en',
+        customData: `<dc:creator>Your Name</dc:creator>
         <slash:comments>0</slash:comments>`,
       };
     }),
     customData: `<language>en-us</language>
     <atom:link href="${context.site}en/rss.xml" rel="self" type="application/rss+xml" />
-    <copyright><![CDATA[© ${new Date().getFullYear()} Moyuin. All rights reserved.]]></copyright>
-    <webMaster>me@moyuin.top</webMaster>
+    <copyright><![CDATA[© ${new Date().getFullYear()} Your Name. All rights reserved.]]></copyright>
+    <webMaster>me@example.com</webMaster>
     <lastBuildDate>${lastBuildDate.toUTCString()}</lastBuildDate>
     <pubDate>${lastBuildDate.toUTCString()}</pubDate>
-    <generator><![CDATA[Astro Feed Generator (Modified by Moyuin)]]></generator>`,
+    <follow_challenge>
+    <feedId>198470139602333696</feedId>
+    <userId>152623330881389568</userId>
+    </follow_challenge>
+    <generator><![CDATA[Astro Feed Generator (Modified by Your Name)]]></generator>`,
     
   });
 }

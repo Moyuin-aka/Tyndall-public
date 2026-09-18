@@ -62,7 +62,7 @@ export async function GET(context) {
   const lastBuildDate = zhPosts.length > 0 ? zhPosts[0].data.pubDate : new Date();
   
   return rss({
-    title: 'Moyuin',
+    title: 'Your Name',
     description: '缥缈,游荡,没有来路与归处。',
     site: context.site,
     xmlns: {
@@ -82,17 +82,21 @@ export async function GET(context) {
         pubDate: post.data.pubDate,
         link: `/blog/${linkSlug}/`,
         categories: post.data.category ? [post.data.category] : [],
-        author: 'Moyuin',
-        customData: `<dc:creator>Moyuin</dc:creator>
+        author: 'Your Name',
+        customData: `<dc:creator>Your Name</dc:creator>
         <slash:comments>0</slash:comments>`,
       };
     }),
     customData: `<language>zh-cn</language>
     <atom:link href="${context.site}rss.xml" rel="self" type="application/rss+xml" />
-    <copyright><![CDATA[© ${new Date().getFullYear()} Moyuin. All rights reserved.]]></copyright>
-    <webMaster>me@moyuin.top</webMaster>
+    <copyright><![CDATA[© ${new Date().getFullYear()} Your Name. All rights reserved.]]></copyright>
+    <webMaster>me@example.com</webMaster>
     <lastBuildDate>${lastBuildDate.toUTCString()}</lastBuildDate>
     <pubDate>${lastBuildDate.toUTCString()}</pubDate>
-    <generator><![CDATA[Astro Feed Generator (Modified by Moyuin)]]></generator>`,
+    <follow_challenge>
+    <feedId>198460993970662400</feedId>
+    <userId>152623330881389568</userId>
+    </follow_challenge>
+    <generator><![CDATA[Astro Feed Generator (Modified by Your Name)]]></generator>`,
   });
 }

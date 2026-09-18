@@ -1,0 +1,321 @@
+---
+// "现在在做" — a bento card showing the current activity (Switch game, an
+// article being read, a video, …). Keeps the `card--mbti` class so it inherits
+// the grid slot + all responsive rules of the card it replaces.
+const locale = Astro.currentLocale === 'en' ? 'en' : 'zh';
+---
+
+<article class="card card--mbti card--now" data-lang={locale} data-state="loading">
+  <p class="now-kicker">{locale === 'en' ? 'Now' : '现在'}</p>
+
+  <div class="now-poster">
+    <img class="now-img" alt="" loading="lazy" decoding="async" hidden />
+    <span class="now-emoji"></span>
+  </div>
+
+  <div class="now-text">
+    <span class="now-state">
+      <span class="now-dot"></span>
+      <span class="now-verb"></span>
+      <span class="now-source"></span>
+    </span>
+    <p class="now-title"></p>
+    <span class="now-time"></span>
+  </div>
+  <div class="now-music" hidden>
+    <span class="now-music-icon" aria-hidden="true">♫</span>
+    <div><span class="now-music-label">{locale === 'en' ? 'On repeat, right now' : '此刻，耳机里'}</span><p class="now-music-track"></p></div>
+  </div>
+</article>
+
+<script>
+  import { getNowSnapshot, type NowSnapshot } from '@utils/switch-presence';
+  import { gamePosters, appIcons, kindMeta, type NowKind } from '@data/now';
+
+  let timer: ReturnType<typeof setInterval> | undefined;
+  let controller: AbortController | undefined;
+  let expireTimer: ReturnType<typeof setTimeout> | undefined;
+  let generation = 0;
+  const posters = new Map<string, string>();
+
+  // Explicit local fixtures only: localhost without a query reads the real API.
+  function fixture(): NowSnapshot | null {
+    if (!['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) return null;
+    const p = new URLSearchParams(location.search);
+    if (!p.has('kind') && !p.has('game') && !p.has('app') && !p.has('now')) return null;
+    if (p.get('now') === 'idle' || p.get('now') === 'stale' || p.get('game') === '') {
+      return { state: p.get('now') === 'stale' ? 'stale' : 'idle', item: null, music: null };
+    }
+    const requested = p.get('kind') || (p.has('game') ? 'game' : p.has('app') ? 'browsing' : 'writing');
+    const kind = (Object.hasOwn(kindMeta, requested) ? requested : 'other') as NowKind;
+    return {
+      state: 'live',
+      item: { kind, title: p.get('title') || p.get('game') || p.get('app') || '写作',
+        source: p.get('source') || 'Obsidian', image: p.get('image') || undefined,
+        startedAt: new Date(Date.now() - 23 * 60_000).toISOString() },
+      music: p.has('music') ? { state: 'playing', title: p.get('music') || 'A quiet afternoon', artist: 'Apple Music', album: '' } : null,
+    };
+  }
+
+  function stop() {
+    generation++;
+    if (timer) clearInterval(timer);
+    if (expireTimer) clearTimeout(expireTimer);
+    controller?.abort(); controller = undefined;
+  }
+
+  async function render() {
+    if (document.hidden || controller) return;
+    const root = document.querySelector<HTMLElement>('.card--now');
+    if (!root) return;
+    const current = generation;
+    const request = new AbortController(); controller = request;
+    const deadline = setTimeout(() => request.abort(), 8000);
+    try {
+      const snapshot = fixture() || await getNowSnapshot(request.signal);
+      if (generation !== current || !root.isConnected) return;
+      if (expireTimer) clearTimeout(expireTimer);
+      const en = root.dataset.lang === 'en';
+      const img = root.querySelector<HTMLImageElement>('.now-img')!;
+      const emoji = root.querySelector<HTMLElement>('.now-emoji')!;
+      const verb = root.querySelector<HTMLElement>('.now-verb')!;
+      const source = root.querySelector<HTMLElement>('.now-source')!;
+      const title = root.querySelector<HTMLElement>('.now-title')!;
+      const time = root.querySelector<HTMLElement>('.now-time')!;
+      const music = root.querySelector<HTMLElement>('.now-music')!;
+      const item = snapshot.item;
+      root.dataset.state = snapshot.state;
+      root.dataset.hasImage = 'false';
+      img.hidden = true; img.onerror = null; emoji.textContent = '';
+      root.onclick = null; root.style.cursor = '';
+      music.hidden = !snapshot.music || item?.kind === 'music';
+      root.querySelector<HTMLElement>('.now-music-track')!.textContent = snapshot.music
+        ? `${snapshot.music.title} — ${snapshot.music.artist}` : '';
+      if (!item) {
+        emoji.textContent = '☾';
+        verb.textContent = en ? 'Away for a moment' : '暂时没有状态';
+        source.textContent = '';
+        title.textContent = en ? 'Somewhere beyond the screen.' : '此刻，生活在屏幕之外。';
+        time.textContent = snapshot.state === 'unavailable' ? (en ? 'Connection unavailable' : '暂时无法连接') : '';
+        return;
+      }
+      const meta = kindMeta[item.kind];
+      verb.textContent = en ? meta.en : meta.zh;
+      source.textContent = item.source ? `· ${item.source}` : '';
+      title.textContent = item.kind === 'game' && item.title.includes('/') ? item.title.split('/')[0].trim() : item.title;
+      if (en && ['coding', 'vibe', 'writing', 'ai'].includes(item.kind)) title.textContent = item.source || meta.en;
+      const started = Date.parse(item.startedAt || '');
+      time.textContent = Number.isFinite(started)
+        ? (en ? `For ${Math.max(1, Math.floor((Date.now() - started) / 60_000))} min` : `已持续 ${Math.max(1, Math.floor((Date.now() - started) / 60_000))} 分钟`)
+        : (en ? 'Updated just now' : '刚刚同步');
+      const fallback = appIcons[item.title] || meta.icon;
+      emoji.textContent = fallback;
+      let poster = gamePosters[item.title] || item.image || '';
+      if (!poster && item.kind === 'game') {
+        if (!posters.has(item.title)) {
+          try {
+            const r = await fetch(`/api/now-playing?poster=${encodeURIComponent(item.title)}`, { signal: request.signal });
+            posters.set(item.title, r.ok ? (await r.json()).image || '' : '');
+          } catch { posters.set(item.title, ''); }
+        }
+        poster = posters.get(item.title) || '';
+      }
+      if (generation !== current || !root.isConnected) return;
+      if (poster) {
+        img.src = poster; img.alt = item.title; img.hidden = false; emoji.textContent = '';
+        root.dataset.hasImage = item.kind === 'browsing' ? 'icon' : 'true';
+        img.onerror = () => { img.hidden = true; emoji.textContent = fallback; root.dataset.hasImage = 'false'; };
+      }
+      if (snapshot.expiresAt) {
+        const remaining = Date.parse(snapshot.expiresAt) - Date.now();
+        expireTimer = setTimeout(() => {
+          // Never leave a green live indicator on a suspended/background page.
+          root.dataset.state = 'stale'; music.hidden = true; img.hidden = true;
+          root.dataset.hasImage = 'false'; emoji.textContent = '☾'; source.textContent = ''; time.textContent = '';
+          verb.textContent = en ? 'Away for a moment' : '暂时没有状态';
+          title.textContent = en ? 'Somewhere beyond the screen.' : '此刻，生活在屏幕之外。';
+        }, Math.max(0, remaining));
+      }
+    } finally {
+      clearTimeout(deadline);
+      if (controller === request) controller = undefined;
+    }
+  }
+  function start() { stop(); void render(); timer = setInterval(() => void render(), 20_000); }
+  document.addEventListener('astro:page-load', start);
+  document.addEventListener('astro:before-swap', stop);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) void render(); });
+</script>
+
+<style>
+  .card--now {
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .now-music {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    margin-top: 0.9rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid rgba(127, 127, 127, 0.2);
+    min-width: 0;
+  }
+  .now-music[hidden] { display: none; }
+  .now-music > div { min-width: 0; }
+  .now-music-icon { font-size: 1.3rem; color: #559b83; }
+  .now-music-label { font-size: 0.62rem; color: var(--grey); letter-spacing: 0.08em; }
+  .now-music-track { margin: 0.18rem 0 0; font-size: 0.74rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .now-kicker {
+    margin: 0 0 0.85rem;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--grey);
+    opacity: 0.8;
+  }
+
+  .now-poster {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 130px;
+    border-radius: 16px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: rgba(127, 127, 127, 0.12);
+    box-shadow: 0 10px 26px -12px rgba(0, 0, 0, 0.5);
+  }
+  .now-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+  .now-img:not([hidden]) {
+    display: block;
+  }
+  .now-emoji {
+    font-size: 2.8rem;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.25));
+  }
+  .now-emoji:empty {
+    display: none;
+  }
+
+  /* No-poster states (app icon / idle / game without art): drop the big
+     empty box and show a centred rounded tile instead — either a resolved
+     icon image or the emoji fallback. */
+  .card--now[data-has-image='false'] .now-poster,
+  .card--now[data-has-image='icon'] .now-poster {
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+    min-height: 0;
+  }
+  .card--now[data-has-image='icon'] .now-img {
+    width: 108px;
+    height: 108px;
+    object-fit: cover;
+    border-radius: 28px;
+    box-shadow:
+      0 16px 34px -14px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  .card--now[data-has-image='false'] .now-emoji {
+    width: 108px;
+    height: 108px;
+    display: grid;
+    place-items: center;
+    font-size: 3.4rem;
+    border-radius: 28px;
+    background:
+      radial-gradient(120% 120% at 50% 0%, rgba(162, 89, 236, 0.22), transparent 70%),
+      rgba(127, 127, 127, 0.12);
+    box-shadow:
+      0 16px 34px -14px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Quiet loading state before the client fills in data — no icon, just a
+     gently breathing poster box (avoids a placeholder-emoji flash). */
+  .card--now[data-state='loading'] .now-poster {
+    animation: now-breathe 1.3s ease-in-out infinite;
+  }
+  @keyframes now-breathe {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.9; }
+  }
+
+  .now-text {
+    margin-top: 0.9rem;
+  }
+
+  .now-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--grey);
+  }
+  .card--now[data-state='live'] .now-verb {
+    color: #2ecc71;
+  }
+  .now-source {
+    color: var(--grey);
+    opacity: 0.75;
+    font-weight: 500;
+  }
+  .now-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #9aa0a6;
+    flex-shrink: 0;
+  }
+  .card--now[data-state='live'] .now-dot {
+    background: #2ecc71;
+    animation: now-pulse 2s infinite;
+  }
+  @keyframes now-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.5); }
+    70% { box-shadow: 0 0 0 7px rgba(46, 204, 113, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+  }
+
+  .now-title {
+    margin: 0.35rem 0 0.2rem;
+    font-family: var(--font-serif);
+    font-size: 1.02rem;
+    font-weight: 600;
+    line-height: 1.32;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .now-time {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--grey);
+    opacity: 0.85;
+  }
+  .now-time:empty {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card--now[data-state='live'] .now-dot,
+    .card--now[data-state='loading'] .now-poster {
+      animation: none;
+    }
+  }
+</style>

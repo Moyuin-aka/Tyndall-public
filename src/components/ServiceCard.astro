@@ -1,25 +1,64 @@
 ---
 import { ICONS } from '@utils/icons';
-const { service, t } = Astro.props;
+const { service, t, compact = false } = Astro.props;
 
 const status = service.status?.state || 'unknown';
 const statusKey = `status_${status === 'up' ? 'online' : (status === 'down' ? 'offline' : 'unknown')}`;
 const serviceDescKey = `services.${service.name.toLowerCase().replace(/[^a-z0-9_]+/g, '_')}.desc`;
 ---
 
-<a href={service.url} class="service-card" target={service.target || '_blank'} rel="noopener noreferrer">
+<a href={service.url} class={`service-card ${compact ? 'compact' : ''}`} target={service.target || '_blank'} rel="noopener noreferrer">
     <div class="card-content">
         <div class="card-header">
             <div class="card-icon" set:html={service.icon_svg || ''}></div>
             <h3 class="card-title">{service.name || 'Unnamed Service'}</h3>
         </div>
-        <p class="card-desc">{t(serviceDescKey, { defaultValue: service.desc })}</p>
+        {!compact && <p class="card-desc">{t(serviceDescKey, { defaultValue: service.desc })}</p>}
     </div>
     <div class="card-footer">
         <div class="status">
             <span class={`status-dot ${status}`}></span>
-            <span class="status-text">{t(statusKey, { defaultValue: status })}</span>
+            {!compact && <span class="status-text">{t(statusKey, { defaultValue: status })}</span>}
         </div>
         <div class="external-link-icon" set:html={ICONS.externalLink}></div>
     </div>
 </a>
+
+<style>
+    .service-card.compact {
+        min-height: unset;
+        padding: 0.7rem 0.9rem;
+    }
+
+    .service-card.compact .card-header {
+        margin-bottom: 0;
+    }
+
+    .service-card.compact .card-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .service-card.compact .card-title {
+        font-size: 0.85rem;
+    }
+
+    .service-card.compact .card-footer {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
+
+    .service-card.compact .status {
+        background: none;
+        padding: 0;
+    }
+
+    .service-card.compact .status-dot {
+        margin-right: 0;
+    }
+
+    .service-card.compact .external-link-icon svg {
+        width: 14px;
+        height: 14px;
+    }
+</style>

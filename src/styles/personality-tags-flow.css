@@ -1,0 +1,2065 @@
+  /* ─── Container ─────────────────────────────────────────── */
+  .personality-flow-container {
+    margin-top: 5rem;
+    padding: 0;
+    /* Containing block for the absolutely-positioned equip popover. */
+    position: relative;
+  }
+
+  .section-head {
+    max-width: 42rem;
+    margin: 0 auto 2.5rem;
+    text-align: center;
+  }
+
+  .section-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.03em;
+  }
+
+  .section-lead {
+    margin: 0.75rem auto 0;
+    max-width: 30rem;
+    font-size: 1rem;
+    line-height: 1.9;
+    color: var(--grey);
+    opacity: 0.85;
+  }
+
+  /* ─── Grid ───────────────────────────────────────────────── */
+  .bento-grid {
+    display: grid;
+    width: min(100%, 1060px);
+    margin: 0 auto;
+    gap: 1rem;
+    grid-template-columns: 240px 1fr 1fr 220px;
+    grid-template-rows: 260px minmax(216px, auto) minmax(248px, auto);
+    grid-template-areas:
+      "mbti motto motto reading"
+      "mbti major interest reading"
+      "current current social social";
+  }
+
+  /* ─── Card Base ──────────────────────────────────────────── */
+  .card {
+    --glow-x: 50%;
+    --glow-y: 50%;
+    --glow-opacity: 0;
+    --card-glow-size-x: 220px;
+    --card-glow-size-y: 180px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    border-radius: 28px;
+    overflow: hidden;
+    transition:
+      box-shadow 0.3s ease,
+      border-color 0.3s ease,
+      color 0.25s ease;
+
+    /* Dark glassmorphism */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      linear-gradient(155deg, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+      rgba(14, 10, 28, 0.65);
+    box-shadow:
+      0 24px 56px -36px rgba(0, 0, 0, 0.85),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    color: rgba(255, 255, 255, 0.88);
+    text-decoration: none;
+  }
+
+  .card--site {
+    padding: 0;
+  }
+
+  .card--site.card--mbti,
+  .card--site.card--social {
+    --site-card-padding: 1.5rem;
+  }
+
+  .card--site.card--mbti {
+    padding-bottom: 0;
+  }
+
+  .card--site.card--major,
+  .card--site.card--interest {
+    --site-card-padding: 1.25rem;
+  }
+
+  .card--motto:focus-visible,
+  .card--current:focus-visible,
+  .card--hobby:focus-visible,
+  .site-open-button:focus-visible,
+  .site-window-link:focus-visible,
+  .site-window-close:focus-visible {
+    outline: 2px solid rgba(162, 89, 236, 0.6);
+    outline-offset: 4px;
+  }
+
+  /* Accent glow */
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse var(--card-glow-size-x) var(--card-glow-size-y) at var(--glow-x) var(--glow-y),
+      var(--card-accent, rgba(162, 89, 236, 0.25)) 0%,
+      transparent 72%
+    );
+    opacity: var(--glow-opacity);
+    transition: opacity 0.28s ease;
+  }
+
+  /* ─── Grid Areas ─────────────────────────────────────────── */
+  .card--mbti {
+    grid-area: mbti;
+  }
+  .card--motto {
+    grid-area: motto;
+  }
+  .card--reading {
+    grid-area: reading;
+  }
+  .card--major {
+    grid-area: major;
+  }
+  .card--interest {
+    grid-area: interest;
+  }
+  .card--current {
+    grid-area: current;
+  }
+  .card--social {
+    grid-area: social;
+  }
+
+  /* ─── Card Accents ───────────────────────────────────────── */
+  .card--mbti {
+    --card-accent: rgba(177, 141, 238, 0.35);
+  }
+  .card--motto {
+    --card-accent: rgba(220, 183, 108, 0.3);
+  }
+  .card--reading {
+    --card-accent: rgba(108, 149, 214, 0.3);
+  }
+  .card--major {
+    --card-accent: rgba(146, 122, 222, 0.32);
+    --trait-icon-color: rgba(206, 188, 255, 0.9);
+    --trait-bg-icon-color: rgba(214, 197, 255, 0.24);
+    --trait-glow-color: rgba(146, 122, 222, 0.26);
+  }
+  .card--interest {
+    --card-accent: rgba(114, 176, 149, 0.32);
+    --trait-icon-color: rgba(171, 234, 206, 0.88);
+    --trait-bg-icon-color: rgba(186, 242, 220, 0.24);
+    --trait-glow-color: rgba(114, 176, 149, 0.24);
+  }
+  .card--hobby {
+    --card-accent: rgba(188, 180, 230, 0.24);
+  }
+  .card--current {
+    --card-accent: rgba(225, 152, 104, 0.24);
+    --card-glow-size-x: 260px;
+    --card-glow-size-y: 196px;
+  }
+  .card--social {
+    --card-accent: rgba(208, 124, 168, 0.3);
+    --bg-icon-color: rgba(231, 162, 196, 0.16);
+    --card-glow-size-x: 260px;
+    --card-glow-size-y: 196px;
+  }
+
+  /* ─── Shared Typography ──────────────────────────────────── */
+  .kicker {
+    margin: 0 0 0.4rem;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.42);
+    position: relative;
+    z-index: 1;
+    transition: color 0.25s ease;
+  }
+
+  h3 {
+    margin: 0.15rem 0 0.35rem;
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: rgba(255, 255, 255, 0.95);
+    position: relative;
+    z-index: 1;
+    transition: color 0.25s ease;
+  }
+
+  .detail {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.58);
+    position: relative;
+    z-index: 1;
+    transition: color 0.25s ease;
+  }
+
+  .viewer-corner {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.3rem;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.3);
+    transition:
+      color 0.25s ease,
+      border-color 0.25s ease,
+      background 0.25s ease,
+      transform 0.25s ease;
+    z-index: 2;
+  }
+
+  .viewer-corner svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .card--link:hover .kicker,
+  .card--motto:hover .kicker,
+  .card--current:hover .kicker {
+    color: rgba(255, 255, 255, 0.58);
+  }
+
+  .card--link:hover h3,
+  .card--motto:hover h3,
+  .card--current:hover h3 {
+    color: rgba(255, 255, 255, 1);
+  }
+
+  .card--link:hover .detail,
+  .card--motto:hover .detail,
+  .card--current:hover .detail {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .card--link:hover .viewer-corner {
+    color: rgba(255, 255, 255, 0.74);
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .site-card-face {
+    position: absolute;
+    inset: 0;
+    transition:
+      opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+  }
+
+  .site-card-face--front {
+    padding: var(--site-card-padding, 1.5rem);
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .site-card-face--back {
+    padding: 0;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    background: rgba(8, 9, 18, 0.18);
+  }
+
+  .card--site.is-window .site-card-face--front {
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+  }
+
+  .card--site.is-window .site-card-face--back {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .site-open-button {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    color: inherit;
+  }
+
+  /* ─── MBTI Card ──────────────────────────────────────────── */
+  .card--mbti {
+    justify-content: flex-start;
+    padding-bottom: 1.25rem;
+  }
+
+  .mbti-top {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mbti-title {
+    font-size: 2rem !important;
+    letter-spacing: 0.04em;
+    margin: 0.15rem 0 0.2rem !important;
+  }
+
+  .mbti-detail {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.08rem 0.16rem;
+    max-width: 12.5rem;
+  }
+
+  .mbti-separator {
+    opacity: 0.46;
+  }
+
+  .mbti-detail-line {
+    display: inline-block;
+  }
+
+  /* SVG free-floats from the bottom, no container */
+  .mbti-img {
+    position: absolute;
+    bottom: 1.15rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 220px;
+    height: auto;
+    filter: drop-shadow(0 -6px 20px rgba(162, 89, 236, 0.18));
+    transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .card--mbti:hover .mbti-img {
+    transform: translateX(-50%) translateY(-8px) scale(1.04) rotate(-2deg);
+  }
+
+  /* ─── Motto Card ─────────────────────────────────────────── */
+  .card--motto {
+    cursor: pointer;
+    min-height: 260px;
+    /* Reset button defaults */
+    -webkit-appearance: none;
+    appearance: none;
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    /* Restore card look */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      linear-gradient(155deg, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+      rgba(14, 10, 28, 0.65);
+    box-shadow:
+      0 24px 56px -36px rgba(0, 0, 0, 0.85),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+  }
+
+  /* Two-panel cross-fade container */
+  .motto-face {
+    position: absolute;
+    inset: 1.5rem; /* match card padding */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition:
+      opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+  }
+
+  .motto-face--front {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .motto-face--back {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+  }
+
+  /* Toggled state */
+  .card--motto.is-diary .motto-face--front {
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+  }
+
+  .card--motto.is-diary .motto-face--back {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .motto-inner {
+    margin-top: auto;
+  }
+
+  .motto-text {
+    margin: 0 0 0.55rem;
+    padding: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.3rem, 2.2vw, 1.65rem);
+    font-weight: 500;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.95);
+    white-space: pre-line;
+    border: none;
+  }
+
+  .motto-foot {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+  }
+
+  /* Diary face */
+  .diary-scroll {
+    flex: 1;
+    overflow-y: auto;
+    /* Hide scrollbar but keep scrollability */
+    scrollbar-width: none;
+  }
+
+  .diary-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .diary-p {
+    margin: 0 0 0.8rem;
+    font-family: var(--font-serif);
+    font-size: 0.92rem;
+    line-height: 1.85;
+    color: rgba(255, 255, 255, 0.75);
+    text-align: justify;
+  }
+
+  .diary-p:last-child {
+    margin-bottom: 0;
+  }
+
+  .diary-highlight {
+    color: rgba(196, 168, 255, 0.95);
+    font-weight: 500;
+  }
+
+  .bg-quote {
+    position: absolute;
+    bottom: -2.5rem;
+    right: 0.5rem;
+    font-family: var(--font-serif);
+    font-size: 12rem;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.03);
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+  }
+
+  /* ─── Reading Card ───────────────────────────────────────── */
+  .card--reading {
+    justify-content: center;
+    padding-bottom: 1.25rem;
+  }
+
+  .reading-info {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .reading-desc-text {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.5;
+  }
+
+  /* Book cover fills the lower card space — centred, no side layout */
+  .reading-cover-wrap {
+    margin-top: 1rem;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .card--reading .recently-read-container {
+    width: 100%;
+  }
+
+  .card--reading .reading-list-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .card--reading .book-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .card--reading .book-cover {
+    width: 100%;
+    max-width: 150px;
+    border-radius: 10px;
+  }
+
+  .card--reading .book-info {
+    padding: 0;
+    text-align: center;
+  }
+
+  .card--reading .book-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 0.2rem;
+  }
+
+  .card--reading .book-author {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.48);
+  }
+
+  /* ─── Trait Cards (Major / Interest) ────────────────────── */
+  .card--major,
+  .card--interest:not(.card--hobby) {
+    justify-content: flex-start;
+    gap: 0;
+    padding: 1.25rem;
+    min-height: 216px;
+  }
+
+  .card--major h3,
+  .card--interest:not(.card--hobby) h3 {
+    font-size: 1.18rem;
+    line-height: 1.22;
+  }
+
+  .card--major .detail,
+  .card--interest:not(.card--hobby) .detail {
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+
+  .trait-copy {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    max-width: min(11.5rem, calc(100% - 5.8rem));
+  }
+
+  .trait-illustration {
+    position: absolute;
+    right: -0.2rem;
+    bottom: -0.15rem;
+    width: 7.2rem;
+    height: 7.2rem;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+    transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .trait-illustration::before {
+    content: "";
+    position: absolute;
+    inset: 1.75rem 0.45rem 0.2rem 1.75rem;
+    border-radius: 999px;
+    background: radial-gradient(
+      circle at 50% 50%,
+      var(--trait-glow-color, rgba(255, 255, 255, 0.18)) 0%,
+      transparent 74%
+    );
+    filter: blur(11px);
+    opacity: 0.9;
+  }
+
+  .trait-bg-icon {
+    position: relative;
+    z-index: 1;
+    position: absolute;
+    right: 0.7rem;
+    bottom: 0.6rem;
+    width: 4.8rem;
+    height: 4.8rem;
+    color: var(--trait-bg-icon-color, rgba(255, 255, 255, 0.22));
+    filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.12));
+    transform: rotate(-10deg);
+    transition:
+      transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+      color 0.25s ease;
+  }
+
+  .card--major:hover .trait-illustration,
+  .card--interest:hover .trait-illustration {
+    transform: translateY(-4px) scale(1.03);
+  }
+
+  .card--major:hover .trait-bg-icon,
+  .card--interest:hover .trait-bg-icon {
+    transform: rotate(-6deg) scale(1.05);
+  }
+
+  /* ─── Hobby Card ────────────────────────────────────────── */
+  .card--hobby {
+    cursor: pointer;
+    min-height: 216px;
+    padding: 1.25rem;
+    -webkit-appearance: none;
+    appearance: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+
+  .card--hobby:hover .kicker {
+    color: rgba(255, 255, 255, 0.54);
+  }
+
+  .hobby-face {
+    position: absolute;
+    inset: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition:
+      opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+  }
+
+  .hobby-face--front {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    z-index: 1;
+  }
+
+  .hobby-face--back {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    z-index: 2;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .card--hobby.is-revealed .hobby-face--front {
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+  }
+
+  .card--hobby.is-revealed .hobby-face--back {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* ─── Hobby Card: Equipment Face (3rd state) ─────────────── */
+  .hobby-face--equip {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    z-index: 3;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .card--hobby.is-equip .hobby-face--front {
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+  }
+
+  .card--hobby.is-equip .hobby-face--back {
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+  }
+
+  .card--hobby.is-equip .hobby-face--equip {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .equip-title {
+    font-size: 0.88rem !important;
+    margin: 0 0 0.35rem !important;
+    color: rgba(255, 255, 255, 0.82);
+    font-weight: 600;
+  }
+
+  .equip-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.36rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    /* prevent overflow: ensure grid fills exactly the face inset */
+    width: 100%;
+    min-width: 0;
+  }
+
+  .equip-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.38rem 0.2rem 0.32rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.035);
+    min-width: 0;
+    overflow: hidden;
+    transition:
+      background 0.25s ease,
+      border-color 0.25s ease,
+      transform 0.25s ease;
+    cursor: default;
+  }
+
+  .equip-popover.is-open .equip-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .equip-logo-wrap {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .equip-logo {
+    display: block;
+    width: 1.25rem;
+    height: 1.25rem;
+    object-fit: contain;
+    opacity: 0.72;
+    filter: grayscale(1) brightness(0) invert(1);
+    transition: opacity 0.25s ease;
+  }
+
+  .equip-popover.is-open .equip-item:hover .equip-logo {
+    opacity: 0.92;
+  }
+
+  /* external-src logos (e.g. iconify) are already grey — skip invert */
+  .equip-logo--external {
+    filter: grayscale(1) opacity(0.72);
+  }
+
+  html.dark .equip-logo--external {
+    filter: grayscale(1) brightness(1.4) opacity(0.72);
+  }
+
+  html:not(.dark) .equip-logo--external {
+    filter: grayscale(1) opacity(0.48);
+  }
+
+  .equip-name {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: rgba(255, 255, 255, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .equip-label {
+    font-size: 0.49rem;
+    line-height: 1.25;
+    color: rgba(255, 255, 255, 0.36);
+    text-align: center;
+    /* allow wrap so text isn't clipped horizontally */
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+    padding: 0 0.1rem;
+  }
+
+  .hobby-copy {
+    max-width: min(13rem, calc(100% - 6.9rem));
+  }
+
+  .hobby-art {
+    position: absolute;
+    right: -0.15rem;
+    bottom: -0.05rem;
+    width: 7.15rem;
+    height: 7.15rem;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .hobby-art-glow {
+    position: absolute;
+    inset: 1.65rem 0.45rem 0.45rem 1.65rem;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(218, 204, 249, 0.16) 0%, transparent 72%);
+    filter: blur(12px);
+  }
+
+  .hobby-icon-grid {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.7rem;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hobby-icon-cell {
+    width: 2.85rem;
+    height: 2.85rem;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition:
+      transform 0.32s ease,
+      border-color 0.28s ease,
+      background 0.28s ease;
+  }
+
+  .hobby-icon {
+    display: block;
+    width: 1.2rem;
+    height: 1.2rem;
+    object-fit: contain;
+    opacity: 0.76;
+    filter: brightness(0) invert(1);
+    transition:
+      opacity 0.28s ease,
+      transform 0.28s ease;
+  }
+
+  .hobby-icon--list {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .hobby-icon-cell--feather .hobby-icon,
+  .hobby-list-icon--feather .hobby-icon {
+    opacity: 0.84;
+  }
+
+  .hobby-icon-cell--palette .hobby-icon,
+  .hobby-list-icon--palette .hobby-icon {
+    opacity: 0.7;
+  }
+
+  .hobby-icon-cell--bird .hobby-icon,
+  .hobby-list-icon--bird .hobby-icon {
+    opacity: 0.72;
+  }
+
+  .hobby-icon-cell--paw .hobby-icon,
+  .hobby-list-icon--paw .hobby-icon {
+    opacity: 0.74;
+  }
+
+  .hobby-list {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 0.46rem;
+    margin: 0.04rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hobby-list-item {
+    display: grid;
+    grid-template-columns: 1.1rem minmax(0, 1fr);
+    gap: 0.72rem;
+    align-items: center;
+  }
+
+  .hobby-list-icon {
+    width: 1.05rem;
+    height: 1.05rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hobby-list-text {
+    min-width: 0;
+    font-size: 0.79rem;
+    line-height: 1.38;
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .card--hobby:hover .hobby-icon-cell {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .card--hobby:hover .hobby-icon {
+    opacity: 0.92;
+    transform: scale(1.04);
+  }
+
+  /* ─── Wide Cards (Current / Social) ─────────────────────── */
+  .card--social {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 1.5rem;
+  }
+
+  .site-card-face--front-social {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 1.5rem;
+    padding: var(--site-card-padding, 1.5rem);
+  }
+
+  .card--current {
+    cursor: pointer;
+    min-height: 248px;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+  }
+
+  .current-face {
+    position: absolute;
+    inset: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+    transition:
+      opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+  }
+
+  .current-face--front {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .current-face--back {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+  }
+
+  .card--current.is-chart .current-face--front {
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+  }
+
+  .card--current.is-chart .current-face--back {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .wide-copy {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .chips {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.48rem;
+    align-self: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .chips li {
+    padding: 0.38rem 0.9rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    transition:
+      background 0.2s,
+      border-color 0.2s;
+  }
+
+  .stack-head {
+    position: relative;
+    z-index: 1;
+    max-width: 28rem;
+  }
+
+  .stack-head h3 {
+    margin-top: 0;
+  }
+
+  .stack-cloud {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    margin-top: 0.25rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.38rem 0.5rem;
+  }
+
+  .stack-link {
+    width: 1.6rem;
+    height: 1.6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: opacity 0.22s ease;
+  }
+
+  .stack-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    display: block;
+    opacity: 0.82;
+    filter: grayscale(1);
+    transition:
+      opacity 0.22s ease,
+      filter 0.22s ease;
+  }
+
+  .stack-icon--external {
+    filter: grayscale(1) contrast(1.02);
+  }
+
+  .stack-link:hover .stack-icon {
+    opacity: 1;
+  }
+
+  .chart-panel {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.65rem;
+    min-height: 100%;
+  }
+
+  .chart-shell {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.1rem 0 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .chart-shell::-webkit-scrollbar {
+    display: none;
+  }
+
+  .github-chart {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    opacity: 0.92;
+    filter: hue-rotate(244deg) saturate(0.72) brightness(1.02) contrast(1.04);
+  }
+
+  .bg-icon {
+    position: absolute;
+    right: 1.5rem;
+    bottom: -0.4rem;
+    width: 7rem;
+    height: 7rem;
+    color: var(--bg-icon-color, rgba(255, 255, 255, 0.1));
+    pointer-events: none;
+    user-select: none;
+    transform: rotate(-15deg);
+    transition:
+      opacity 0.4s ease,
+      transform 0.5s ease;
+    z-index: 0;
+  }
+
+  /* ─── Site Window ───────────────────────────────────────── */
+  .site-window-chrome {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3.4rem;
+    padding: 0.72rem 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.035);
+    cursor: pointer;
+  }
+
+  .site-window-dots {
+    display: inline-flex;
+    gap: 0.32rem;
+  }
+
+  .site-window-dots span {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .site-window-dots span:nth-child(1) {
+    background: rgba(235, 114, 135, 0.82);
+  }
+
+  .site-window-dots span:nth-child(2) {
+    background: rgba(232, 190, 96, 0.82);
+  }
+
+  .site-window-dots span:nth-child(3) {
+    background: rgba(105, 196, 145, 0.82);
+  }
+
+  .site-window-host {
+    display: block;
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.42);
+  }
+
+  .site-window-bar {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.14rem;
+  }
+
+  .site-window-title {
+    margin: 0;
+    overflow: hidden;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.82);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .site-window-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+  }
+
+  .site-window-link,
+  .site-window-close {
+    width: 1.92rem;
+    height: 1.92rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.045);
+    color: rgba(255, 255, 255, 0.84);
+    transition:
+      background 0.25s ease,
+      border-color 0.25s ease,
+      color 0.25s ease;
+  }
+
+  .site-window-link,
+  .site-window-close {
+    position: relative;
+    z-index: 1;
+  }
+
+  .site-window-link {
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+
+  .site-window-close {
+    padding: 0;
+    font: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .site-window-link:hover,
+  .site-window-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 1);
+  }
+
+  .site-window-frame {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .site-window-iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #fff;
+  }
+
+  /* ─── Light Mode ─────────────────────────────────────────── */
+  html:not(.dark) .card {
+    border-color: rgba(80, 50, 110, 0.09);
+    background:
+      linear-gradient(
+        155deg,
+        rgba(255, 255, 255, 0.72) 0%,
+        rgba(255, 255, 255, 0.45) 55%
+      ),
+      rgba(248, 244, 255, 0.75);
+    box-shadow:
+      0 18px 48px -28px rgba(80, 50, 120, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    color: rgba(30, 15, 50, 0.9);
+  }
+
+  html:not(.dark) .kicker {
+    color: rgba(80, 50, 110, 0.48);
+  }
+
+  html:not(.dark) h3 {
+    color: #1a0f2e;
+  }
+
+  html:not(.dark) .detail {
+    color: rgba(80, 50, 110, 0.65);
+  }
+
+  html:not(.dark) .motto-text {
+    color: #1a0f2e;
+  }
+
+  html:not(.dark) .motto-foot,
+  html:not(.dark) .reading-desc-text {
+    color: rgba(80, 50, 110, 0.45);
+  }
+
+  html:not(.dark) .bg-quote {
+    color: rgba(0, 0, 0, 0.02);
+  }
+
+  html:not(.dark) .viewer-corner {
+    border-color: rgba(80, 50, 110, 0.08);
+    background: rgba(80, 50, 110, 0.035);
+    color: rgba(80, 50, 110, 0.24);
+  }
+
+  html:not(.dark) .card--link:hover .viewer-corner {
+    border-color: rgba(80, 50, 110, 0.14);
+    background: rgba(80, 50, 110, 0.08);
+    color: rgba(80, 50, 110, 0.64);
+  }
+
+  html:not(.dark) .card--link:hover .kicker,
+  html:not(.dark) .card--motto:hover .kicker,
+  html:not(.dark) .card--current:hover .kicker {
+    color: rgba(80, 50, 110, 0.58);
+  }
+
+  html:not(.dark) .card--hobby:hover .kicker {
+    color: rgba(88, 92, 100, 0.66);
+  }
+
+  html:not(.dark) .card--hobby {
+    --card-accent: rgba(154, 158, 168, 0.18);
+    border-color: rgba(102, 107, 116, 0.08);
+    background:
+      linear-gradient(
+        155deg,
+        rgba(255, 255, 255, 0.82) 0%,
+        rgba(255, 255, 255, 0.58) 55%
+      ),
+      rgba(241, 242, 244, 0.9);
+    box-shadow:
+      0 18px 44px -28px rgba(112, 118, 128, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  }
+
+  html:not(.dark) .card--hobby .kicker {
+    color: rgba(106, 111, 120, 0.5);
+  }
+
+  html:not(.dark) .card--hobby h3 {
+    color: #2f3338;
+  }
+
+  html:not(.dark) .card--hobby .detail {
+    color: rgba(100, 104, 112, 0.72);
+  }
+
+  html:not(.dark) .card--link:hover h3,
+  html:not(.dark) .card--motto:hover h3,
+  html:not(.dark) .card--current:hover h3 {
+    color: rgba(35, 18, 60, 0.98);
+  }
+
+  html:not(.dark) .card--link:hover .detail,
+  html:not(.dark) .card--motto:hover .detail,
+  html:not(.dark) .card--current:hover .detail {
+    color: rgba(80, 50, 110, 0.76);
+  }
+
+  html:not(.dark) .card--major {
+    --trait-icon-color: rgba(104, 69, 192, 0.88);
+    --trait-bg-icon-color: rgba(123, 93, 211, 0.22);
+    --trait-glow-color: rgba(137, 100, 224, 0.16);
+  }
+
+  html:not(.dark) .card--interest {
+    --trait-icon-color: rgba(37, 122, 93, 0.88);
+    --trait-bg-icon-color: rgba(50, 147, 109, 0.22);
+    --trait-glow-color: rgba(63, 165, 124, 0.14);
+  }
+
+  html:not(.dark) .card--social {
+    --bg-icon-color: rgba(161, 74, 117, 0.16);
+  }
+
+  html:not(.dark) .hobby-icon-cell {
+    border-color: rgba(114, 118, 126, 0.1);
+    background: rgba(255, 255, 255, 0.52);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  }
+
+  html:not(.dark) .hobby-icon {
+    filter: none;
+    opacity: 0.42;
+  }
+
+  html:not(.dark) .hobby-art-glow {
+    background: radial-gradient(circle, rgba(160, 165, 174, 0.14) 0%, transparent 72%);
+  }
+
+  html:not(.dark) .hobby-list-text {
+    color: rgba(68, 72, 79, 0.8);
+  }
+
+  html:not(.dark) .trait-bg-icon {
+    filter: drop-shadow(0 12px 22px rgba(84, 53, 130, 0.1));
+  }
+
+  html:not(.dark) .chips li {
+    background: rgba(80, 50, 110, 0.04);
+    border-color: rgba(80, 50, 110, 0.1);
+    color: rgba(30, 15, 50, 0.8);
+  }
+
+  html:not(.dark) .card--hobby:hover .hobby-icon-cell {
+    border-color: rgba(114, 118, 126, 0.16);
+    background: rgba(255, 255, 255, 0.76);
+  }
+
+  html:not(.dark) .card--hobby:hover .hobby-icon {
+    opacity: 0.58;
+  }
+
+  /* Light mode — Equipment face */
+  html:not(.dark) .equip-item {
+    border-color: rgba(100, 105, 115, 0.1);
+    background: rgba(255, 255, 255, 0.45);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  html:not(.dark) .equip-popover.is-open .equip-item:hover {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(100, 105, 115, 0.16);
+  }
+
+  html:not(.dark) .equip-logo {
+    filter: grayscale(1);
+    opacity: 0.44;
+  }
+
+  html:not(.dark) .equip-popover.is-open .equip-item:hover .equip-logo {
+    opacity: 0.62;
+  }
+
+  html:not(.dark) .equip-name {
+    color: rgba(40, 35, 55, 0.82);
+  }
+
+  html:not(.dark) .equip-label {
+    color: rgba(80, 75, 100, 0.52);
+  }
+
+  html:not(.dark) .equip-title {
+    color: #2a2040;
+  }
+
+  html:not(.dark) .stack-icon {
+    opacity: 0.38;
+    filter: grayscale(1);
+  }
+
+  html:not(.dark) .stack-icon--external {
+    filter: grayscale(1) contrast(1.02);
+  }
+
+  html:not(.dark) .github-chart {
+    opacity: 0.88;
+    filter: hue-rotate(242deg) saturate(0.84) brightness(0.93) contrast(1.05);
+  }
+
+  html:not(.dark) .site-window-chrome {
+    border-color: rgba(80, 50, 110, 0.08);
+    background: rgba(255, 255, 255, 0.36);
+  }
+
+  html:not(.dark) .site-window-host {
+    color: rgba(80, 50, 110, 0.42);
+  }
+
+  html:not(.dark) .site-window-title {
+    color: rgba(30, 15, 50, 0.8);
+  }
+
+  html:not(.dark) .site-window-link,
+  html:not(.dark) .site-window-close {
+    border-color: rgba(80, 50, 110, 0.1);
+    background: rgba(80, 50, 110, 0.04);
+    color: rgba(30, 15, 50, 0.84);
+  }
+
+  html:not(.dark) .site-window-link:hover,
+  html:not(.dark) .site-window-close:hover {
+    border-color: rgba(80, 50, 110, 0.16);
+    background: rgba(80, 50, 110, 0.08);
+    color: rgba(30, 15, 50, 0.95);
+  }
+
+  html:not(.dark) .site-window-frame {
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  html:not(.dark) .diary-p {
+    color: rgba(30, 15, 50, 0.78);
+  }
+
+  html:not(.dark) .diary-highlight {
+    color: rgba(110, 60, 200, 0.95);
+  }
+
+  html:not(.dark) .card--reading .book-title {
+    color: #1a0f2e;
+  }
+
+  html:not(.dark) .card--reading .book-author {
+    color: rgba(80, 50, 110, 0.55);
+  }
+
+  html:not(.dark) .mbti-img {
+    filter: drop-shadow(0 -6px 20px rgba(100, 60, 180, 0.12));
+  }
+
+  html.dark .stack-icon {
+    filter: grayscale(1) brightness(0) invert(1);
+  }
+
+  html.dark .stack-icon--external {
+    filter: grayscale(1) brightness(0) invert(0.74) contrast(1.02);
+  }
+
+  html.dark .github-chart {
+    filter: hue-rotate(246deg) saturate(0.7) brightness(0.96) contrast(1.03);
+  }
+
+  /* ─── Responsive: Tablet (~860px) ───────────────────────── */
+  @media (max-width: 860px) {
+    .bento-grid {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto;
+      grid-template-areas:
+        "mbti motto"
+        "reading reading"
+        "major interest"
+        "current social";
+    }
+
+    .card--mbti {
+      min-height: 280px;
+      padding-bottom: 0;
+    }
+
+    .mbti-img {
+      bottom: 0.35rem;
+    }
+
+    .card--motto {
+      min-height: 250px;
+    }
+
+    .card--reading {
+      /* Side-by-side on tablet */
+      padding-bottom: 1.5rem;
+      justify-content: flex-start;
+    }
+
+    .card--reading .book-card {
+      flex-direction: row;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .card--reading .book-cover {
+      max-width: 100px;
+    }
+
+    .card--reading .book-info {
+      text-align: left;
+    }
+
+    .reading-cover-wrap {
+      margin-top: auto;
+      justify-content: flex-start;
+      padding-top: 0.75rem;
+    }
+
+    .card--social {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .card--hobby {
+      min-height: 228px;
+    }
+
+    .site-card-face--front-social {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .trait-copy {
+      max-width: calc(100% - 5.2rem);
+    }
+
+    .card--current {
+      min-height: 260px;
+    }
+
+    .current-face {
+      gap: 0.9rem;
+    }
+
+    .chips {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+  }
+
+  /* ─── Responsive: Mobile (~520px) ───────────────────────── */
+  @media (max-width: 520px) {
+    .bento-grid {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "mbti"
+        "motto"
+        "major"
+        "interest"
+        "reading"
+        "current"
+        "social";
+      gap: 0.75rem;
+    }
+
+    .card {
+      border-radius: 28px;
+      padding: 1.25rem;
+    }
+
+    .card--site.card--mbti,
+    .card--site.card--social,
+    .card--site.card--major,
+    .card--site.card--interest {
+      --site-card-padding: 1.25rem;
+    }
+
+    .card--mbti {
+      min-height: 260px;
+      padding-bottom: 0;
+    }
+
+    .mbti-top {
+      max-width: 9.25rem;
+    }
+
+    .mbti-detail {
+      display: grid;
+      gap: 0.1rem;
+      max-width: 8em;
+    }
+
+    .mbti-separator {
+      display: none;
+    }
+
+    .mbti-img {
+      bottom: 0.15rem;
+      width: 82%;
+      max-width: 196px;
+    }
+
+    .card--motto {
+      min-height: 240px;
+    }
+
+    .card--reading,
+    .card--social {
+      min-height: 180px;
+    }
+
+    .card--current {
+      min-height: 252px;
+    }
+
+    .card--hobby {
+      min-height: 220px;
+    }
+
+    .trait-copy {
+      max-width: calc(100% - 4.9rem);
+    }
+
+    .trait-illustration {
+      right: -0.15rem;
+      bottom: -0.1rem;
+      width: 6.1rem;
+      height: 6.1rem;
+    }
+
+    .trait-bg-icon {
+      right: 0.68rem;
+      bottom: 0.58rem;
+      width: 4.15rem;
+      height: 4.15rem;
+    }
+
+    .current-face {
+      inset: 1.25rem;
+    }
+
+    .card--reading {
+      padding-bottom: 1.25rem;
+      justify-content: flex-start;
+    }
+
+    .card--reading .book-card {
+      flex-direction: row;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .card--reading .book-cover {
+      max-width: 80px;
+    }
+
+    .card--reading .book-info {
+      flex: 1;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .reading-cover-wrap {
+      margin-top: auto;
+      justify-content: flex-start;
+      padding-top: 0.75rem;
+    }
+
+    .site-card-face--front-social {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .stack-cloud {
+      gap: 0.32rem 0.44rem;
+    }
+
+    .stack-link {
+      width: 1.45rem;
+      height: 1.45rem;
+    }
+
+    .stack-icon {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .chart-shell {
+      padding-top: 0.05rem;
+    }
+
+    .motto-face {
+      inset: 1.25rem;
+    }
+
+    .hobby-face {
+      inset: 1.1rem;
+    }
+
+    .hobby-copy {
+      max-width: calc(100% - 5.9rem);
+    }
+
+    .hobby-art {
+      width: 6.35rem;
+      height: 6.35rem;
+    }
+
+    .hobby-icon-grid {
+      right: 0.62rem;
+      bottom: 0.6rem;
+      gap: 0.4rem;
+    }
+
+    .hobby-icon-cell {
+      width: 2.55rem;
+      height: 2.55rem;
+      border-radius: 13px;
+    }
+
+    .hobby-icon {
+      width: 1.05rem;
+      height: 1.05rem;
+    }
+
+    .hobby-list-item {
+      gap: 0.55rem;
+    }
+
+    .hobby-list-text {
+      font-size: 0.8rem;
+    }
+
+    .motto-text {
+      font-size: 1.16rem;
+      line-height: 1.55;
+    }
+
+    .site-window-chrome {
+      min-height: 3.15rem;
+      padding: 0.68rem 0.78rem;
+    }
+
+    .site-window-title {
+      font-size: 0.76rem;
+    }
+  }
+
+  /* ─── Equipment Popover ─────────────────────────────────────── */
+  .equip-popover {
+    display: none;
+    /* absolute → anchored to .personality-flow-container, so it scrolls
+       with the page and stays glued to the card (see positionPopover). */
+    position: absolute;
+    z-index: 200;
+    width: 380px;
+    max-width: calc(100vw - 24px);
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background:
+      linear-gradient(155deg, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+      rgba(14, 10, 28, 0.9);
+    box-shadow:
+      0 32px 64px -20px rgba(0, 0, 0, 0.75),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(32px) saturate(150%);
+    -webkit-backdrop-filter: blur(32px) saturate(150%);
+    color: rgba(255, 255, 255, 0.88);
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+    pointer-events: none;
+    transition:
+      opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+
+  .equip-popover.is-open {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+  }
+
+  .equip-popover-inner {
+    padding: 1rem 1.25rem 1.25rem;
+  }
+
+  .equip-popover-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 0.85rem;
+  }
+
+  .equip-popover-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .equip-popover-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.25;
+  }
+
+  .equip-popover-close {
+    flex-shrink: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.52);
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+
+  .equip-popover-close svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+
+  .equip-popover-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .equip-popover-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Arrow caret */
+  .equip-popover-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    left: var(--arrow-offset, 50%);
+    transform: translateX(-50%) rotate(45deg);
+    background: rgba(20, 14, 36, 0.9);
+  }
+
+  .equip-popover[data-direction="down"] .equip-popover-arrow {
+    bottom: -6px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .equip-popover[data-direction="up"] .equip-popover-arrow {
+    top: -6px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Light mode popover */
+  html:not(.dark) .equip-popover {
+    border-color: rgba(80, 50, 110, 0.1);
+    background:
+      linear-gradient(155deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.68) 55%),
+      rgba(248, 244, 255, 0.95);
+    box-shadow:
+      0 24px 56px -16px rgba(80, 50, 120, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    color: rgba(30, 15, 50, 0.9);
+  }
+
+  html:not(.dark) .equip-popover .kicker {
+    color: rgba(80, 50, 110, 0.48);
+  }
+
+  html:not(.dark) .equip-popover-title {
+    color: #1a0f2e;
+  }
+
+  html:not(.dark) .equip-popover-close {
+    border-color: rgba(80, 50, 110, 0.1);
+    background: rgba(80, 50, 110, 0.04);
+    color: rgba(80, 50, 110, 0.44);
+  }
+
+  html:not(.dark) .equip-popover-close:hover {
+    background: rgba(80, 50, 110, 0.08);
+    border-color: rgba(80, 50, 110, 0.16);
+    color: rgba(80, 50, 110, 0.88);
+  }
+
+  html:not(.dark) .equip-popover-arrow {
+    background: rgba(248, 244, 255, 0.95);
+    border-color: rgba(80, 50, 110, 0.1);
+  }
+
+  /* ─── Reduced Motion ─────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .card,
+    .card::after,
+    .mbti-img,
+    .bg-icon,
+    .viewer-corner,
+    .site-card-face,
+    .site-window-link,
+    .site-window-close,
+    .current-face,
+    .stack-link,
+    .stack-icon,
+    .hobby-face,
+    .hobby-icon-cell,
+    .hobby-icon,
+    .equip-item,
+    .equip-logo,
+    .equip-popover {
+      transition: none !important;
+      transform: none !important;
+    }
+
+    .card--mbti:hover .mbti-img {
+      transform: translateX(-50%) !important;
+    }
+  }
+
+  /* ─── Anime.js: Perspective & Entrance Initial States ────── */
+  /* Only applied when prefers-reduced-motion is not set.       */
+  /* These ensure no FOUC before the JS entrance animation runs.*/
+  @media (prefers-reduced-motion: no-preference) {
+    .bento-grid {
+      perspective: 1000px;
+    }
+
+    .bento-grid .card {
+      opacity: 0;
+      transform: translateY(28px) scale(0.97);
+    }
+
+    .stack-cloud li {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    .chips li {
+      opacity: 0;
+      transform: translateX(18px) scale(0.92);
+    }
+  }

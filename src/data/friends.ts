@@ -14,9 +14,16 @@ export interface Friend {
 export const friends: Friend[] = [
   {
     name: "Moyuin",
-    url: "https://moyuin.top",
-    avatar: "https:/moyuin.top/avatar.webp",
-    description: "缥缈，游荡，没有来路与归处。",
+    url: "https://moyuin.top/",
+    avatar: "https://moyuin.top/avatar.webp",
+    description: "缥缈，游荡，没有来路与归处。 · Tyndall 主题作者",
+    tags: ["Friends"]
+  },
+  {
+    name: "Example Friend",
+    url: "https://example.com",
+    avatar: "/examples/avatar.svg",
+    description: "示例友链 / Example friend",
     tags: ["Friends"]
   },
   // Add more friends here

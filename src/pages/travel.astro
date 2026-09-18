@@ -1,0 +1,64 @@
+---
+import { getCollection } from "astro:content";
+import type { ImageMetadata } from "astro";
+import Layout from "@layouts/Layout.astro";
+import TravelRoll from "@components/TravelRoll.astro";
+import TravelRollR2 from "@components/TravelRollR2.astro";
+import { useTranslations } from "@utils/ui";
+import { buildTravelEntries, buildTravelEntriesFromR2 } from "@utils/travel-gallery";
+
+const t = useTranslations(Astro.currentLocale);
+
+const rawEntries = await getCollection("travel");
+
+// Auto-detect: if travel/*/img/*.webp files exist locally, use Astro's image
+// pipeline (sharp → responsive srcset). Otherwise, photos live in R2 (the
+// CMS's canonical upload target) — use buildTravelEntriesFromR2 which reads
+// exif.json for dimensions and constructs public CDN URLs.
+const allPhotoModules = import.meta.glob<{ default: ImageMetadata }>(
+  "../content/travel/*/img/*.webp",
+  { eager: true },
+);
+const useR2 = Object.keys(allPhotoModules).length === 0;
+
+const legacyEntries = useR2 ? [] : buildTravelEntries(rawEntries, allPhotoModules);
+const r2Entries = useR2
+  ? buildTravelEntriesFromR2(rawEntries, (import.meta.env.PUBLIC_TRAVEL_IMAGE_BASE || "/examples"))
+  : [];
+---
+
+<Layout title={t("travel_page_title")}>
+  <main class="travel-page">
+    {useR2 ? (
+      <TravelRollR2
+        entries={r2Entries}
+        title={t("travel_title")}
+        kicker="TRAVEL"
+        description={t("travel_desc")}
+        hint={t("travel_hint")}
+      />
+    ) : (
+      <TravelRoll
+        entries={legacyEntries}
+        title={t("travel_title")}
+        kicker="TRAVEL"
+        description={t("travel_desc")}
+        hint={t("travel_hint")}
+      />
+    )}
+  </main>
+</Layout>
+
+<style is:global>
+  main.travel-page {
+    height: 100vh;
+    margin: 0;
+    padding: calc(var(--header-height, 5rem) + 1rem) 0 0;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  main.travel-page ~ footer {
+    display: none;
+  }
+</style>

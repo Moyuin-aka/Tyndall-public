@@ -5,6 +5,7 @@ import "@styles/markdown.css";
 import { useTranslations } from "@utils/ui";
 import SupabaseComments from "@components/SupabaseComments.astro";
 import TableOfContents from "@components/TableOfContents.astro";
+import TravelMap from "@components/TravelMap.astro";
 import {
   filterPostsBySection,
   getCategoryDisplayName,
@@ -73,6 +74,24 @@ const ogImageUrl = new URL(getOgImagePath(translationKey, locale), Astro.site).t
 const rawContent = post.body;
 const hasLatex = /\$.*?\$|\$\$[\s\S]*?\$\$/.test(rawContent);
 const hasMermaid = /```mermaid/.test(rawContent);
+const hasTravelMap = /::travel-map\b/.test(rawContent);
+
+const postUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: post.data.title,
+  description: post.data.description || "",
+  image: ogImageUrl,
+  datePublished: post.data.pubDate.toISOString(),
+  ...(post.data.updatedDate && { dateModified: post.data.updatedDate.toISOString() }),
+  author: { "@type": "Person", name: "Your Name", url: Astro.site?.toString() },
+  publisher: { "@type": "Person", name: "Your Name", url: Astro.site?.toString() },
+  url: postUrl,
+  mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+  inLanguage: post.data.lang === "zh" ? "zh-CN" : "en-US",
+  articleSection: categoryDisplay,
+};
 ---
 
 <Layout
@@ -82,6 +101,8 @@ const hasMermaid = /```mermaid/.test(rawContent);
   ogImage={ogImageUrl}
   ogType="article"
 >
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
   <!-- 按需加载 KaTeX CSS -->
   {
     hasLatex && (
@@ -96,6 +117,7 @@ const hasMermaid = /```mermaid/.test(rawContent);
   }
 
   <main class="post-container">
+    <article>
     <div class="post-topbar">
       <a href={blogIndexUrl} class="post-back-link" aria-label={backToBlogLabel}>
         <span class="post-back-icon" set:html={ICONS.arrowLeft} />
@@ -127,6 +149,9 @@ const hasMermaid = /```mermaid/.test(rawContent);
     <div class="markdown-content">
       <Content />
     </div>
+
+    {hasTravelMap && <TravelMap />}
+    </article>
 
     <hr class="comment-divider" />
 
@@ -323,8 +348,7 @@ const hasMermaid = /```mermaid/.test(rawContent);
   }
 
   .post-meta-date .post-meta-text {
-    font-family: "Noto Serif SC", "Noto Serif", ui-serif, "Source Han Serif SC", "Songti SC", "STSong",
-      "Hiragino Mincho ProN", Georgia, "Times New Roman", Times, serif;
+    font-family: var(--font-serif);
     letter-spacing: 0.01em;
   }
 

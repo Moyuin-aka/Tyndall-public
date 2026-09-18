@@ -1,4 +1,5 @@
 import { defineCollection, z } from 'astro:content';
+import { TravelMapFrontmatterSchema } from '../utils/travel-map-schema';
 
 const blogCollection = defineCollection({
   // Type-check frontmatter using a schema
@@ -13,17 +14,16 @@ const blogCollection = defineCollection({
     translationKey: z.string().optional(), // 同一篇多语言的配对键
     category: z.string().optional(), // 文章分类
     published: z.boolean().default(true), // 是否发布，默认为 true
+    map: TravelMapFrontmatterSchema.optional(), // 旅行行程地图数据，配合正文里的 ::travel-map
   }),
 });
 
 const travelCollection = defineCollection({
-  type: 'data',
-  schema: ({ image }) => z.object({
+  type: 'content',
+  schema: z.object({
     title: z.string(),
     when: z.string(),
     where: z.string(),
-    note: z.string().optional(),
-    photos: z.array(image()),
   }),
 });
 

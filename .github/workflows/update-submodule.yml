@@ -1,0 +1,73 @@
+name: Update Submodule
+
+on:
+  # 从子模块仓库接收 repository_dispatch 事件
+  repository_dispatch:
+    types: [submodule-updated]
+
+  # 保留手动触发选项
+  workflow_dispatch:
+
+# 需要写权限来推送变更
+permissions:
+  contents: write
+
+jobs:
+  update-submodule:
+    if: ${{ vars.ENABLE_CONTENT_SUBMODULE == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0  # need full git history for generate-heatmap.mjs
+          token: ${{ secrets.SUBMODULE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Update submodule to latest
+        run: |
+          echo "Updating submodule to latest commit..."
+          git submodule update --remote --recursive
+          # Ensure full history is available for generate-heatmap.mjs (git log --since=15 months).
+          # actions/checkout may have fetched the submodule shallow even with fetch-depth:0.
+          git -C src/content fetch --unshallow 2>/dev/null || true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Regenerate writing heatmap
+        run: node .github/scripts/generate-heatmap.mjs
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes detected"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add src/content src/data/writing-heatmap.json
+          git commit -m "chore: Update content submodule and writing heatmap
+
+          Triggered by content repository update"
+          current_branch="$(git rev-parse --abbrev-ref HEAD)"
+          git pull --rebase origin "$current_branch"
+          git push origin "$current_branch"
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.check_changes.outputs.changed }}" == "true" ]; then
+            echo "✅ Submodule updated and changes committed"
+          else
+            echo "ℹ️ Submodule already up to date"
+          fi

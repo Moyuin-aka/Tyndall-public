@@ -751,7 +751,7 @@ body.mermaid-preview-open > header {
   background: rgba(255, 255, 255, 0.74);
   color: var(--text);
   padding: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-control);
   font-size: 2rem;
   line-height: 1;
   cursor: pointer;

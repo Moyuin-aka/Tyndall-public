@@ -5,6 +5,7 @@ import '@styles/markdown.css';
 import { useTranslations } from '@utils/ui';
 import SupabaseComments from '@components/SupabaseComments.astro';
 import TableOfContents from '@components/TableOfContents.astro';
+import TravelMap from '@components/TravelMap.astro';
 import {
   filterPostsBySection,
   getOgImagePath,
@@ -91,6 +92,7 @@ const ogImageUrl = new URL(getOgImagePath(translationKey, locale), Astro.site).t
 const rawContent = post.body;
 const hasLatex = /\$.*?\$|\$\$[\s\S]*?\$\$/.test(rawContent);
 const hasMermaid = /```mermaid/.test(rawContent);
+const hasTravelMap = /::travel-map\b/.test(rawContent);
 ---
 <Layout
   title={post.data.title}
@@ -146,7 +148,9 @@ const hasMermaid = /```mermaid/.test(rawContent);
     <div class="markdown-content">
       <Content />
     </div>
-    
+
+    {hasTravelMap && <TravelMap />}
+
     <hr class="comment-divider" />
 
     <div class="post-navigation">
@@ -338,8 +342,7 @@ const hasMermaid = /```mermaid/.test(rawContent);
   }
 
   .post-meta-date .post-meta-text {
-    font-family: "Noto Serif SC", "Noto Serif", ui-serif, "Source Han Serif SC", "Songti SC", "STSong",
-      "Hiragino Mincho ProN", Georgia, "Times New Roman", Times, serif;
+    font-family: var(--font-serif);
     letter-spacing: 0.01em;
   }
 

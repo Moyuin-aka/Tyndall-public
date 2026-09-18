@@ -13,10 +13,18 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "routes:build": "node scripts/build-travel-routes.mjs",
+    "sync:plan": "node scripts/sync-public.mjs",
+    "sync:apply": "node scripts/sync-public.mjs --apply",
+    "sync:check": "node scripts/sync-public.mjs --check",
+    "check:public": "node scripts/check-public.mjs",
+    "test": "node --test scripts/public-safety.test.mjs scripts/memos-auth.test.mjs workers/telegram-memos-bot/worker.test.mjs && node --experimental-strip-types scripts/check-presence.mjs"
   },
   "devDependencies": {
+    "@mapbox/polyline": "^1.2.1",
     "astro": "^5.16.6",
+    "js-yaml": "^4.1.0",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-slug": "^6.0.0",
     "sharp": "^0.34.4",
@@ -30,15 +38,17 @@
     "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.93.3",
     "@vercel/speed-insights": "^1.2.0",
+    "animejs": "^4.3.6",
+    "maplibre-gl": "^5.24.0",
     "marked": "^16.4.1",
     "rehype-katex": "^7.0.1",
     "remark-breaks": "^4.0.0",
+    "remark-directive": "^4.0.0",
     "remark-math": "^6.0.0",
     "sanitize-html": "^2.17.0",
     "satori": "^0.26.0",
-    "tsparticles-engine": "^2.12.0",
-    "tsparticles-slim": "^2.12.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "zod": "^3.25.0"
   },
   "overrides": {
     "path-to-regexp": "6.3.0"

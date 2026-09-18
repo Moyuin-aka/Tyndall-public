@@ -1,0 +1,282 @@
+---
+// R2-backed travel roll — mirrors TravelRoll.astro but uses TravelCarouselR2
+// instead of TravelCarousel. Photos come from example.com R2 bucket.
+import type { R2TravelEntry } from "@utils/travel-gallery";
+import TravelCarouselR2 from "@/components/TravelCarouselR2.astro";
+
+interface Props {
+  entries: R2TravelEntry[];
+  title: string;
+  kicker?: string;
+  description?: string;
+  hint?: string;
+}
+
+const {
+  entries,
+  title,
+  kicker = "TRAVEL LOG",
+  description = "摄影作品展览。",
+  hint = "滚动切换旅程；图片区域左右滑动 / 拖动切换。",
+} = Astro.props as Props;
+
+const rendered = await Promise.all(
+  entries.map(async ({ entry, photos, exifData }) => {
+    const { Content } = await entry.render();
+    return { entry, photos, exifData, Content };
+  })
+);
+---
+
+<div class="roll" data-roll>
+  <section class="screen intro is-active" data-screen>
+    <div class="intro-inner">
+      <p class="kicker">{kicker}</p>
+      <h1 class="title">{title}</h1>
+      <p class="desc">{description}</p>
+      <p class="hint">{hint}</p>
+    </div>
+  </section>
+
+  {
+    rendered.map(({ entry, photos, exifData, Content }) => (
+      <section class="screen entry" id={entry.slug} data-screen>
+        <div class="grid">
+          <div class="media">
+            <TravelCarouselR2
+              id={entry.slug}
+              photos={photos}
+              exifData={exifData}
+              altBase={`${entry.data.when} ${entry.data.where}`}
+            />
+          </div>
+          <aside class="meta" aria-label="Trip notes">
+            <p class="meta-kicker">
+              <span class="when">{entry.data.when}</span>
+              <span class="dot" aria-hidden="true">·</span>
+              <span class="where">{entry.data.where}</span>
+            </p>
+            <h2 class="meta-title">{entry.data.title}</h2>
+            <div class="meta-note"><Content /></div>
+          </aside>
+        </div>
+      </section>
+    ))
+  }
+</div>
+
+<script is:inline>
+(() => {
+  const roll = document.currentScript?.previousElementSibling;
+  if (roll) {
+    const screens = Array.from(roll.querySelectorAll("[data-screen]"));
+
+    const setActive = (target) => {
+      screens.forEach((s) => s.classList.toggle("is-active", s === target));
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0))[0];
+        if (visible?.target) setActive(visible.target);
+      },
+      {
+        root: roll,
+        threshold: [0.55, 0.72],
+      },
+    );
+
+    screens.forEach((s) => io.observe(s));
+  }
+})();
+</script>
+
+<style>
+  .roll {
+    height: 100%;
+    overflow: auto;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior-y: contain;
+    scroll-behavior: smooth;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .screen {
+    scroll-snap-align: start;
+    min-height: 100%;
+    display: grid;
+    align-items: center;
+    padding: 1.25rem;
+    box-sizing: border-box;
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .screen.entry {
+    border-top: 1px solid color-mix(in oklab, var(--text) 10%, transparent);
+  }
+
+  .intro-inner {
+    max-width: 820px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 2rem 0.5rem;
+  }
+
+  .kicker {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-serif);
+    letter-spacing: 0.18em;
+    font-size: 0.85rem;
+    color: var(--grey);
+  }
+
+  .title {
+    margin: 0 0 0.8rem;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    letter-spacing: 0.02em;
+  }
+
+  .desc {
+    margin: 0 auto 0.8rem;
+    max-width: 44ch;
+    color: color-mix(in oklab, var(--text) 80%, var(--grey));
+    font-family: var(--font-serif);
+    line-height: 1.7;
+    font-size: 1.02rem;
+  }
+
+  .hint {
+    margin: 0;
+    color: var(--grey);
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+  }
+
+  .grid {
+    width: 100%;
+    max-width: 1160px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 0.4rem 0.2rem;
+    height: var(--frame-height, auto);
+    transition: height 0.4s ease;
+  }
+
+  .meta-kicker {
+    margin: 0;
+    font-family: var(--font-serif);
+    color: var(--grey);
+    letter-spacing: 0.02em;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .meta-title {
+    margin: 0;
+    font-size: 2.1rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .meta-note {
+    margin: 0;
+    font-family: var(--font-serif);
+    line-height: 1.75;
+    color: color-mix(in oklab, var(--text) 88%, var(--grey));
+    max-width: 52ch;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.4rem;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black calc(100% - 56px),
+      transparent
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      black calc(100% - 56px),
+      transparent
+    );
+  }
+  .meta-note::-webkit-scrollbar {
+    width: 6px;
+  }
+  .meta-note::-webkit-scrollbar-thumb {
+    background: rgba(162, 89, 236, 0.3);
+    border-radius: 3px;
+  }
+  .meta-note::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .meta-note :global(p) {
+    margin: 0 0 0.6em;
+  }
+
+  .meta-note :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .meta-note :global(strong) {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .meta-note :global(em) {
+    font-style: italic;
+  }
+
+  @media (max-width: 960px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    .meta {
+      height: auto;
+    }
+    .meta-note {
+      overflow: visible;
+      padding-right: 0;
+      max-width: none;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .meta-title {
+      font-size: 1.85rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .meta {
+      transition: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .roll {
+      scroll-behavior: auto;
+    }
+    .screen {
+      transition: none;
+      transform: none;
+    }
+  }
+</style>

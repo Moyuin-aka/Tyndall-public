@@ -1,0 +1,183 @@
+---
+import serversData from '@data/servers.json';
+
+const { t } = Astro.props;
+
+interface HistoryPoint {
+  at: string;
+  cpu: number | null;
+  mem: number | null;
+  disk: number | null;
+}
+
+interface System {
+  id: string;
+  name: string;
+  status: string;
+  cpu: number | null;
+  mem: number | null;
+  disk: number | null;
+  updated: string;
+  history: HistoryPoint[];
+}
+
+const systems: System[] = serversData.systems || [];
+
+const SPARK_W = 120;
+const SPARK_H = 28;
+
+function sparklinePoints(history: HistoryPoint[], key: 'cpu' | 'mem' | 'disk'): string {
+  const values = history.map((h) => h[key] ?? 0);
+  if (values.length === 0) return '';
+  const max = Math.max(100, ...values);
+  const step = SPARK_W / Math.max(1, values.length - 1);
+  return values
+    .map((v, i) => {
+      const x = i * step;
+      const y = SPARK_H - (v / max) * SPARK_H;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
+}
+---
+
+<div class="server-vitals">
+  <div class="vitals-header">
+    <h3 class="vitals-title">{t('lab_servers_title')}</h3>
+  </div>
+  <div class="vitals-grid">
+    {systems.map((system) => (
+      <div class="vitals-card">
+        <div class="vitals-card-header">
+          <span class={`status-dot ${system.status === 'up' ? 'up' : 'down'}`} />
+          <span class="system-name">{system.name}</span>
+        </div>
+        <div class="metric-rows">
+          {(['cpu', 'mem', 'disk'] as const).map((key) => (
+            <div class="metric-row">
+              <span class="metric-label">{t(`lab_servers_${key}`)}</span>
+              <svg class="sparkline" viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} preserveAspectRatio="none">
+                <polyline points={sparklinePoints(system.history, key)} class={`spark-${key}`} />
+              </svg>
+              <span class="metric-value">{(system[key] ?? 0).toFixed(1)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .server-vitals {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 20px;
+    padding: 1.5rem 1.75rem;
+    backdrop-filter: blur(10px);
+  }
+
+  :global(.dark) .server-vitals {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .vitals-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .vitals-title {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .vitals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .vitals-card {
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.02);
+    padding: 1rem 1.1rem;
+  }
+
+  :global(.dark) .vitals-card {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .vitals-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    box-shadow: 0 0 6px currentColor;
+  }
+
+  .status-dot.up { background: #2ecc71; color: rgba(46, 204, 113, 0.5); }
+  .status-dot.down { background: #ff5252; color: rgba(255, 82, 82, 0.5); }
+
+  .system-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+
+  .metric-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .metric-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 44px;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .metric-label {
+    font-size: 0.72rem;
+    color: var(--grey);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .metric-value {
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    color: var(--grey);
+    text-align: right;
+  }
+
+  .sparkline {
+    width: 100%;
+    height: 20px;
+  }
+
+  .sparkline polyline {
+    fill: none;
+    stroke-width: 1.6;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .spark-cpu { stroke: #a259ec; }
+  .spark-mem { stroke: #3b82f6; }
+  .spark-disk { stroke: #f59e0b; }
+
+  @media (max-width: 768px) {
+    .vitals-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

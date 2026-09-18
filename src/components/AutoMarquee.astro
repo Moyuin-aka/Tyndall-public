@@ -1,6 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import { favorites } from "@/data/favorites";
+import { toAppleMusicEmbedUrl } from "@utils/appleMusic.mjs";
 
 interface Props {
   title?: string;
@@ -38,6 +39,8 @@ const displayItems = items && items.length ? items : favorites;
               aria-label={it.name}
               tabindex="0"
               data-idx={i}
+              data-embed-url={toAppleMusicEmbedUrl(it.href) || undefined}
+              data-embed-title={it.name}
             >
               <div class="cover">
                 <Image
@@ -74,6 +77,8 @@ const displayItems = items && items.length ? items : favorites;
                 aria-label={it.name}
                 tabindex="0"
                 data-idx={i}
+                data-embed-url={toAppleMusicEmbedUrl(it.href) || undefined}
+                data-embed-title={it.name}
               >
                 <div class="cover">
                   <Image
@@ -99,62 +104,200 @@ const displayItems = items && items.length ? items : favorites;
   </div>
 </section>
 
-<script is:inline>
-  // Pause on hover/focus, restore on leave/blur.
-  const root = document.currentScript?.closest(".marquee");
-  if (root) {
-    const rows = root.querySelectorAll(".row");
-    const pause = () => rows.forEach((r) => r.classList.add("paused"));
-    const resume = () => rows.forEach((r) => r.classList.remove("paused"));
-    root.addEventListener("mouseenter", pause);
-    root.addEventListener("mouseleave", resume);
-    root.addEventListener("focusin", pause);
-    root.addEventListener("focusout", resume);
+<script>
+  import { createAnimatable } from "animejs";
 
-    // Mobile: pause while user touches to make tapping easier
-    let touchTimer = 0;
-    const touchPause = () => {
-      pause();
-      if (touchTimer) clearTimeout(touchTimer);
-      touchTimer = setTimeout(resume, 2200);
+  // Cleanup for the currently-open player's loading overlay (message
+  // listener + fallback timer), so closing mid-load doesn't leak them.
+  let amReveal: (() => void) | null = null;
+
+  // Runs on every Astro page-load (View Transitions friendly).
+  // Iterates ALL .marquee instances on the page — replaces the
+  // old is:inline / currentScript pattern.
+  // ── Click-to-play Apple Music modal ──────────────────────────────
+  // A single shared player overlay (lazily created, lives on <body> so
+  // it survives outside any marquee's scoped DOM). Clicking an album
+  // tile opens its embed here instead of navigating off-site.
+  function getModal() {
+    let modal = document.getElementById("am-player-modal");
+    if (modal) return modal;
+
+    modal = document.createElement("div");
+    modal.id = "am-player-modal";
+    modal.className = "am-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="am-modal__backdrop" data-am-close></div>
+      <div class="am-modal__card" role="document">
+        <button class="am-modal__close" type="button" aria-label="关闭" data-am-close>&times;</button>
+        <div class="am-modal__frame"></div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    const close = () => {
+      modal.hidden = true;
+      modal.classList.remove("is-open");
+      // Tear down the loading overlay's listener/timer if still pending.
+      amReveal?.();
+      amReveal = null;
+      // Removing the iframe stops playback immediately.
+      const frame = modal.querySelector(".am-modal__frame");
+      if (frame) frame.innerHTML = "";
+      document.documentElement.style.removeProperty("overflow");
     };
-    root.addEventListener(
-      "pointerdown",
-      (e) => {
-        // only react to touch/pen
-        if (e.pointerType === "mouse") return;
-        touchPause();
-      },
-      { passive: true },
+    modal.addEventListener("click", (e) => {
+      if ((e.target as HTMLElement).closest("[data-am-close]")) close();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal!.hidden) close();
+    });
+    return modal;
+  }
+
+  function openPlayer(url: string, title: string) {
+    const modal = getModal();
+    const frame = modal.querySelector(".am-modal__frame")!;
+
+    // Progress bar covers Apple's blank placeholder while the embed
+    // boots (the player takes a few seconds to load MusicKit + auth).
+    const loading = document.createElement("div");
+    loading.className = "am-modal__loading";
+    loading.innerHTML =
+      '<div class="am-progress"><span class="am-progress__bar" aria-hidden="true"></span></div>';
+    const bar = loading.querySelector(".am-progress__bar") as HTMLElement;
+
+    const iframe = document.createElement("iframe");
+    iframe.src = url;
+    iframe.title = title || "Apple Music";
+    iframe.allow = "autoplay *; encrypted-media *; clipboard-write";
+    iframe.setAttribute("frameborder", "0");
+    iframe.setAttribute(
+      "sandbox",
+      "allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation",
     );
 
-    // Subtle tilt on pointer move
-    root.addEventListener(
-      "pointermove",
-      (e) => {
-        const t = e.target.closest(".tile");
-        if (!t) return;
-        const r = t.getBoundingClientRect();
-        const cx = r.left + r.width / 2,
-          cy = r.top + r.height / 2;
-        const dx = (e.clientX - cx) / r.width; // -0.5..0.5
-        const dy = (e.clientY - cy) / r.height; // -0.5..0.5
-        t.style.setProperty("--rx", `${(-dy * 6).toFixed(2)}deg`);
-        t.style.setProperty("--ry", `${(dx * 8).toFixed(2)}deg`);
-      },
-      { passive: true },
-    );
-    root.addEventListener(
-      "pointerleave",
-      () => {
-        root.querySelectorAll(".tile").forEach((t) => {
-          t.style.removeProperty("--rx");
-          t.style.removeProperty("--ry");
-        });
-      },
-      { passive: true },
-    );
+    // The iframe is cross-origin, so we can't read when Apple's player
+    // has actually painted. The `load` event fires way too early (the
+    // doc loads ~2s before MusicKit finishes booting). Best signal we
+    // have is the first postMessage Apple's embed emits once it's live;
+    // fall back to a timer so the spinner never sticks if none arrives.
+    let revealed = false;
+    const reveal = () => {
+      window.removeEventListener("message", onMessage);
+      clearTimeout(fallback);
+      amReveal = null;
+      if (revealed) return;
+      revealed = true;
+      // Snap to 100%, then fade the overlay out.
+      bar.style.transition = "width 0.3s ease";
+      bar.style.width = "100%";
+      setTimeout(() => loading.classList.add("is-done"), 300);
+    };
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin === "https://embed.music.apple.com") reveal();
+    };
+    window.addEventListener("message", onMessage);
+    const fallback = setTimeout(reveal, 6000);
+    amReveal = reveal;
+
+    frame.innerHTML = "";
+    frame.appendChild(iframe);
+    frame.appendChild(loading);
+    modal.hidden = false;
+    // Next frame so the transition runs.
+    requestAnimationFrame(() => {
+      modal.classList.add("is-open");
+      // Crawl toward 90% (decelerating) — never completes until ready.
+      bar.style.width = "90%";
+    });
+    document.documentElement.style.overflow = "hidden";
   }
+
+  document.addEventListener("astro:page-load", () => {
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
+    const finePointer = window.matchMedia("(pointer: fine)");
+
+    document.querySelectorAll(".marquee").forEach((rootEl) => {
+      const root = rootEl as HTMLElement;
+      const rowEls = root.querySelectorAll(".row");
+      const pause = () => rowEls.forEach((r) => r.classList.add("paused"));
+      const resume = () =>
+        rowEls.forEach((r) => r.classList.remove("paused"));
+
+      // Only pause on keyboard-focus or touch — NOT on mouse hover,
+      // so the marquee keeps scrolling while you tilt individual tiles.
+      root.addEventListener("focusin", pause);
+      root.addEventListener("focusout", resume);
+
+      // Intercept clicks on embeddable tiles → open in-page player.
+      // Guard so View Transitions re-runs don't double-bind.
+      if (root.dataset.embedBound !== "true") {
+        root.dataset.embedBound = "true";
+        root.addEventListener("click", (e) => {
+          const tile = (e.target as HTMLElement).closest(
+            ".tile",
+          ) as HTMLAnchorElement | null;
+          if (!tile) return;
+          const url = tile.dataset.embedUrl;
+          if (!url) return; // no embed → let the link navigate normally
+          // Let modifier-clicks (open in new tab) through untouched.
+          const me = e as MouseEvent;
+          if (me.metaKey || me.ctrlKey || me.shiftKey || me.button !== 0) return;
+          e.preventDefault();
+          openPlayer(url, tile.dataset.embedTitle || "");
+        });
+      }
+
+      // Mobile: pause on touch
+      let touchTimer = 0;
+      root.addEventListener(
+        "pointerdown",
+        (e: PointerEvent) => {
+          if (e.pointerType === "mouse") return;
+          pause();
+          if (touchTimer) clearTimeout(touchTimer);
+          touchTimer = setTimeout(resume, 2200) as unknown as number;
+        },
+        { passive: true },
+      );
+
+      // 3D tilt with createAnimatable — smooth interpolated spring
+      if (!prefersReducedMotion.matches && finePointer.matches) {
+        root.querySelectorAll(".tile").forEach((tile) => {
+          const el = tile as HTMLElement;
+          if (el.dataset.tiltBound === "true") return;
+          el.dataset.tiltBound = "true";
+
+          // createAnimatable gives each property its own smooth easing
+          const tilt = createAnimatable(el, {
+            rotateX: { duration: 300, ease: "out(3)" },
+            rotateY: { duration: 300, ease: "out(3)" },
+          });
+
+          el.addEventListener(
+            "pointermove",
+            (e: PointerEvent) => {
+              const r = el.getBoundingClientRect();
+              const dx = (e.clientX - (r.left + r.width / 2)) / r.width;
+              const dy = (e.clientY - (r.top + r.height / 2)) / r.height;
+              tilt.rotateX(-dy * 9);
+              tilt.rotateY(dx * 12);
+            },
+            { passive: true },
+          );
+
+          el.addEventListener("pointerleave", () => {
+            tilt.rotateX(0);
+            tilt.rotateY(0);
+          });
+        });
+      }
+    });
+  });
 </script>
 
 <style>
@@ -188,6 +331,9 @@ const displayItems = items && items.length ? items : favorites;
     isolation: isolate;
     contain: layout paint;
     box-sizing: border-box;
+    /* Perspective here gives each tile the same vanishing point,
+       so depth layers on .cover look natural from any position. */
+    perspective: 900px;
   }
   .row {
     overflow: hidden;
@@ -251,9 +397,8 @@ const displayItems = items && items.length ? items : favorites;
     outline: none;
     filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.1));
     transform-style: preserve-3d;
-    transition:
-      transform 0.18s ease,
-      filter 0.18s ease;
+    /* anime.js controls rotateX/Y — only keep filter transition */
+    transition: filter 0.18s ease;
   }
   .tile:focus-visible {
     filter: drop-shadow(0 10px 26px rgba(61, 123, 246, 0.42));
@@ -264,9 +409,34 @@ const displayItems = items && items.length ? items : favorites;
     border-radius: 14px;
     overflow: hidden;
     background: var(--bg);
-    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
-    transform: translateZ(0.01px);
+    transform: translateZ(0);
+    position: relative;
+
+    /* ── Stacked-spine thickness ──────────────────────────────── */
+    /* Three layered box-shadows offset right+down simulate       */
+    /* the page edges of a CD case / vinyl sleeve.                */
+    --spine-1: rgba(0, 0, 0, 0.08);
+    --spine-2: rgba(0, 0, 0, 0.05);
+    --spine-3: rgba(0, 0, 0, 0.03);
+    box-shadow:
+      /* base ambient shadow */
+      0 1px 6px rgba(0, 0, 0, 0.06),
+      /* spine page 1 */
+      3px 3px 0 0 var(--spine-1),
+      /* spine page 2 */
+      6px 6px 0 0 var(--spine-2),
+      /* spine page 3 */
+      9px 9px 0 0 var(--spine-3);
+    transition: box-shadow 0.22s ease;
   }
+
+  /* Dark theme spine colors */
+  :global([data-theme="dark"]) .cover {
+    --spine-1: rgba(255, 255, 255, 0.06);
+    --spine-2: rgba(255, 255, 255, 0.03);
+    --spine-3: rgba(255, 255, 255, 0.015);
+  }
+
   .cover img {
     width: 100%;
     height: 100%;
@@ -289,11 +459,9 @@ const displayItems = items && items.length ? items : favorites;
     color: var(--grey);
   }
 
-  /* Idle subtle float */
+  /* Idle state — anime.js owns rotateX/Y, no CSS var needed */
   .tile {
-    --rx: 0deg;
-    --ry: 0deg;
-    transform: perspective(800px) rotateX(var(--rx)) rotateY(var(--ry));
+    transform: none;
   }
   .tile .cover img {
     will-change: transform;
@@ -380,6 +548,137 @@ const displayItems = items && items.length ? items : favorites;
     }
     .fade {
       display: none;
+    }
+  }
+</style>
+
+<!-- Player modal lives on <body>, so its styles must be global. -->
+<style is:global>
+  .am-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+    /* Apple-style scrim: dark, heavily blurred. */
+    background: rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    opacity: 0;
+    transition: opacity 0.28s ease;
+  }
+  .am-modal.is-open {
+    opacity: 1;
+  }
+  .am-modal[hidden] {
+    display: none;
+  }
+
+  .am-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    cursor: zoom-out;
+  }
+
+  .am-modal__card {
+    position: relative;
+    width: min(100%, 560px);
+    transform: translateY(12px) scale(0.98);
+    transition:
+      transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.28s ease;
+    opacity: 0;
+  }
+  .am-modal.is-open .am-modal__card {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  .am-modal__frame {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+    background: transparent;
+  }
+  .am-modal__frame {
+    position: relative;
+  }
+  .am-modal__frame iframe {
+    display: block;
+    width: 100%;
+    height: 450px;
+    border: 0;
+    background: transparent;
+  }
+
+  /* Loading overlay — hides Apple's blank placeholder until ready. */
+  .am-modal__loading {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: #f2f2f2;
+    border-radius: 16px;
+    transition: opacity 0.4s ease;
+  }
+  :global([data-theme="dark"]) .am-modal__loading {
+    background: #2a2a2c;
+  }
+  .am-modal__loading.is-done {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .am-progress {
+    width: min(62%, 260px);
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(128, 128, 128, 0.25);
+    overflow: hidden;
+  }
+  .am-progress__bar {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: 999px;
+    background: #fa2d48; /* Apple Music red */
+    /* Decelerating crawl toward 90% over ~6s (overridden on reveal). */
+    transition: width 6s cubic-bezier(0.12, 0.85, 0.2, 1);
+  }
+
+  .am-modal__close {
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: #111;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease;
+  }
+  .am-modal__close:hover {
+    transform: scale(1.08);
+  }
+
+  @media (max-width: 600px) {
+    .am-modal__close {
+      top: -10px;
+      right: 4px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .am-modal,
+    .am-modal__card {
+      transition: none;
     }
   }
 </style>

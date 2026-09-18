@@ -1,0 +1,63 @@
+# Copy to .github/workflows/sync-lab-data.yml in your own fork.
+# All exports are public: review the resulting JSON before enabling a schedule.
+name: Sync Lab Data
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: sync-lab-data
+  cancel-in-progress: false
+jobs:
+  sync:
+    if: ${{ vars.ENABLE_LAB_DATA_SYNC == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Writing activity
+        if: ${{ vars.ENABLE_WRITING_HEATMAP == 'true' }}
+        run: node .github/scripts/generate-heatmap.mjs
+      - name: Bookmarks
+        if: ${{ vars.ENABLE_KARAKEEP_SYNC == 'true' }}
+        env:
+          KARAKEEP_URL: ${{ secrets.KARAKEEP_URL }}
+          KARAKEEP_API_KEY: ${{ secrets.KARAKEEP_API_KEY }}
+          CI_BYPASS_SECRET: ${{ secrets.KARAKEEP_CI_BYPASS_SECRET }}
+        run: node .github/scripts/fetch-bookmarks.mjs
+      - name: Server metrics
+        if: ${{ vars.ENABLE_BESZEL_SYNC == 'true' }}
+        env:
+          BESZEL_URL: ${{ secrets.BESZEL_URL }}
+          BESZEL_EMAIL: ${{ secrets.BESZEL_EMAIL }}
+          BESZEL_PASSWORD: ${{ secrets.BESZEL_PASSWORD }}
+          CI_BYPASS_SECRET: ${{ secrets.BESZEL_CI_BYPASS_SECRET }}
+        run: node .github/scripts/fetch-servers.mjs
+      - name: Commit snapshots
+        id: commit
+        run: |
+          git add src/data/writing-heatmap.json src/data/bookmarks.json src/data/servers.json
+          if git diff --cached --quiet; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(lab): refresh public snapshots'
+          git push
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+      - name: Request site rebuild (optional)
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.LAB_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -n "$DEPLOY_HOOK_URL" ]; then
+            curl --fail --silent --show-error --max-time 30 --request POST "$DEPLOY_HOOK_URL" --output /dev/null
+          fi

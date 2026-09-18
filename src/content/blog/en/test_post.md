@@ -1,9 +1,19 @@
 ---
 title: Welcome to Tyndall Theme
-description: A sample post showcasing various Markdown rendering effects in Tyndall theme
+description: Start writing with Tyndall, from Apple Music and travel maps to everyday Markdown.
 pubDate: 2025-01-15
 translationKey: welcome
 lang: en
+map:
+  days:
+    - day: 1
+      color: '#a259ec'
+      stops:
+        - name: Eiffel Tower
+          coords: [2.2945, 48.8584]
+          note: Start the day's walk here
+        - name: Louvre Museum
+          coords: [2.3376, 48.8606]
 ---
 
 ## Welcome to Tyndall
@@ -17,6 +27,10 @@ Tyndall is a modern Astro blog theme focused on details and visual experience.
 - 🌍 **Internationalization** - Built-in Chinese and English support
 - 📱 **Responsive** - Perfect adaptation for all devices
 - ⚡ **High Performance** - Built on Astro, blazing fast
+- 🎵 **Music in your posts** - Embed Apple Music songs, albums and playlists with one directive
+- 🗺️ **Travel maps** - Mark places in a travel post and switch between days
+- 📝 **Quick notes** - Publish a Memo by messaging your Telegram Bot
+- 🟢 **Live status** - Share your current activity and playing music with Nowcast
 
 ### Getting Started
 
@@ -25,7 +39,110 @@ Tyndall is a modern Astro blog theme focused on details and visual experience.
 3. Start dev server: `pnpm dev`
 4. Start creating your content!
 
-### Comprehensive Markdown Rendering Test
+See the [configuration guide](/en/blog/config) for site settings, deployment and integrations. First, try a few of Tyndall's own writing features.
+
+## 🎵 Put Music Between Your Paragraphs
+
+When writing about an album, you can include its player instead of just a link. In Apple Music, choose **Share → Copy Link**, then add a directive on its own line:
+
+```markdown
+A little music to go with today's walk.
+
+::apple-music{url="https://music.apple.com/us/album/how-to-be-a-human-being/1440840097"}
+
+Then carry on with the story.
+```
+
+Here is the result:
+
+::apple-music{url="https://music.apple.com/us/album/how-to-be-a-human-being/1440840097"}
+
+Share links for songs, albums and public playlists work here. Keep the `?i=trackID` part of a song link, or it may open the whole album. Songs default to 175px high, albums and playlists to 450px. Add `height="300"` to choose your own height.
+
+This is a **block directive**: give it its own line, with blank lines before and after. No iframe markup or Apple API key is needed. Apple provides the player; playback may depend on region, sign-in and content availability. The theme does not download audio to your site.
+
+## 🗺️ Add a Map to Your Travel Story
+
+Put your stops in the article's frontmatter, then place the map directive in the body. Here is a fictional walk through Paris:
+
+```yaml
+map:
+  days:
+    - day: 1
+      color: '#a259ec'
+      stops:
+        - name: Eiffel Tower
+          coords: [2.2945, 48.8584]
+          note: Start the day's walk here
+        - name: Louvre Museum
+          coords: [2.3376, 48.8606]
+```
+
+Merge `map:` into the existing `---` frontmatter, alongside `title` and `pubDate`. Then add this on its own line in the body:
+
+```markdown
+::travel-map{height="480"}
+```
+
+That is how this map was created. Pan, zoom and click the places to explore:
+
+::travel-map{height="480"}
+
+Coordinates use **[longitude, latitude]**. Put `stops` in visit order. The default straight lines show that order, not walking directions. Add `day: 2`, `day: 3` and so on for more days, each with its own color.
+
+The map uses article data, not photo EXIF, and does not require a `/travel` gallery. Loading the basemap needs an internet connection. For road routes and custom basemaps, see the [configuration guide](/en/blog/config). Check that your locations are suitable for sharing before publishing.
+
+## 📝 Quick Notes Without Opening an Editor
+
+Once your Telegram Bot is configured, send “Finished a good book today #reading” or a photo album with a caption to publish a Memo. The blog reads new posts from Supabase, so each note does not require a redeploy.
+
+The [configuration guide](/en/blog/config) covers the Bot, commands and photo storage. Feishu and Discord can support the same flow with additional development; their receivers are not currently included.
+
+## 🟢 Share What You Are Doing Now
+
+Nowcast can send your current activity and background Apple Music information to the blog's status card, such as “Writing with Obsidian.” This status expires: it does not create articles or Memos, or change your album wall.
+
+After installing the client, configure the receiver endpoint and write secret using the [configuration guide](/en/blog/config). Choose the activity descriptions you want to make public before sharing.
+
+## 🔧 Bring Your Everyday Tools into Lab
+
+Lab can show writing rhythm, recent bookmarks, server metrics and self-hosted services. These are snapshots, not live requests from visitors' browsers: writing rhythm comes from Git history, while Karakeep and Beszel provide bookmark and server data. GitHub Actions can save the snapshots and request a site rebuild.
+
+The public theme starts with sample data. Connect only what you need, or maintain the files manually. See the [configuration guide](/en/blog/config) for variables, workflows and what becomes public.
+
+## ✍️ A Few Small Writing Helpers
+
+Alongside standard Markdown, you can write keyboard shortcuts, highlights and collapsible notes:
+
+```markdown
+Press :kbd[Ctrl] + :kbd[S] to save, or :mark[highlight] a key point.
+
+:::details[Read more]
+Keep writing Markdown here, including formulas such as $E=mc^2$.
+:::
+```
+
+Press :kbd[Ctrl] + :kbd[S] to save, or :mark[highlight] a key point.
+
+:::details[Read more]
+Keep writing **Markdown** here, including formulas such as $E=mc^2$.
+:::
+
+Mermaid diagrams work in fenced code blocks too:
+
+````markdown
+```mermaid
+graph LR
+  A[Write] --> B[Preview] --> C[Publish]
+```
+````
+
+```mermaid
+graph LR
+  A[Write] --> B[Preview] --> C[Publish]
+```
+
+## Comprehensive Markdown Rendering Test
 
 This is an article designed to test the capabilities of a Markdown rendering engine. It includes a variety of Markdown elements to ensure your website can display all formats correctly and beautifully.
 
